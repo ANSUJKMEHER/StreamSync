@@ -240,6 +240,10 @@ class WebSocketService {
       case 'pong':
         // Heartbeat response — connection is alive
         break;
+
+      case 'error':
+        console.error('[WS] Server error:', message.payload);
+        break;
     }
 
     // Dispatch to registered handlers

@@ -151,8 +151,9 @@ function handleMessage(roomManager: RoomManager, userId: string, message: WSMess
 
     case 'yjs-update': {
       if (!message.roomId || !message.payload) return;
-      if (roomManager.getPermission(message.roomId, userId) !== 'EDIT') {
-        // Read-only mode: reject the update silently or send an error back
+      const perm = roomManager.getPermission(message.roomId, userId);
+      if (perm !== 'EDIT') {
+        console.log(`[WS] yjs-update rejected for ${userId} in ${message.roomId} (Permission: ${perm})`);
         return;
       }
       const payload = message.payload as any;
@@ -161,6 +162,8 @@ function handleMessage(roomManager: RoomManager, userId: string, message: WSMess
         const applied = roomManager.applyYjsUpdate(message.roomId, payload.update);
         if (applied) {
           roomManager.broadcast(message.roomId, message, userId);
+        } else {
+          console.log(`[WS] yjs-update failed to apply for ${message.roomId} (ydoc not found or apply failed)`);
         }
       }
       break;
