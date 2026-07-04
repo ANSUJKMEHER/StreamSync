@@ -117,7 +117,7 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
 router.post('/:id/accept', authenticateToken, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId;
-    const inviteId = req.params.id;
+    const inviteId = req.params.id as string;
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     
@@ -162,7 +162,7 @@ router.post('/:id/accept', authenticateToken, async (req: Request, res: Response
 router.post('/:id/reject', authenticateToken, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId;
-    const inviteId = req.params.id;
+    const inviteId = req.params.id as string;
 
     const user = await prisma.user.findUnique({ where: { id: userId } });
     const invite = await prisma.roomInvite.findUnique({ where: { id: inviteId } });
@@ -192,7 +192,7 @@ router.post('/:id/reject', authenticateToken, async (req: Request, res: Response
 router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId;
-    const inviteId = req.params.id;
+    const inviteId = req.params.id as string;
 
     const invite = await prisma.roomInvite.findUnique({ where: { id: inviteId } });
     if (!invite) {
@@ -219,7 +219,7 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response) => 
 router.get('/room/:roomId', authenticateToken, async (req: Request, res: Response) => {
   try {
     const userId = req.user!.userId;
-    const roomId = req.params.roomId;
+    const roomId = req.params.roomId as string;
 
     const room = await prisma.room.findUnique({ where: { id: roomId } });
     if (!room || room.ownerId !== userId) {
