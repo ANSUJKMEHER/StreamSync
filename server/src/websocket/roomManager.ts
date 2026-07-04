@@ -59,19 +59,12 @@ export class RoomManager {
   /**
    * Register a new client connection.
    */
-  addClient(userId: string, username: string, socket: WebSocket): ConnectedClient {
-    // If user already connected, close old socket
-    const existing = this.clients.get(userId);
-    if (existing) {
-      console.log(`[WS] Closing stale connection for ${username}`);
-      try { existing.socket.close(1000, 'Reconnected from another session'); } catch {}
-      // Clean up old rooms
-      for (const roomId of existing.rooms) {
-        this.rooms.get(roomId)?.delete(userId);
-      }
-    }
+  addClient(connectionId: string, userId: string, username: string, socket: WebSocket): ConnectedClient {
+    // We no longer close stale connections because users might be testing with multiple tabs!
+    // They will just get a new connectionId and BOTH tabs will work.
 
     const client: ConnectedClient = {
+      connectionId,
       userId,
       username,
       socket,
@@ -80,33 +73,33 @@ export class RoomManager {
       connectedAt: new Date().toISOString(),
     };
 
-    this.clients.set(userId, client);
-    console.log(`[WS] Client connected: ${username} (${userId}) | Total: ${this.clients.size}`);
+    this.clients.set(connectionId, client);
+    console.log(`[WS] Client connected: ${username} (${connectionId}) | Total: ${this.clients.size}`);
     return client;
   }
 
   /**
    * Remove a client connection and clean up all room memberships.
    */
-  async removeClient(userId: string): Promise<void> {
-    const client = this.clients.get(userId);
+  async removeClient(connectionId: string): Promise<void> {
+    const client = this.clients.get(connectionId);
     if (!client) return;
 
     // Leave all rooms
     const roomsToLeave = Array.from(client.rooms);
     for (const roomId of roomsToLeave) {
-      await this.leaveRoom(roomId, userId);
+      await this.leaveRoom(roomId, connectionId);
     }
 
-    this.clients.delete(userId);
+    this.clients.delete(connectionId);
     console.log(`[WS] Client disconnected: ${client.username} | Total: ${this.clients.size}`);
   }
 
   /**
    * Add a client to a room.
    */
-  async joinRoom(roomId: string, userId: string): Promise<void> {
-    const client = this.clients.get(userId);
+  async joinRoom(roomId: string, connectionId: string, userId: string): Promise<void> {
+    const client = this.clients.get(connectionId);
     if (!client) return;
 
     // Wait for room initialization if it's currently being created
@@ -188,9 +181,9 @@ export class RoomManager {
     }
 
     const room = this.rooms.get(roomId)!;
-    if (room.has(userId)) return; // Already in room
+    if (room.has(connectionId)) return; // Already in room
 
-    room.add(userId);
+    room.add(connectionId);
     client.rooms.add(roomId);
 
     console.log(`[WS] ${client.username} joined room ${roomId} | Room size: ${room.size}`);
@@ -204,10 +197,10 @@ export class RoomManager {
         username: client.username,
       },
       timestamp: new Date().toISOString(),
-    }, userId);
+    }, connectionId);
 
     // Send current room users to the joining client
-    this.sendToClient(userId, {
+    this.sendToClient(connectionId, {
       type: 'room-users',
       roomId,
       payload: this.getRoomUsers(roomId),
@@ -218,7 +211,7 @@ export class RoomManager {
     const ydoc = this.ydocs.get(roomId);
     if (ydoc) {
       const state = Y.encodeStateAsUpdate(ydoc);
-      this.sendToClient(userId, {
+      this.sendToClient(connectionId, {
         type: 'yjs-sync',
         roomId,
         payload: { update: fromByteArray(state) },
@@ -230,14 +223,13 @@ export class RoomManager {
   /**
    * Remove a client from a room.
    */
-  async leaveRoom(roomId: string, userId: string): Promise<void> {
-    const client = this.clients.get(userId);
+  async leaveRoom(roomId: string, connectionId: string): Promise<void> {
+    const client = this.clients.get(connectionId);
     const room = this.rooms.get(roomId);
     if (!room || !client) return;
 
-    room.delete(userId);
+    room.delete(connectionId);
     client.rooms.delete(roomId);
-    this.permissions.delete(`${roomId}:${userId}`);
 
     console.log(`[WS] ${client.username} left room ${roomId} | Room size: ${room.size}`);
 
@@ -283,15 +275,15 @@ export class RoomManager {
   /**
    * Broadcast a message to all clients in a room.
    */
-  broadcast(roomId: string, message: WSMessage, excludeUserId?: string): void {
+  broadcast(roomId: string, message: WSMessage, excludeConnectionId?: string): void {
     const room = this.rooms.get(roomId);
     if (!room) return;
 
     const data = JSON.stringify(message);
 
-    for (const userId of room) {
-      if (userId === excludeUserId) continue;
-      const client = this.clients.get(userId);
+    for (const connectionId of room) {
+      if (connectionId === excludeConnectionId) continue;
+      const client = this.clients.get(connectionId);
       if (client && client.socket.readyState === WebSocket.OPEN) {
         client.socket.send(data);
       }
@@ -301,8 +293,8 @@ export class RoomManager {
   /**
    * Send a message to a specific client.
    */
-  sendToClient(userId: string, message: WSMessage): void {
-    const client = this.clients.get(userId);
+  sendToClient(connectionId: string, message: WSMessage): void {
+    const client = this.clients.get(connectionId);
     if (client && client.socket.readyState === WebSocket.OPEN) {
       client.socket.send(JSON.stringify(message));
     }
@@ -316,8 +308,8 @@ export class RoomManager {
     if (!room) return [];
 
     return Array.from(room)
-      .map((userId) => {
-        const client = this.clients.get(userId);
+      .map((connectionId) => {
+        const client = this.clients.get(connectionId);
         return client
           ? { userId: client.userId, username: client.username }
           : null;
@@ -326,10 +318,10 @@ export class RoomManager {
   }
 
   /**
-   * Get a client by userId.
+   * Get a client by connectionId.
    */
-  getClient(userId: string): ConnectedClient | undefined {
-    return this.clients.get(userId);
+  getClient(connectionId: string): ConnectedClient | undefined {
+    return this.clients.get(connectionId);
   }
 
   /**
@@ -392,11 +384,11 @@ export class RoomManager {
    * Terminates clients that haven't responded to the previous ping.
    */
   checkHeartbeats(): void {
-    for (const [userId, client] of this.clients.entries()) {
+    for (const [connectionId, client] of this.clients.entries()) {
       if (!client.isAlive) {
-        console.log(`[WS] Terminating dead connection: ${client.username} (${userId})`);
+        console.log(`[WS] Terminating dead connection: ${client.username} (${connectionId})`);
         client.socket.terminate();
-        this.removeClient(userId).catch(console.error);
+        this.removeClient(connectionId).catch(console.error);
         continue;
       }
       

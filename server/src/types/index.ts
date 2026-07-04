@@ -87,6 +87,7 @@ export interface WSMessage {
 }
 
 export interface ConnectedClient {
+  connectionId: string;
   userId: string;
   username: string;
   socket: import('ws').WebSocket;

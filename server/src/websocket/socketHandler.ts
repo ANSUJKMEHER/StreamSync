@@ -39,7 +39,9 @@ export function initWebSocket(httpServer: HttpServer): RoomManager {
     }
 
     // Register client
-    const client = roomManager.addClient(user.userId, user.username, socket);
+    const crypto = require('crypto');
+    const connectionId = crypto.randomUUID();
+    const client = roomManager.addClient(connectionId, user.userId, user.username, socket);
 
     // Send welcome message
     const welcomeMsg: WSMessage = {
@@ -57,7 +59,7 @@ export function initWebSocket(httpServer: HttpServer): RoomManager {
     socket.on('message', (rawData) => {
       try {
         const message: WSMessage = JSON.parse(rawData.toString());
-        handleMessage(roomManager, user.userId, message);
+        handleMessage(roomManager, connectionId, user.userId, message);
       } catch (err) {
         console.error(`[WS] Invalid message from ${user.username}:`, err);
         socket.send(JSON.stringify({
@@ -76,7 +78,7 @@ export function initWebSocket(httpServer: HttpServer): RoomManager {
     // ── Close handler ──
     socket.on('close', (code, reason) => {
       console.log(`[WS] Socket closed: ${user.username} (code: ${code}, reason: ${reason.toString() || 'none'})`);
-      roomManager.removeClient(user.userId).catch(console.error);
+      roomManager.removeClient(connectionId).catch(console.error);
     });
 
     // ── Error handler ──
@@ -101,48 +103,52 @@ export function initWebSocket(httpServer: HttpServer): RoomManager {
 /**
  * Route incoming WebSocket messages to the appropriate handler.
  */
-function handleMessage(roomManager: RoomManager, userId: string, message: WSMessage): void {
+async function handleMessage(
+  roomManager: RoomManager,
+  connectionId: string,
+  userId: string,
+  message: WSMessage
+): Promise<void> {
   switch (message.type) {
     case 'join-room': {
       if (!message.roomId) {
-        roomManager.sendToClient(userId, {
+        roomManager.sendToClient(connectionId, {
           type: 'error',
-          payload: { message: 'roomId is required for join-room' },
+          payload: { message: 'Missing roomId' },
           timestamp: new Date().toISOString(),
         });
         return;
       }
-      roomManager.joinRoom(message.roomId, userId).catch(console.error);
+      roomManager.joinRoom(message.roomId, connectionId, userId).catch(console.error);
       break;
     }
 
     case 'leave-room': {
       if (!message.roomId) return;
-      roomManager.leaveRoom(message.roomId, userId).catch(console.error);
+      roomManager.leaveRoom(message.roomId, connectionId).catch(console.error);
       break;
     }
 
     case 'room-message': {
-      if (!message.roomId) return;
-      const client = roomManager.getClient(userId);
+      if (!message.roomId || !message.payload) return;
+      const client = roomManager.getClient(connectionId);
       if (!client) return;
 
-      // Relay message to all room members except sender
       roomManager.broadcast(message.roomId, {
         type: 'room-message',
         roomId: message.roomId,
         payload: {
-          ...message.payload as object,
+          ...(message.payload as object),
           userId: client.userId,
           username: client.username,
         },
         timestamp: new Date().toISOString(),
-      }, userId);
+      }, connectionId);
       break;
     }
 
     case 'ping': {
-      roomManager.sendToClient(userId, {
+      roomManager.sendToClient(connectionId, {
         type: 'pong',
         timestamp: new Date().toISOString(),
       });
@@ -154,7 +160,7 @@ function handleMessage(roomManager: RoomManager, userId: string, message: WSMess
       const perm = roomManager.getPermission(message.roomId, userId);
       if (perm !== 'EDIT') {
         console.log(`[WS] yjs-update rejected for ${userId} in ${message.roomId} (Permission: ${perm})`);
-        roomManager.sendToClient(userId, {
+        roomManager.sendToClient(connectionId, {
           type: 'error',
           payload: { message: `Update rejected: Permission is ${perm}` },
           timestamp: new Date().toISOString(),
@@ -166,10 +172,10 @@ function handleMessage(roomManager: RoomManager, userId: string, message: WSMess
         // Validate FIRST, broadcast ONLY if valid
         const applied = roomManager.applyYjsUpdate(message.roomId, payload.update);
         if (applied) {
-          roomManager.broadcast(message.roomId, message, userId);
+          roomManager.broadcast(message.roomId, message, connectionId);
         } else {
           console.log(`[WS] yjs-update failed to apply for ${message.roomId} (ydoc not found or apply failed)`);
-          roomManager.sendToClient(userId, {
+          roomManager.sendToClient(connectionId, {
             type: 'error',
             payload: { message: `Update failed: ydoc not ready for ${message.roomId}` },
             timestamp: new Date().toISOString(),
@@ -181,16 +187,17 @@ function handleMessage(roomManager: RoomManager, userId: string, message: WSMess
 
     case 'awareness-update': {
       if (!message.roomId || !message.payload) return;
-      roomManager.broadcast(message.roomId, message, userId);
+      roomManager.broadcast(message.roomId, message, connectionId);
       break;
     }
 
     default: {
-      roomManager.sendToClient(userId, {
+      roomManager.sendToClient(connectionId, {
         type: 'error',
-        payload: { message: `Unknown message type: ${message.type}` },
+        payload: { message: 'Unknown message type' },
         timestamp: new Date().toISOString(),
       });
+      break;
     }
   }
 }
