@@ -15,6 +15,7 @@ class YjsService {
       wsService.on('yjs-sync', (msg) => {
         if (!msg.roomId || !msg.payload) return;
         const payload = msg.payload as any;
+        console.log('[Yjs] Received yjs-sync for room:', msg.roomId);
         if (typeof payload.update === 'string') {
           const doc = this.getDoc(msg.roomId);
           Y.applyUpdate(doc, toByteArray(payload.update), 'remote');
@@ -27,6 +28,7 @@ class YjsService {
       wsService.on('yjs-update', (msg) => {
         if (!msg.roomId || !msg.payload) return;
         const payload = msg.payload as any;
+        console.log('[Yjs] Received yjs-update for room:', msg.roomId);
         if (typeof payload.update === 'string') {
           const doc = this.getDoc(msg.roomId);
           Y.applyUpdate(doc, toByteArray(payload.update), 'remote');
@@ -39,6 +41,7 @@ class YjsService {
       wsService.on('awareness-update', (msg) => {
         if (!msg.roomId || !msg.payload) return;
         const payload = msg.payload as any;
+        console.log('[Yjs] Received awareness-update for room:', msg.roomId);
         if (typeof payload.update === 'string') {
           const awareness = this.getAwareness(msg.roomId);
           import('y-protocols/awareness').then(({ applyAwarenessUpdate }) => {

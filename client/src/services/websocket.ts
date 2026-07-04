@@ -147,6 +147,7 @@ class WebSocketService {
    * Join a room (document).
    */
   joinRoom(roomId: string): void {
+    console.log('[WS] Joining room:', roomId);
     this.joinedRooms.add(roomId);
     this.send({ type: 'join-room', roomId });
   }
