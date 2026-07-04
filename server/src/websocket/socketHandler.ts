@@ -154,6 +154,11 @@ function handleMessage(roomManager: RoomManager, userId: string, message: WSMess
       const perm = roomManager.getPermission(message.roomId, userId);
       if (perm !== 'EDIT') {
         console.log(`[WS] yjs-update rejected for ${userId} in ${message.roomId} (Permission: ${perm})`);
+        roomManager.sendToClient(userId, {
+          type: 'error',
+          payload: { message: `Update rejected: Permission is ${perm}` },
+          timestamp: new Date().toISOString(),
+        });
         return;
       }
       const payload = message.payload as any;
@@ -164,6 +169,11 @@ function handleMessage(roomManager: RoomManager, userId: string, message: WSMess
           roomManager.broadcast(message.roomId, message, userId);
         } else {
           console.log(`[WS] yjs-update failed to apply for ${message.roomId} (ydoc not found or apply failed)`);
+          roomManager.sendToClient(userId, {
+            type: 'error',
+            payload: { message: `Update failed: ydoc not ready for ${message.roomId}` },
+            timestamp: new Date().toISOString(),
+          });
         }
       }
       break;
