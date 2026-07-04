@@ -140,7 +140,7 @@ function AuthModal() {
             const height = 600;
             const left = window.screen.width / 2 - width / 2;
             const top = window.screen.height / 2 - height / 2;
-            const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+            const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
             window.open(
               `${API_BASE}/api/v1/oauth/github`,
               'GitHub OAuth',
@@ -196,3 +196,4 @@ function AuthModal() {
 }
 
 export default AuthModal;
+

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import type { FileItem, CursorPosition } from '../types';
 import { useAuthStore } from './authStore';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
 
 /** Helper to build headers with auth token */
 function getAuthHeaders(): Record<string, string> {
@@ -250,3 +250,4 @@ export const useFileStore = create<FileStore>((set, get) => ({
   toggleSidebar: () => set({ isSidebarOpen: !get().isSidebarOpen }),
   setSidebarWidth: (width: number) => set({ sidebarWidth: width }),
 }));
+

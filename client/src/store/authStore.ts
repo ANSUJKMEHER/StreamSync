@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
 const TOKEN_KEY = 'streamsync_token';
 const USER_KEY = 'streamsync_user';
 
@@ -135,3 +135,4 @@ export const useAuthStore = create<AuthStore>((set) => ({
     set({ user, token, isAuthenticated: true, error: null });
   }
 }));
+

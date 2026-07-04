@@ -15,7 +15,7 @@ export default function InviteModal({ roomId, onClose }: InviteModalProps) {
   const [success, setSuccess] = useState(false);
   const { token } = useAuthStore();
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+  const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
 
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,3 +106,4 @@ export default function InviteModal({ roomId, onClose }: InviteModalProps) {
     </div>
   );
 }
+

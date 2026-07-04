@@ -1,6 +1,6 @@
 import type { Room } from './roomService';
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
 
 const getHeaders = (token?: string | null) => ({
   'Content-Type': 'application/json',
@@ -29,3 +29,4 @@ export const githubService = {
     if (!json.success) throw new Error(json.error);
   }
 };
+

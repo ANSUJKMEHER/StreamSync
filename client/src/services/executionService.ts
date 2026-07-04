@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
 
 export interface ExecutionResult {
   stdout: string;
@@ -25,3 +25,4 @@ export const executionService = {
     return json.data as ExecutionResult;
   }
 };
+

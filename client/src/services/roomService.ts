@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
 
 export interface Room {
   id: string;
@@ -70,3 +70,4 @@ export const roomService = {
     if (!json.success) throw new Error(json.error);
   }
 };
+
