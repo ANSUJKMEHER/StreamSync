@@ -13,12 +13,16 @@ router.get('/room/:roomId', authenticateToken, async (req: Request, res: Respons
     const roomId = req.params.roomId as string;
 
     // Verify user has access to this room
-    const room = await prisma.room.findUnique({ where: { id: roomId } });
+    const room = await prisma.room.findUnique({ 
+      where: { id: roomId },
+      include: { collaborators: true }
+    });
     if (!room) {
       res.status(404).json({ success: false, error: 'Room not found' });
       return;
     }
-    if (room.ownerId !== userId && !room.isPublic) {
+    const isCollab = room.collaborators.some(c => c.userId === userId);
+    if (room.ownerId !== userId && !room.isPublic && !isCollab) {
       res.status(403).json({ success: false, error: 'Access denied' });
       return;
     }
@@ -45,14 +49,15 @@ router.get('/file/:id', authenticateToken, async (req: Request, res: Response) =
 
     const file = await prisma.file.findUnique({
       where: { id },
-      include: { room: true },
+      include: { room: { include: { collaborators: true } } },
     });
     if (!file) {
       res.status(404).json({ success: false, error: 'File not found' });
       return;
     }
     // Authorization check
-    if (file.room.ownerId !== userId && !file.room.isPublic) {
+    const isCollab = file.room.collaborators.some(c => c.userId === userId);
+    if (file.room.ownerId !== userId && !file.room.isPublic && !isCollab) {
       res.status(403).json({ success: false, error: 'Access denied' });
       return;
     }
@@ -84,12 +89,18 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
     }
 
     // Verify ownership or public EDIT access
-    const room = await prisma.room.findUnique({ where: { id: body.roomId } });
+    const room = await prisma.room.findUnique({ 
+      where: { id: body.roomId },
+      include: { collaborators: true }
+    });
     if (!room) {
       res.status(404).json({ success: false, error: 'Room not found' });
       return;
     }
-    const canEdit = room.ownerId === userId || (room.isPublic && room.publicAccess === 'EDIT');
+    const collab = room.collaborators.find(c => c.userId === userId);
+    const canEdit = room.ownerId === userId || 
+                    (room.isPublic && room.publicAccess === 'EDIT') ||
+                    (collab && collab.role === 'EDIT');
     if (!canEdit) {
       res.status(403).json({ success: false, error: 'Access denied — no write access to this room' });
       return;
@@ -138,13 +149,16 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
 
     const existing = await prisma.file.findUnique({
       where: { id },
-      include: { room: true },
+      include: { room: { include: { collaborators: true } } },
     });
     if (!existing) {
       res.status(404).json({ success: false, error: 'File not found' });
       return;
     }
-    const canEdit = existing.room.ownerId === userId || (existing.room.isPublic && existing.room.publicAccess === 'EDIT');
+    const collab = existing.room.collaborators.find(c => c.userId === userId);
+    const canEdit = existing.room.ownerId === userId || 
+                    (existing.room.isPublic && existing.room.publicAccess === 'EDIT') ||
+                    (collab && collab.role === 'EDIT');
     if (!canEdit) {
       res.status(403).json({ success: false, error: 'Access denied' });
       return;
@@ -182,14 +196,16 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response) => 
 
     const existing = await prisma.file.findUnique({
       where: { id },
-      include: { room: true },
+      include: { room: { include: { collaborators: true } } },
     });
     if (!existing) {
       res.status(404).json({ success: false, error: 'File not found' });
       return;
     }
-    if (existing.room.ownerId !== userId) {
-      res.status(403).json({ success: false, error: 'Access denied — only the room owner can delete files' });
+    const collab = existing.room.collaborators.find(c => c.userId === userId);
+    const canDelete = existing.room.ownerId === userId || (collab && collab.role === 'EDIT');
+    if (!canDelete) {
+      res.status(403).json({ success: false, error: 'Access denied — missing delete permissions' });
       return;
     }
 
