@@ -161,11 +161,31 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response): Pr
       where: { id: roomId },
     });
 
-    if (!room || room.ownerId !== userId) {
+    if (!room) {
+      res.status(404).json({ success: false, error: 'Room not found' });
+      return;
+    }
+
+    if (room.ownerId !== userId) {
+      // Check if user is a collaborator
+      const collaborator = await prisma.collaborator.findUnique({
+        where: { roomId_userId: { roomId, userId } }
+      });
+      
+      if (collaborator) {
+        // Just remove them as a collaborator
+        await prisma.collaborator.delete({
+          where: { roomId_userId: { roomId, userId } }
+        });
+        res.json({ success: true, message: 'Left workspace successfully' });
+        return;
+      }
+      
       res.status(403).json({ success: false, error: 'Access denied' });
       return;
     }
 
+    // If owner, delete the entire room
     await prisma.room.delete({
       where: { id: roomId },
     });

@@ -64,7 +64,11 @@ export default function Workspace() {
         setRoomData(data);
       } catch (err) {
         console.error('Failed to fetch room:', err);
-        navigate('/');
+        if (!token) {
+          navigate(`/?returnTo=/room/${roomId}`);
+        } else {
+          navigate('/');
+        }
       }
     };
     loadRoom();

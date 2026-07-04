@@ -22,6 +22,13 @@ export default function Dashboard() {
       return;
     }
 
+    const params = new URLSearchParams(window.location.search);
+    const returnTo = params.get('returnTo');
+    if (returnTo && returnTo.startsWith('/room/')) {
+      navigate(returnTo);
+      return;
+    }
+
     const fetchRoomsAndRepos = async () => {
       try {
         const data = await roomService.getRooms(token);
