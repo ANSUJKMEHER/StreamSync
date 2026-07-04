@@ -9,6 +9,35 @@
   background: var(--bg-surface);
 }
 
+/* ═══════════════════════════════════════
+   y-monaco Remote Collaboration Cursors
+   ═══════════════════════════════════════ */
+
+/* Remote user's text selection highlight */
+.yRemoteSelection {
+  background-color: rgba(250, 129, 0, 0.25);
+}
+
+/* Remote user's cursor head (the blinking line) */
+.yRemoteSelectionHead {
+  position: absolute;
+  border-left: 2px solid orange;
+  border-top: 2px solid orange;
+  border-bottom: none;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+/* Cursor label showing the remote user's name */
+.yRemoteSelectionHead::after {
+  position: absolute;
+  content: ' ';
+  border: 3px solid orange;
+  border-radius: 4px;
+  left: -4px;
+  top: -5px;
+}
+
 .editor-loading {
   display: flex;
   flex-direction: column;

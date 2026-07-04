@@ -90,6 +90,56 @@ function MonacoEditor() {
     );
     bindingRef.current = binding;
 
+    // Dynamically inject CSS for each remote user's cursor color
+    const styleEl = document.createElement('style');
+    styleEl.id = `yjs-cursor-styles-${activeFileId}`;
+    document.head.appendChild(styleEl);
+
+    const updateCursorStyles = () => {
+      const styles: string[] = [];
+      awareness.getStates().forEach((state, clientID) => {
+        if (clientID === awareness.clientID) return; // skip self
+        const user = state.user;
+        if (!user) return;
+        const color = user.color || '#ff8c00';
+        const name = user.name || 'Anonymous';
+        styles.push(`
+          .yRemoteSelection-${clientID} {
+            background-color: ${color}33;
+          }
+          .yRemoteSelectionHead-${clientID} {
+            position: absolute;
+            border-left: 2px solid ${color};
+            border-top: 2px solid ${color};
+            border-bottom: none;
+            height: 100%;
+            box-sizing: border-box;
+          }
+          .yRemoteSelectionHead-${clientID}::after {
+            content: '${name.replace(/'/g, "\\'")}';
+            position: absolute;
+            top: -18px;
+            left: -2px;
+            padding: 1px 6px;
+            background: ${color};
+            color: #fff;
+            font-size: 11px;
+            font-weight: 600;
+            font-family: system-ui, sans-serif;
+            border-radius: 3px 3px 3px 0;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 100;
+            line-height: 15px;
+          }
+        `);
+      });
+      styleEl.textContent = styles.join('\n');
+    };
+
+    awareness.on('change', updateCursorStyles);
+    updateCursorStyles(); // Initial render
+
     // Register AI Inline Completions Provider
     if (!aiProviderDisposable.current) {
       const monaco = (window as any).monaco;
@@ -145,6 +195,8 @@ function MonacoEditor() {
     return () => {
       binding.destroy();
       bindingRef.current = null;
+      awareness.off('change', updateCursorStyles);
+      styleEl.remove();
       if (aiProviderDisposable.current) {
         aiProviderDisposable.current.dispose();
         aiProviderDisposable.current = null;

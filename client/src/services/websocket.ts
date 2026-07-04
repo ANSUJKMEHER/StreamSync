@@ -23,7 +23,10 @@ type MessageHandler = (message: WSMessage) => void;
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 type StatusHandler = (status: ConnectionStatus) => void;
 
-const WS_BASE = import.meta.env.VITE_WS_URL || 'ws://localhost:3001';
+const isLocal = window.location.hostname === 'localhost';
+const WS_BASE = (import.meta.env.VITE_WS_URL && (!import.meta.env.VITE_WS_URL.includes('localhost') || isLocal))
+  ? import.meta.env.VITE_WS_URL
+  : (isLocal ? 'ws://localhost:3001' : 'wss://streamsync-cxox.onrender.com');
 
 /**
  * WebSocket client service with auto-reconnect, room management,
