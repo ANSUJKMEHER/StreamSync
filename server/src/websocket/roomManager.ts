@@ -17,6 +17,8 @@ export class RoomManager {
   private clients = new Map<string, ConnectedClient>();
   // To prevent race conditions on room creation DB fetch
   private roomCreationLocks = new Map<string, Promise<void>>();
+  // To prevent race conditions on client join (permission fetch)
+  private joinLocks = new Map<string, Promise<void>>();
   // Track rooms with unsaved CRDT changes
   private dirtyRooms = new Set<string>();
   // Track permissions: `${fileId}:${userId}` -> 'VIEW' | 'EDIT'
@@ -102,13 +104,20 @@ export class RoomManager {
     const client = this.clients.get(connectionId);
     if (!client) return;
 
-    // Wait for room initialization if it's currently being created
-    if (this.roomCreationLocks.has(roomId)) {
-      await this.roomCreationLocks.get(roomId);
-    }
+    // Create a lock for this connection joining this room
+    const lockKey = `${roomId}:${connectionId}`;
+    let resolveJoinLock!: () => void;
+    const joinPromise = new Promise<void>(resolve => { resolveJoinLock = resolve; });
+    this.joinLocks.set(lockKey, joinPromise);
 
-    // Permission check
-    let permission: 'VIEW' | 'EDIT' = 'VIEW';
+    try {
+      // Wait for room initialization if it's currently being created
+      if (this.roomCreationLocks.has(roomId)) {
+        await this.roomCreationLocks.get(roomId);
+      }
+
+      // Permission check
+      let permission: 'VIEW' | 'EDIT' = 'VIEW';
     try {
       const file = await prisma.file.findUnique({
         where: { id: roomId },
@@ -217,6 +226,10 @@ export class RoomManager {
         payload: { update: fromByteArray(state) },
         timestamp: new Date().toISOString(),
       });
+    }
+    } finally {
+      resolveJoinLock();
+      this.joinLocks.delete(lockKey);
     }
   }
 
@@ -374,8 +387,13 @@ export class RoomManager {
 
   /**
    * Get the cached permission for a user in a room.
+   * Awaits any pending join operation for this connection to prevent race conditions.
    */
-  getPermission(roomId: string, userId: string): 'VIEW' | 'EDIT' {
+  async getPermission(roomId: string, connectionId: string, userId: string): Promise<'VIEW' | 'EDIT'> {
+    const lockKey = `${roomId}:${connectionId}`;
+    if (this.joinLocks.has(lockKey)) {
+      await this.joinLocks.get(lockKey);
+    }
     return this.permissions.get(`${roomId}:${userId}`) || 'VIEW';
   }
 

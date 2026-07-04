@@ -157,7 +157,7 @@ async function handleMessage(
 
     case 'yjs-update': {
       if (!message.roomId || !message.payload) return;
-      const perm = roomManager.getPermission(message.roomId, userId);
+      const perm = await roomManager.getPermission(message.roomId, connectionId, userId);
       if (perm !== 'EDIT') {
         console.log(`[WS] yjs-update rejected for ${userId} in ${message.roomId} (Permission: ${perm})`);
         roomManager.sendToClient(connectionId, {
