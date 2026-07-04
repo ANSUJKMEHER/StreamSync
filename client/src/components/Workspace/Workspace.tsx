@@ -225,51 +225,51 @@ export default function Workspace() {
         break;
     }
 
-    // Wrap main content with vertical SplitPane for the bottom panel
-    if (isBottomPanelOpen) {
-      return (
-        <div className="editor-with-panel" style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-          <div style={{ flex: 1, overflow: 'hidden' }}>
-            {content}
-          </div>
-          <div 
-            className="panel-resizer" 
-            style={{ 
-              height: '4px', 
-              background: 'var(--border-subtle)', 
-              cursor: 'row-resize',
-              zIndex: 10
-            }} 
-            onMouseDown={(e) => {
-              const startY = e.clientY;
-              const startHeight = bottomPanelHeight;
-              
-              const onMouseMove = (moveEvent: MouseEvent) => {
-                const delta = startY - moveEvent.clientY;
-                setBottomPanelHeight(Math.max(100, Math.min(600, startHeight + delta)));
-              };
-              
-              const onMouseUp = () => {
-                document.removeEventListener('mousemove', onMouseMove);
-                document.removeEventListener('mouseup', onMouseUp);
-              };
-              
-              document.addEventListener('mousemove', onMouseMove);
-              document.addEventListener('mouseup', onMouseUp);
-            }}
-          />
-          <div style={{ height: `${bottomPanelHeight}px`, flexShrink: 0, overflow: 'hidden' }}>
-             <BottomPanel 
-                executionOutput={executionOutput} 
-                isExecuting={isExecuting} 
-                onClose={() => setIsBottomPanelOpen(false)} 
-             />
-          </div>
+    // Wrap main content with vertical flex container to ensure React doesn't unmount the editor
+    return (
+      <div className="editor-with-panel" style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
+        <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+          {content}
         </div>
-      );
-    }
-    
-    return content;
+        {isBottomPanelOpen && (
+          <>
+            <div 
+              className="panel-resizer" 
+              style={{ 
+                height: '4px', 
+                background: 'var(--border-subtle)', 
+                cursor: 'row-resize',
+                zIndex: 10
+              }} 
+              onMouseDown={(e) => {
+                const startY = e.clientY;
+                const startHeight = bottomPanelHeight;
+                
+                const onMouseMove = (moveEvent: MouseEvent) => {
+                  const delta = startY - moveEvent.clientY;
+                  setBottomPanelHeight(Math.max(100, Math.min(600, startHeight + delta)));
+                };
+                
+                const onMouseUp = () => {
+                  document.removeEventListener('mousemove', onMouseMove);
+                  document.removeEventListener('mouseup', onMouseUp);
+                };
+                
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+              }}
+            />
+            <div style={{ height: `${bottomPanelHeight}px`, flexShrink: 0, overflow: 'hidden' }}>
+               <BottomPanel 
+                  executionOutput={executionOutput} 
+                  isExecuting={isExecuting} 
+                  onClose={() => setIsBottomPanelOpen(false)} 
+               />
+            </div>
+          </>
+        )}
+      </div>
+    );
   };
 
   return (
