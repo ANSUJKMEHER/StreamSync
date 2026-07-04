@@ -11,7 +11,7 @@ interface GitHubPanelProps {
 
 export default function GitHubPanel({ roomData }: GitHubPanelProps) {
   const { token } = useAuthStore();
-  const { files } = useFileStore();
+  const { files, saveFile } = useFileStore();
   
   const [commitMessage, setCommitMessage] = useState('');
   const [isPushing, setIsPushing] = useState(false);
@@ -26,6 +26,10 @@ export default function GitHubPanel({ roomData }: GitHubPanelProps) {
     setSuccess(false);
     
     try {
+      // Force flush all files from Yjs to the backend database before pushing
+      const fileIds = files.filter(f => !f.isFolder).map(f => f.id);
+      await Promise.all(fileIds.map(id => saveFile(id)));
+
       await githubService.pushRepo(roomData.id, commitMessage.trim(), '', token);
       setSuccess(true);
       setCommitMessage('');
