@@ -42,10 +42,12 @@ export default function NotificationsHub() {
       });
       const json = await res.json();
       if (json.success) {
+        const acceptedInvite = invites.find(i => i.id === inviteId);
         setInvites(invites.filter(i => i.id !== inviteId));
-        // Refresh page to show new room if accepted
-        if (action === 'accept') {
-          window.location.reload();
+        
+        // Redirect to the room immediately if accepted
+        if (action === 'accept' && acceptedInvite?.roomId) {
+          window.location.href = `/room/${acceptedInvite.roomId}`;
         }
       } else {
         alert(json.error || 'Failed to process invite');
