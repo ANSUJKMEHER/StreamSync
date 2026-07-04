@@ -18,6 +18,7 @@ import StatusBar from '../StatusBar/StatusBar';
 import BottomPanel from '../Panel/BottomPanel';
 import UserDropdown from '../Auth/UserDropdown';
 import InviteModal from './InviteModal';
+import GitHubPanel from '../Sidebar/GitHubPanel';
 import '../../App.css';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
@@ -44,9 +45,9 @@ export default function Workspace() {
   const [bottomPanelHeight, setBottomPanelHeight] = useState(300);
 
   // Execution States
+  // Execution States
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionOutput, setExecutionOutput] = useState<{ stdout: string; stderr: string } | null>(null);
-  const [isPushing, setIsPushing] = useState(false);
   
   // Invite Modal
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -139,23 +140,6 @@ export default function Workspace() {
     }
   };
 
-  const handlePushGithub = async () => {
-    if (!roomData?.githubRepo || !token) return;
-    const commitMsg = prompt("Enter commit message:", `Update from StreamSync`);
-    if (!commitMsg) return;
-
-    setIsPushing(true);
-    try {
-      const { githubService } = await import('../../services/githubService');
-      await githubService.pushRepo(roomData.id, commitMsg, '', token);
-      alert("Successfully pushed to GitHub!");
-    } catch (err: any) {
-      alert(`Push failed: ${err.message}`);
-    } finally {
-      setIsPushing(false);
-    }
-  };
-
   // Run Drift Engine
   useEffect(() => {
     if (files.length === 0) return;
@@ -197,6 +181,7 @@ export default function Workspace() {
   const renderSidebar = () => {
     if (!isSidebarOpen) return null;
     if (activeActivityView === 'explorer') return <FileExplorer />;
+    if (activeActivityView === 'github') return <GitHubPanel roomData={roomData} />;
     return (
       <div style={{ padding: '16px', color: 'var(--text-muted)' }}>
         {activeActivityView.charAt(0).toUpperCase() + activeActivityView.slice(1)} coming soon...
@@ -336,18 +321,6 @@ export default function Workspace() {
         </div>
 
         <div className="titlebar-right">
-          {/* GitHub Push Action */}
-          {roomData?.githubRepo && (
-            <button 
-              className="titlebar-btn" 
-              onClick={handlePushGithub} 
-              title="Push to GitHub"
-              disabled={isPushing}
-              style={{ color: '#2ea44f', fontWeight: 'bold' }}
-            >
-              {isPushing ? 'Pushing...' : '🐙 Push'}
-            </button>
-          )}
 
           <div className="titlebar-divider" />
           

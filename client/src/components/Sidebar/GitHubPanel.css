@@ -1,0 +1,125 @@
+.github-panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1rem;
+}
+
+.github-repo-info, .github-branch-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.repo-name-text, .branch-name-text {
+  background: var(--bg-active);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+}
+
+.github-commit-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.commit-input {
+  width: 100%;
+  resize: vertical;
+  min-height: 80px;
+  background-color: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+}
+
+.commit-input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.btn-commit-push {
+  background-color: var(--text-primary);
+  color: var(--bg-surface);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 0.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-commit-push:hover {
+  background-color: var(--text-secondary);
+}
+
+.btn-commit-push:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.github-changes-section h3 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+
+.github-changed-files {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.github-changed-file {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-hover);
+}
+
+.changed-file-icon {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--color-warning);
+  font-weight: bold;
+}
+
+.changed-file-name {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.github-error {
+  color: var(--color-error);
+  font-size: 0.85rem;
+  padding: 0.75rem;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: var(--radius-sm);
+}
+
+.github-success {
+  color: var(--color-success);
+  font-size: 0.85rem;
+  padding: 0.75rem;
+  background: rgba(16, 185, 129, 0.1);
+  border-radius: var(--radius-sm);
+}

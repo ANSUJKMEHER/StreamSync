@@ -39,9 +39,12 @@ function MonacoEditor() {
         id: 'streamsync-save',
         label: 'Save File',
         keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS],
-        run: () => {
+        run: async () => {
           const state = useFileStore.getState();
           if (state.activeFileId && editorRef.current) {
+            // Run formatter before saving if available
+            await editorRef.current.getAction('editor.action.formatDocument')?.run();
+            
             // Update local store before saving
             state.updateFileContent(state.activeFileId, editorRef.current.getValue());
             state.saveFile(state.activeFileId);
@@ -182,7 +185,7 @@ function MonacoEditor() {
         key={activeFile.id}
         height="100%"
         language={activeFile.language}
-        theme="light"
+        theme="vs-dark"
         defaultValue={activeFile.content}
         onMount={handleMount}
         loading={
@@ -214,6 +217,7 @@ function MonacoEditor() {
           tabSize: 2,
           insertSpaces: true,
           formatOnPaste: true,
+          formatOnType: true,
           suggestOnTriggerCharacters: true,
           acceptSuggestionOnCommitCharacter: true,
           snippetSuggestions: 'inline',
