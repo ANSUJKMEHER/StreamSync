@@ -141,11 +141,16 @@ function AuthModal() {
             const left = window.screen.width / 2 - width / 2;
             const top = window.screen.height / 2 - height / 2;
             const API_BASE = (import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://streamsync-cxox.onrender.com')).replace(/\/$/, '');
-            window.open(
+            const popup = window.open(
               `${API_BASE}/api/v1/oauth/github`,
               'GitHub OAuth',
               `width=${width},height=${height},top=${top},left=${left}`
             );
+
+            if (!popup || popup.closed || typeof popup.closed === 'undefined') {
+              alert('Popup blocked! Please enable popups in your browser settings to log in with GitHub.');
+              return;
+            }
 
             const handleMessage = (event: MessageEvent) => {
               if (event.data?.type === 'OAUTH_SUCCESS') {
