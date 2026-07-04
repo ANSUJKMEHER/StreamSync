@@ -206,24 +206,42 @@ export default function Workspace() {
   );
 
   const renderMainArea = () => {
-    let content;
-    switch (viewMode) {
-      case 'editor':
-        content = renderEditorArea();
-        break;
-      case 'canvas':
-        content = renderCanvasArea();
-        break;
-      case 'split':
-        content = (
-          <div className="split-workspace">
-            <div className="split-workspace-left">{renderEditorArea()}</div>
-            <div className="split-workspace-divider" />
-            <div className="split-workspace-right">{renderCanvasArea()}</div>
-          </div>
-        );
-        break;
-    }
+    // Use a stable DOM structure for editor and canvas to prevent React from unmounting components when switching modes
+    let content = (
+      <div className={viewMode === 'split' ? 'split-workspace' : ''} style={{ display: 'flex', width: '100%', height: '100%' }}>
+        
+        {/* Editor Area */}
+        <div 
+          className={viewMode === 'split' ? 'split-workspace-left' : ''} 
+          style={{ 
+            display: viewMode === 'canvas' ? 'none' : 'flex', 
+            flexDirection: 'column',
+            flex: viewMode === 'split' ? 1 : 1, // Let SplitPane styles handle flex when in split mode
+            width: viewMode === 'split' ? undefined : '100%',
+            height: '100%'
+          }}
+        >
+          {renderEditorArea()}
+        </div>
+        
+        {/* Divider */}
+        {viewMode === 'split' && <div className="split-workspace-divider" />}
+        
+        {/* Canvas Area */}
+        <div 
+          className={viewMode === 'split' ? 'split-workspace-right' : ''} 
+          style={{ 
+            display: viewMode === 'editor' ? 'none' : 'block', 
+            flex: viewMode === 'split' ? 1 : 1,
+            width: viewMode === 'split' ? undefined : '100%',
+            height: '100%'
+          }}
+        >
+          {renderCanvasArea()}
+        </div>
+
+      </div>
+    );
 
     // Wrap main content with vertical flex container to ensure React doesn't unmount the editor
     return (
