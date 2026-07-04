@@ -81,14 +81,19 @@ function MonacoEditor() {
     const ytext = doc.getText('monaco');
     const awareness = yjsService.getAwareness(activeFileId);
 
+    // Clean up previous binding before recreating
+    if (bindingRef.current) {
+      bindingRef.current.destroy();
+      bindingRef.current = null;
+    }
+
     // Bind Yjs to Monaco
-    const binding = new MonacoBinding(
+    bindingRef.current = new MonacoBinding(
       ytext,
       model,
       new Set([editor]),
       awareness
     );
-    bindingRef.current = binding;
 
     // Dynamically inject CSS for each remote user's cursor color
     const styleEl = document.createElement('style');
@@ -193,8 +198,10 @@ function MonacoEditor() {
     }
 
     return () => {
-      binding.destroy();
-      bindingRef.current = null;
+      if (bindingRef.current) {
+        bindingRef.current.destroy();
+        bindingRef.current = null;
+      }
       awareness.off('change', updateCursorStyles);
       styleEl.remove();
       if (aiProviderDisposable.current) {
@@ -202,7 +209,7 @@ function MonacoEditor() {
         aiProviderDisposable.current = null;
       }
     };
-  }, [editorReady, activeFileId]);
+  }, [editorReady, activeFileId, yjsService.getDoc(activeFileId || '').guid]);
 
   // Empty state
   if (!activeFile) {

@@ -172,6 +172,8 @@ async function handleMessage(
         // Validate FIRST, broadcast ONLY if valid
         const applied = roomManager.applyYjsUpdate(message.roomId, payload.update);
         if (applied) {
+          const roomClients = roomManager.getRoomUsers(message.roomId);
+          console.log(`[YJS] Update from user ${userId} for file ${message.roomId}, broadcasting to ${roomClients.length - 1} other clients`);
           roomManager.broadcast(message.roomId, message, connectionId);
         } else {
           console.log(`[WS] yjs-update failed to apply for ${message.roomId} (ydoc not found or apply failed)`);
