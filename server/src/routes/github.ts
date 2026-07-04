@@ -10,7 +10,7 @@ async function fetchGithubAPI(url: string, token: string, method = 'GET', body: 
   const options: RequestInit = {
     method,
     headers: {
-      Authorization: `token ${token}`,
+      Authorization: `Bearer ${token}`,
       Accept: 'application/vnd.github.v3+json',
       'User-Agent': 'StreamSync-App'
     }

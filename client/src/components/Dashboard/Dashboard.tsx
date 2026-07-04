@@ -14,6 +14,7 @@ export default function Dashboard() {
   const [repos, setRepos] = useState<GithubRepo[]>([]);
   const [loading, setLoading] = useState(true);
   const [reposLoading, setReposLoading] = useState(false);
+  const [githubError, setGithubError] = useState<string | null>(null);
   const [newRoomName, setNewRoomName] = useState('');
 
   useEffect(() => {
@@ -33,15 +34,37 @@ export default function Dashboard() {
       
       try {
         setReposLoading(true);
+        setGithubError(null);
         const userRepos = await githubService.getUserRepos(token);
         setRepos(userRepos);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to load github repos:', err);
+        setGithubError(err.message || 'Failed to connect to GitHub');
       } finally {
         setReposLoading(false);
       }
     };
     fetchRoomsAndRepos();
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'OAUTH_SUCCESS') {
+        const { token, user } = event.data.payload;
+        useAuthStore.getState().setAuth(user, token);
+        // Re-fetch repos with the new token
+        githubService.getUserRepos(token).then(userRepos => {
+          setRepos(userRepos);
+          setGithubError(null);
+        }).catch(err => {
+          console.error('Failed to reload github repos:', err);
+          setGithubError(err.message || 'Failed to connect to GitHub');
+        });
+      }
+    };
+    window.addEventListener('message', handleMessage);
+
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
   }, [token, navigate]);
 
   const handleCreateRoom = async (e: React.FormEvent) => {
@@ -174,6 +197,14 @@ export default function Dashboard() {
             <div className="github-repo-list-container">
               {reposLoading ? (
                 <div className="repo-loading">Loading repositories...</div>
+              ) : githubError ? (
+                <div className="no-repos-msg" style={{ color: '#ef4444' }}>
+                  {githubError}
+                  <br />
+                  <button onClick={() => window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/v1/oauth/github`, 'GitHub OAuth', 'width=600,height=700')} className="btn-primary" style={{ marginTop: '1rem' }}>
+                    Connect GitHub
+                  </button>
+                </div>
               ) : repos.length === 0 ? (
                 <div className="no-repos-msg">
                   No repositories found. Ensure you are connected to GitHub.
