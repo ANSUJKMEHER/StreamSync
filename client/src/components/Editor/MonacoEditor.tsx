@@ -245,7 +245,6 @@ function MonacoEditor() {
         height="100%"
         language={activeFile.language}
         theme="vs-dark"
-        defaultValue={activeFile.content}
         onMount={handleMount}
         loading={
           <div className="editor-loading">
