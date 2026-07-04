@@ -9,7 +9,7 @@ export interface GithubRepo {
   description: string;
 }
 
-const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
+const API_BASE = (import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://streamsync-cxox.onrender.com')).replace(/\/$/, '');
 
 const getHeaders = (token?: string | null) => ({
   'Content-Type': 'application/json',

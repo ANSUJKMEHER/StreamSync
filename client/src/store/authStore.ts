@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:3001').replace(/\/$/, '');
+const API_BASE = (import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://streamsync-cxox.onrender.com')).replace(/\/$/, '');
 const TOKEN_KEY = 'streamsync_token';
 const USER_KEY = 'streamsync_user';
 

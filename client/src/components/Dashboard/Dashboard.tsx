@@ -201,7 +201,7 @@ export default function Dashboard() {
                 <div className="no-repos-msg" style={{ color: '#ef4444' }}>
                   {githubError}
                   <br />
-                  <button onClick={() => window.open(`${import.meta.env.VITE_API_URL || 'http://localhost:3001'}/api/v1/oauth/github`, 'GitHub OAuth', 'width=600,height=700')} className="btn-primary" style={{ marginTop: '1rem' }}>
+                  <button onClick={() => window.open(`${import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://streamsync-cxox.onrender.com')}/api/v1/oauth/github`, 'GitHub OAuth', 'width=600,height=700')} className="btn-primary" style={{ marginTop: '1rem' }}>
                     Connect GitHub
                   </button>
                 </div>
