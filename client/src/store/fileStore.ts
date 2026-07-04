@@ -102,6 +102,21 @@ export const useFileStore = create<FileStore>((set, get) => ({
       newActiveId = newOpenIds[Math.min(idx, newOpenIds.length - 1)] || null;
     }
 
+    // Capture the latest content from Yjs before closing so if we reopen, we have the latest
+    try {
+      // Use dynamic import to prevent circular dependencies
+      import('../services/yjsService').then(({ yjsService }) => {
+        const text = yjsService.getTextContent(id);
+        if (text !== undefined) {
+          set((s) => ({
+            files: s.files.map((f) => (f.id === id ? { ...f, content: text } : f)),
+          }));
+        }
+      });
+    } catch (e) {
+      console.warn('Failed to snapshot yjs content on close', e);
+    }
+
     set({
       openFileIds: newOpenIds,
       activeFileId: newActiveId,
@@ -154,7 +169,12 @@ export const useFileStore = create<FileStore>((set, get) => ({
       if (json.success) {
         const newModified = new Set(state.modifiedFileIds);
         newModified.delete(id);
-        set({ modifiedFileIds: newModified });
+        set({ 
+          modifiedFileIds: newModified,
+          files: state.files.map((f) =>
+            f.id === id ? { ...f, content: contentToSave } : f
+          ),
+        });
       }
     } catch (err) {
       console.error('Failed to save file:', err);
