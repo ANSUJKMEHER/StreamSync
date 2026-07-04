@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
-import { RoomInvite } from '../../types';
+import type { RoomInvite } from '../../types';
 import './NotificationsHub.css';
 
 export default function NotificationsHub() {
