@@ -34,9 +34,12 @@ export default function ActivityBar({ activeView, setActiveView }: ActivityBarPr
           onClick={() => setActiveView('github')}
           title="Source Control"
         >
-          {/* Simple branch icon */}
+          {/* Source Control branch icon */}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m0 0l6-6m-6 6l-6-6" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 3v18M18 9a9 9 0 0 1-9 9" />
+            <circle cx="6" cy="18" r="3" />
+            <circle cx="6" cy="6" r="3" />
+            <circle cx="15" cy="9" r="3" />
           </svg>
         </button>
       </div>
