@@ -84,11 +84,17 @@ export default function Dashboard() {
     e.preventDefault();
     if (!importRepo.trim() || !token) return;
     
+    let cleanedRepo = importRepo.trim();
+    if (cleanedRepo.includes('github.com/')) {
+      cleanedRepo = cleanedRepo.split('github.com/')[1];
+    }
+    cleanedRepo = cleanedRepo.replace(/\/$/, '').replace(/\.git$/, '');
+
     setIsImporting(true);
 
     try {
       const { githubService } = await import('../../services/githubService');
-      const room = await githubService.importRepo(importRepo, importBranch, '', token);
+      const room = await githubService.importRepo(cleanedRepo, importBranch, '', token);
       navigate(`/room/${room.id}`);
     } catch (err: any) {
       console.error('Failed to import repo:', err);
