@@ -199,6 +199,9 @@ class WebSocketService {
 
   public send(message: WSMessage): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      if (message.type !== 'ping' && message.type !== 'pong') {
+        console.log(`[WS] Sending ${message.type}:`, message);
+      }
       this.socket.send(JSON.stringify({ ...message, timestamp: new Date().toISOString() }));
     }
   }
