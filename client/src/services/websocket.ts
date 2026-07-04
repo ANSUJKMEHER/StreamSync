@@ -23,10 +23,15 @@ type MessageHandler = (message: WSMessage) => void;
 type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 type StatusHandler = (status: ConnectionStatus) => void;
 
-const isLocal = window.location.hostname === 'localhost';
-const WS_BASE = (import.meta.env.VITE_WS_URL && (!import.meta.env.VITE_WS_URL.includes('localhost') || isLocal))
-  ? import.meta.env.VITE_WS_URL
-  : (isLocal ? 'ws://localhost:3001' : 'wss://streamsync-cxox.onrender.com');
+// Derive WebSocket URL: in production, always connect to Render backend
+function getWsBase(): string {
+  const host = window.location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1') {
+    return 'ws://localhost:3001';
+  }
+  // Production: always use the Render backend
+  return 'wss://streamsync-cxox.onrender.com';
+}
 
 /**
  * WebSocket client service with auto-reconnect, room management,
@@ -65,8 +70,12 @@ class WebSocketService {
     this.token = token;
     this.setStatus('connecting');
 
+    const wsBase = getWsBase();
+    const wsUrl = `${wsBase}/ws?token=${encodeURIComponent(token)}`;
+    console.log('[WS] Connecting to:', wsUrl);
+
     try {
-      this.socket = new WebSocket(`${WS_BASE}/ws?token=${encodeURIComponent(token)}`);
+      this.socket = new WebSocket(wsUrl);
 
       this.socket.onopen = () => {
         console.log('[WS] Connected');
