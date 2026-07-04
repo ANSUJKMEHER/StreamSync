@@ -29,6 +29,42 @@ async function fetchGithubAPI(url: string, token: string, method = 'GET', body: 
   return response.json() as any;
 }
 
+// GET /api/v1/github/repos
+router.get('/repos', authenticateToken, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.user!.userId;
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.githubToken) {
+      res.status(401).json({ success: false, error: 'GitHub OAuth token not found.' });
+      return;
+    }
+    let pat: string;
+    try {
+      pat = decryptToken(user.githubToken);
+    } catch {
+      res.status(401).json({ success: false, error: 'Stored GitHub token is invalid.' });
+      return;
+    }
+
+    const reposData = await fetchGithubAPI('https://api.github.com/user/repos?sort=updated&per_page=100', pat);
+    
+    // Map to a simpler format
+    const formattedRepos = reposData.map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      full_name: r.full_name,
+      private: r.private,
+      updated_at: r.updated_at,
+      description: r.description
+    }));
+
+    res.json({ success: true, data: formattedRepos });
+  } catch (error: any) {
+    console.error('[GITHUB] Get repos error:', error);
+    res.status(500).json({ success: false, error: error.message || 'Internal server error' });
+  }
+});
+
 // POST /api/v1/github/import
 router.post('/import', authenticateToken, async (req: Request, res: Response): Promise<void> => {
   try {

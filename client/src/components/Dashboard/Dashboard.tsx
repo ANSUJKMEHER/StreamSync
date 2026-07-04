@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { roomService, type Room } from '../../services/roomService';
+import { githubService, type GithubRepo } from '../../services/githubService';
 import UserDropdown from '../Auth/UserDropdown';
 import NotificationsHub from './NotificationsHub';
 import './Dashboard.css';
@@ -10,7 +11,9 @@ export default function Dashboard() {
   const { token } = useAuthStore();
   const navigate = useNavigate();
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [repos, setRepos] = useState<GithubRepo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reposLoading, setReposLoading] = useState(false);
   const [newRoomName, setNewRoomName] = useState('');
 
   useEffect(() => {
@@ -18,7 +21,7 @@ export default function Dashboard() {
       return;
     }
 
-    const fetchRooms = async () => {
+    const fetchRoomsAndRepos = async () => {
       try {
         const data = await roomService.getRooms(token);
         setRooms(data);
@@ -27,8 +30,18 @@ export default function Dashboard() {
       } finally {
         setLoading(false);
       }
+      
+      try {
+        setReposLoading(true);
+        const userRepos = await githubService.getUserRepos(token);
+        setRepos(userRepos);
+      } catch (err) {
+        console.error('Failed to load github repos:', err);
+      } finally {
+        setReposLoading(false);
+      }
     };
-    fetchRooms();
+    fetchRoomsAndRepos();
   }, [token, navigate]);
 
   const handleCreateRoom = async (e: React.FormEvent) => {
@@ -80,11 +93,7 @@ export default function Dashboard() {
   const [importBranch, setImportBranch] = useState('');
   const [isImporting, setIsImporting] = useState(false);
 
-  const handleImportGithub = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!importRepo.trim() || !token) return;
-    
-    let cleanedRepo = importRepo.trim();
+    let cleanedRepo = repoToImport.trim();
     if (cleanedRepo.includes('github.com/')) {
       cleanedRepo = cleanedRepo.split('github.com/')[1];
     }
@@ -93,7 +102,6 @@ export default function Dashboard() {
     setIsImporting(true);
 
     try {
-      const { githubService } = await import('../../services/githubService');
       const room = await githubService.importRepo(cleanedRepo, importBranch, '', token);
       navigate(`/room/${room.id}`);
     } catch (err: any) {
@@ -134,34 +142,67 @@ export default function Dashboard() {
             </form>
           </section>
 
-          <section className="import-github-section" style={{ flex: 1, minWidth: '300px', background: 'var(--bg-surface)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border-subtle)' }}>
-            <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <section className="import-github-section" style={{ flex: 2, minWidth: '400px' }}>
+            <div className="import-github-header">
               <svg height="24" viewBox="0 0 16 16" version="1.1" width="24" fill="currentColor">
                 <path fillRule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
               </svg>
-              Import from GitHub
-            </h2>
-            <form onSubmit={handleImportGithub} className="create-room-form" style={{ marginTop: '1rem', flexDirection: 'column' }}>
+              <h2>Import from GitHub</h2>
+            </div>
+            
+            <div className="github-repo-list-container">
+              {reposLoading ? (
+                <div className="repo-loading">Loading repositories...</div>
+              ) : repos.length === 0 ? (
+                <div className="no-repos-msg">
+                  No repositories found. Ensure you are connected to GitHub.
+                </div>
+              ) : (
+                <div className="github-repo-list">
+                  {repos.map(repo => (
+                    <div key={repo.id} className="repo-list-item">
+                      <div className="repo-info">
+                        <div className="repo-name">
+                          {repo.full_name}
+                          <span className="repo-badge">{repo.private ? 'Private' : 'Public'}</span>
+                        </div>
+                        <div className="repo-meta">
+                          Updated {new Date(repo.updated_at).toLocaleDateString()}
+                        </div>
+                      </div>
+                      <button 
+                        className="btn-import-repo" 
+                        onClick={() => handleImportGithub(repo.full_name)}
+                        disabled={isImporting}
+                      >
+                        Import
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="import-manual-divider">
+              <span>or import via URL</span>
+            </div>
+
+            <div className="create-room-form manual-import-form">
               <input
                 type="text"
-                placeholder="Repository (e.g. facebook/react)"
+                placeholder="Repository URL (e.g. https://github.com/facebook/react)"
                 value={importRepo}
                 onChange={(e) => setImportRepo(e.target.value)}
-                required
               />
-              <input
-                type="text"
-                placeholder="Branch (optional, defaults to default branch)"
-                value={importBranch}
-                onChange={(e) => setImportBranch(e.target.value)}
-              />
-              <button type="submit" className="btn-primary" disabled={isImporting} style={{ background: '#2ea44f', borderColor: '#2ea44f', width: '100%' }}>
-                {isImporting ? 'Importing...' : 'Clone & Create Workspace'}
+              <button 
+                className="btn-primary" 
+                disabled={isImporting || !importRepo.trim()} 
+                onClick={() => handleImportGithub(importRepo)}
+                style={{ background: 'var(--text-primary)', color: 'var(--bg-surface)' }}
+              >
+                Import URL
               </button>
-              <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-                Requires GitHub Account Connection.
-              </p>
-            </form>
+            </div>
           </section>
         </div>
 
