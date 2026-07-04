@@ -1,7 +1,7 @@
 .dashboard-container {
   min-height: 100vh;
-  background-color: var(--bg-base);
-  color: var(--text-primary);
+  background-color: #000;
+  color: #ededed;
   font-family: var(--font-sans);
 }
 
@@ -10,18 +10,17 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 2rem;
-  background-color: var(--bg-surface);
-  border-bottom: 1px solid var(--border-subtle);
+  background-color: #000;
+  border-bottom: 1px solid #333;
   position: sticky;
   top: 0;
   z-index: 10;
-  box-shadow: var(--shadow-sm);
 }
 
 .dashboard-brand {
   font-size: 1.5rem;
   font-weight: 700;
-  color: var(--text-primary);
+  color: #ededed;
   letter-spacing: -0.02em;
 }
 
@@ -45,18 +44,19 @@
 }
 
 .create-room-section, .import-github-section {
-  background-color: var(--bg-surface);
-  padding: 2rem;
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--border-subtle);
-  box-shadow: var(--shadow-md);
-  transition: box-shadow var(--transition-base);
+  background-color: #000;
+  padding: 0;
+  border-radius: 0;
+  border: none;
+  box-shadow: none;
 }
 
-.create-room-section h2 {
-  font-size: 1.25rem;
-  margin-bottom: 1rem;
-  color: var(--text-primary);
+.create-room-section h2, .import-github-header h2 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  color: #ededed;
+  letter-spacing: -0.03em;
 }
 
 .create-room-form {
@@ -67,18 +67,17 @@
 
 .create-room-form input {
   flex: 1;
-  background-color: var(--bg-base);
-  border: 1px solid var(--border-default);
-  color: var(--text-primary);
+  background-color: #0a0a0a;
+  border: 1px solid #333;
+  color: #ededed;
   padding: 0.75rem 1rem;
-  border-radius: var(--radius-md);
-  font-size: 1rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
   transition: all var(--transition-fast);
 }
 
 .create-room-form input:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-dim);
+  border-color: #888;
   outline: none;
 }
 
@@ -109,28 +108,62 @@
 
 /* GitHub Import Vercel Styles */
 .import-github-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
   margin-bottom: 1.5rem;
 }
 
-.import-github-header h2 {
-  font-size: 1.25rem;
-  margin: 0;
-  color: var(--text-primary);
+.import-github-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.import-dropdown {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #0a0a0a;
+  border: 1px solid #333;
+  padding: 0 1rem;
+  border-radius: 6px;
+  height: 40px;
+  color: #ededed;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  min-width: 200px;
+}
+
+.import-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #0a0a0a;
+  border: 1px solid #333;
+  padding: 0 1rem;
+  border-radius: 6px;
+  height: 40px;
+  flex: 1;
+}
+
+.import-search input {
+  background: transparent;
+  border: none;
+  color: #ededed;
+  font-size: 0.9rem;
+  width: 100%;
+  outline: none;
 }
 
 .github-repo-list-container {
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  background: var(--bg-base);
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #000;
   overflow: hidden;
   margin-bottom: 1.5rem;
 }
 
 .github-repo-list {
-  max-height: 350px;
+  max-height: 450px;
   overflow-y: auto;
 }
 
@@ -138,9 +171,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--border-subtle);
-  transition: background var(--transition-fast);
+  padding: 1.25rem;
+  border-bottom: 1px solid #333;
+  transition: background 0.1s ease;
 }
 
 .repo-list-item:last-child {
@@ -148,55 +181,54 @@
 }
 
 .repo-list-item:hover {
-  background-color: var(--bg-hover);
+  background-color: #111;
 }
 
 .repo-info {
   display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
+  align-items: center;
+  gap: 1rem;
+}
+
+.repo-icon-wrap {
+  color: #a1a1aa;
 }
 
 .repo-name {
-  font-weight: 600;
+  font-weight: 500;
   font-size: 0.95rem;
-  color: var(--text-primary);
+  color: #ededed;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.5rem;
 }
 
-.repo-badge {
-  font-size: 0.7rem;
-  padding: 0.1rem 0.5rem;
-  border-radius: 12px;
-  border: 1px solid var(--border-default);
-  color: var(--text-secondary);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.repo-meta {
-  font-size: 0.8rem;
-  color: var(--text-muted);
+.repo-time-ago {
+  color: #a1a1aa;
+  font-size: 0.9rem;
+  font-weight: 400;
 }
 
 .btn-import-repo {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  color: var(--text-primary);
+  background: #fff;
+  color: #000;
+  border: none;
   font-weight: 500;
-  padding: 0.4rem 1rem;
-  border-radius: var(--radius-sm);
+  padding: 0 1rem;
+  height: 32px;
+  border-radius: 6px;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.2s ease;
 }
 
 .btn-import-repo:hover {
-  border-color: var(--text-primary);
-  background: var(--bg-hover);
+  background: #ccc;
+}
+
+.btn-import-repo:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .repo-loading, .no-repos-msg {
