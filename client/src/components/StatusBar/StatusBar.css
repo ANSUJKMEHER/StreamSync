@@ -1,0 +1,136 @@
+/* ═══════════════════════════════════════
+   Status Bar
+   ═══════════════════════════════════════ */
+
+.statusbar {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  background: var(--bg-base);
+  border-top: 1px solid var(--border-subtle);
+  padding: 0 12px;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  user-select: none;
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+}
+
+.statusbar-section {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statusbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.statusbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.statusbar-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px;
+  height: 100%;
+  border-radius: 4px;
+  transition: background var(--transition-fast), color var(--transition-fast);
+  cursor: default;
+}
+
+.statusbar-item.clickable {
+  cursor: pointer;
+}
+
+.statusbar-item.clickable:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.statusbar-item-icon {
+  font-size: 11px;
+  line-height: 1;
+}
+
+.statusbar-branch {
+  color: var(--color-primary);
+}
+
+.statusbar-language {
+  text-transform: capitalize;
+}
+
+.statusbar-divider {
+  width: 1px;
+  height: 12px;
+  background: var(--border-subtle);
+}
+
+/* Remote indicator */
+.statusbar-remote {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  height: 100%;
+  color: white;
+  font-weight: 500;
+  margin-left: -12px;
+  font-size: 11px;
+  transition: background var(--transition-base);
+}
+
+.statusbar-remote.connected {
+  background: var(--color-success);
+}
+
+.statusbar-remote.connecting {
+  background: var(--color-warning);
+  color: #1a1a1a;
+}
+
+.statusbar-remote.disconnected {
+  background: var(--bg-surface);
+  color: var(--text-muted);
+}
+
+.statusbar-remote-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.statusbar-remote.connected .statusbar-remote-dot {
+  animation: pulse 2s ease infinite;
+}
+
+.statusbar-remote.connecting .statusbar-remote-dot {
+  background: rgba(0, 0, 0, 0.4);
+  animation: pulse 0.8s ease infinite;
+}
+
+.statusbar-offline-icon {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+/* User display */
+.statusbar-user-icon {
+  color: var(--color-accent);
+  font-size: 10px;
+}
+
+.statusbar-username {
+  color: var(--text-secondary);
+  font-weight: 500;
+}

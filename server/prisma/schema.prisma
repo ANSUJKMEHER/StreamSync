@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String?  // Made optional for OAuth users
+  githubId     String?  @unique
+  avatarUrl    String?
+  githubToken  String?  // Store OAuth access token
+  rooms        Room[]
+  collaborations Collaborator[]
+  invitesSent    RoomInvite[]   @relation("Inviter")
+  invitesReceived RoomInvite[]  @relation("Invitee")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
+}
+
+model Room {
+  id           String   @id @default(uuid())
+  name         String
+  ownerId      String
+  owner        User     @relation(fields: [ownerId], references: [id])
+  isPublic     Boolean  @default(false)
+  publicAccess String   @default("VIEW") // "VIEW" | "EDIT"
+  githubRepo   String?  // e.g. "owner/repo"
+  githubBranch String?  // e.g. "main"
+  createdAt    DateTime @default(now())
+  files        File[]
+  collaborators Collaborator[]
+  invites       RoomInvite[]
+}
+
+model File {
+  id        String   @id @default(uuid())
+  name      String
+  content   String   @default("")
+  language  String   @default("plaintext")
+  parentId  String?
+  isFolder  Boolean  @default(false)
+  crdtState Bytes?
+  roomId    String
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Collaborator {
+  id        String   @id @default(uuid())
+  roomId    String
+  userId    String
+  role      String   @default("EDIT") // VIEW, EDIT
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([roomId, userId])
+}
+
+model RoomInvite {
+  id             String   @id @default(uuid())
+  roomId         String
+  inviterId      String
+  targetUsername String   // Allow inviting by github username even if they aren't registered yet
+  inviteeId      String?  // Linked if the user exists or joins later
+  status         String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  role           String   @default("EDIT") // VIEW, EDIT
+  room           Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  inviter        User     @relation("Inviter", fields: [inviterId], references: [id], onDelete: Cascade)
+  invitee        User?    @relation("Invitee", fields: [inviteeId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+
+  // Unique constraint ensures you can't invite the same username to the same room multiple times
+  @@unique([roomId, targetUsername])
+}

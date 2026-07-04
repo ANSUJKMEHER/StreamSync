@@ -1,0 +1,59 @@
+/* ═══════════════════════════════════════
+   Split Pane — Resizable Panel Layout
+   ═══════════════════════════════════════ */
+
+.split-pane {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+.split-pane-left {
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: width 0.2s ease;
+  position: relative;
+}
+
+.split-pane-left.collapsed {
+  width: 0 !important;
+}
+
+.split-pane-divider {
+  width: 4px;
+  cursor: col-resize;
+  background: transparent;
+  position: relative;
+  flex-shrink: 0;
+  z-index: 10;
+  transition: background var(--transition-fast);
+}
+
+.split-pane-divider::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 1px;
+  width: 1px;
+  background: var(--border-subtle);
+  transition: all var(--transition-fast);
+}
+
+.split-pane-divider:hover::after,
+.split-pane-divider.dragging::after {
+  left: 0;
+  width: 4px;
+  background: var(--color-primary);
+  border-radius: 2px;
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.split-pane-right {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
