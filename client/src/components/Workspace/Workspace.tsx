@@ -22,6 +22,7 @@ import GitHubPanel from '../Sidebar/GitHubPanel';
 import '../../App.css';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import { LuShare2, LuPlay, LuTerminal, LuArchive, LuImage, LuGithub } from 'react-icons/lu';
 
 type ViewMode = 'editor' | 'canvas' | 'split';
 type ActivityView = 'explorer' | 'search' | 'github';
@@ -278,22 +279,25 @@ export default function Workspace() {
         <div className="titlebar-left">
           <div className="titlebar-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
             <div className="titlebar-logo-icon">S</div>
-            <span className="titlebar-logo-text">StreamSync</span>
+            <span className="titlebar-logo-text" style={{ fontSize: '14px' }}>StreamSync</span>
           </div>
           
           <div className="titlebar-divider" />
           
           {roomData && (
-             <span className="titlebar-roomname" style={{ marginLeft: '1rem', color: '#9ca3af', fontWeight: 500 }}>
-               {roomData.name} {roomData.access === 'VIEW' && '(Read-Only)'}
-               {roomData.githubRepo && ` 🐙 ${roomData.githubRepo}`}
-             </span>
+             <div className="titlebar-project-info">
+               <span className="titlebar-roomname">{roomData.name}</span>
+               {roomData.access === 'VIEW' && <span className="titlebar-badge read-only">Read-Only</span>}
+               {roomData.githubRepo && (
+                 <span className="titlebar-badge github" title={`Connected to ${roomData.githubRepo}`}>
+                   <LuGithub size={12} />
+                 </span>
+               )}
+             </div>
           )}
         </div>
 
         <div className="titlebar-center">
-          {activeFile && <span className="titlebar-filename">{activeFile.name}</span>}
-
           {/* View mode toggle */}
           <div className="view-toggle">
             <button
@@ -321,41 +325,50 @@ export default function Workspace() {
         </div>
 
         <div className="titlebar-right">
-
-          <div className="titlebar-divider" />
-          
           {/* Share Action */}
           {roomData && roomData.ownerId === user?.id && (
             <button 
-              className="titlebar-btn" 
+              className="titlebar-btn action-share" 
               onClick={() => setIsInviteModalOpen(true)} 
               title="Share Project"
-              style={{ color: 'var(--color-accent)', fontWeight: 'bold' }}
             >
-              👥 Share
+              <LuShare2 size={14} />
+              <span>Share</span>
             </button>
           )}
 
-          {/* Export Actions */}
+          {/* Run Action */}
           <button 
-            className="titlebar-btn" 
+            className="titlebar-btn action-run" 
             onClick={handleRunCode} 
             title="Run Code"
             disabled={isExecuting || !activeFile}
-            style={{ color: 'var(--color-primary)', fontWeight: 'bold' }}
           >
-            ▶ Run
+            <LuPlay size={14} />
+            <span>Run</span>
           </button>
+          
+          {/* Terminal Toggle */}
           <button 
-            className="titlebar-btn" 
+            className="titlebar-btn action-terminal" 
             onClick={() => setIsBottomPanelOpen(!isBottomPanelOpen)} 
             title="Toggle Panel"
           >
-            📺 Terminal
+            <LuTerminal size={14} />
+            <span>Terminal</span>
           </button>
+          
           <div className="titlebar-divider" />
-          <button className="titlebar-btn" onClick={handleExportZip} title="Export Code as ZIP">📦</button>
-          <button className="titlebar-btn" onClick={handleExportPng} title="Export Canvas as PNG">🖼️</button>
+          
+          {/* Export Actions */}
+          <div className="titlebar-icon-group">
+            <button className="titlebar-icon-btn" onClick={handleExportZip} title="Export Code as ZIP">
+              <LuArchive size={15} />
+            </button>
+            <button className="titlebar-icon-btn" onClick={handleExportPng} title="Export Canvas as PNG">
+              <LuImage size={15} />
+            </button>
+          </div>
           
           <div className="titlebar-divider" />
 
