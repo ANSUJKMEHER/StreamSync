@@ -92,6 +92,9 @@ class WebSocketService {
       this.socket.onmessage = (event) => {
         try {
           const message: WSMessage = JSON.parse(event.data as string);
+          if (message.type !== 'ping' && message.type !== 'pong') {
+            console.log(`[WS] Received ${message.type}:`, message);
+          }
           this.handleMessage(message);
         } catch (err) {
           console.error('[WS] Failed to parse message:', err);
