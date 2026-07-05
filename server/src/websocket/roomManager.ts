@@ -116,117 +116,110 @@ export class RoomManager {
         await this.roomCreationLocks.get(roomId);
       }
 
-      // Permission check
+      // Single DB query for both permission check AND file content
       let permission: 'VIEW' | 'EDIT' = 'VIEW';
-    try {
-      const file = await prisma.file.findUnique({
-        where: { id: roomId },
-        include: { room: { include: { collaborators: true } } },
-      });
-
-      if (!file || !file.room) {
-        this.sendToClient(userId, {
-          type: 'error',
-          payload: { message: 'File or room not found' },
-          timestamp: new Date().toISOString(),
+      let file: any = null;
+      try {
+        file = await prisma.file.findUnique({
+          where: { id: roomId },
+          include: { room: { include: { collaborators: true } } },
         });
+
+        if (!file || !file.room) {
+          console.log(`[WS] joinRoom failed: file/room not found for ${roomId}`);
+          this.sendToClient(connectionId, {
+            type: 'error',
+            payload: { message: 'File or room not found' },
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+
+        const isCollaborator = file.room.collaborators.find((c: any) => c.userId === userId);
+
+        if (file.room.ownerId === userId) {
+          permission = 'EDIT';
+        } else if (isCollaborator) {
+          permission = isCollaborator.role as 'VIEW' | 'EDIT';
+        } else if (file.room.isPublic) {
+          permission = file.room.publicAccess as 'VIEW' | 'EDIT';
+        } else {
+          console.log(`[WS] joinRoom denied: ${client.username} has no access to ${roomId}`);
+          this.sendToClient(connectionId, {
+            type: 'error',
+            payload: { message: 'Access denied' },
+            timestamp: new Date().toISOString(),
+          });
+          return;
+        }
+      } catch (err) {
+        console.error(`[WS] Permission check failed for ${roomId}:`, err);
         return;
       }
 
-      const isCollaborator = file.room.collaborators.find(c => c.userId === userId);
+      // Store permission
+      this.permissions.set(`${roomId}:${userId}`, permission);
 
-      if (file.room.ownerId === userId) {
-        permission = 'EDIT';
-      } else if (isCollaborator) {
-        permission = isCollaborator.role as 'VIEW' | 'EDIT';
-      } else if (file.room.isPublic) {
-        permission = file.room.publicAccess as 'VIEW' | 'EDIT';
-      } else {
-        this.sendToClient(userId, {
-          type: 'error',
-          payload: { message: 'Access denied' },
-          timestamp: new Date().toISOString(),
-        });
-        return;
-      }
-    } catch (err) {
-      console.error(`[WS] Permission check failed for ${roomId}:`, err);
-      return;
-    }
+      // Create room if it doesn't exist — reuse the file data we already fetched
+      if (!this.rooms.has(roomId)) {
+        this.rooms.set(roomId, new Set());
+        console.log(`[WS] Room created: ${roomId}`);
 
-    // Store permission
-    this.permissions.set(`${roomId}:${userId}`, permission);
+        const ydoc = new Y.Doc();
+        this.ydocs.set(roomId, ydoc);
 
-    // Create room if it doesn't exist
-    if (!this.rooms.has(roomId)) {
-      this.rooms.set(roomId, new Set());
-      console.log(`[WS] Room created: ${roomId}`);
-      
-      const ydoc = new Y.Doc();
-      this.ydocs.set(roomId, ydoc);
-      
-      // Lock room creation until DB fetch completes
-      const initPromise = (async () => {
+        // Initialize Y.Doc from the file data we already have (no second DB query!)
         try {
-          const file = await prisma.file.findUnique({ where: { id: roomId } });
-          if (file) {
-            if (file.crdtState) {
-              // Restore full CRDT history
-              Y.applyUpdate(ydoc, new Uint8Array(file.crdtState));
-            } else if (file.content) {
-              // Fallback for older files
-              const ytext = ydoc.getText('monaco');
-              ytext.insert(0, file.content);
-            }
+          if (file.crdtState) {
+            Y.applyUpdate(ydoc, new Uint8Array(file.crdtState));
+          } else if (file.content) {
+            const ytext = ydoc.getText('monaco');
+            ytext.insert(0, file.content);
           }
         } catch (err) {
-          console.error(`[WS] Failed to load file ${roomId} for Y.Doc:`, err);
+          console.error(`[WS] Failed to init Y.Doc for ${roomId}:`, err);
         }
-      })();
-      
-      this.roomCreationLocks.set(roomId, initPromise);
-      await initPromise;
-      this.roomCreationLocks.delete(roomId);
-    }
+      }
 
-    const room = this.rooms.get(roomId)!;
-    if (room.has(connectionId)) return; // Already in room
+      const room = this.rooms.get(roomId)!;
+      if (room.has(connectionId)) return; // Already in room
 
-    room.add(connectionId);
-    client.rooms.add(roomId);
+      room.add(connectionId);
+      client.rooms.add(roomId);
 
-    console.log(`[WS] ${client.username} joined room ${roomId} | Room size: ${room.size}`);
+      console.log(`[WS] ${client.username} joined room ${roomId} (${permission}) | Room size: ${room.size}`);
 
-    // Notify other room members
-    this.broadcast(roomId, {
-      type: 'user-joined',
-      roomId,
-      payload: {
-        userId: client.userId,
-        username: client.username,
-      },
-      timestamp: new Date().toISOString(),
-    }, connectionId);
-
-    // Send current room users to the joining client
-    this.sendToClient(connectionId, {
-      type: 'room-users',
-      roomId,
-      payload: this.getRoomUsers(roomId),
-      timestamp: new Date().toISOString(),
-    });
-
-    // Send initial Yjs state
-    const ydoc = this.ydocs.get(roomId);
-    if (ydoc) {
-      const state = Y.encodeStateAsUpdate(ydoc);
-      this.sendToClient(connectionId, {
-        type: 'yjs-sync',
+      // Notify other room members
+      this.broadcast(roomId, {
+        type: 'user-joined',
         roomId,
-        payload: { update: fromByteArray(state) },
+        payload: {
+          userId: client.userId,
+          username: client.username,
+        },
+        timestamp: new Date().toISOString(),
+      }, connectionId);
+
+      // Send current room users to the joining client
+      this.sendToClient(connectionId, {
+        type: 'room-users',
+        roomId,
+        payload: this.getRoomUsers(roomId),
         timestamp: new Date().toISOString(),
       });
-    }
+
+      // Send initial Yjs state
+      const ydoc = this.ydocs.get(roomId);
+      if (ydoc) {
+        const state = Y.encodeStateAsUpdate(ydoc);
+        this.sendToClient(connectionId, {
+          type: 'yjs-sync',
+          roomId,
+          payload: { update: fromByteArray(state) },
+          timestamp: new Date().toISOString(),
+        });
+        console.log(`[WS] Sent yjs-sync to ${client.username} for ${roomId}`);
+      }
     } finally {
       resolveJoinLock();
       this.joinLocks.delete(lockKey);

@@ -1,3 +1,4 @@
+
 import { useRef, useCallback, useEffect, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import type { editor as monacoEditor, IDisposable } from 'monaco-editor';
@@ -245,6 +246,7 @@ function MonacoEditor() {
         height="100%"
         language={activeFile.language}
         theme="vs-dark"
+        defaultValue={activeFile.content}
         onMount={handleMount}
         loading={
           <div className="editor-loading">
