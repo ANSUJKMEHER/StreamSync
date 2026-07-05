@@ -21,7 +21,7 @@ export class RoomManager {
   // To prevent race conditions on client join (permission fetch)
   private joinLocks = new Map<string, Promise<void>>();
   // Track rooms with unsaved CRDT changes
-  private dirtyRooms = new Set<string>();
+  private dirtyDocs = new Set<string>();
   // Track permissions: `${fileId}:${userId}` -> 'VIEW' | 'EDIT'
   private permissions = new Map<string, 'VIEW' | 'EDIT'>();
   private saveInterval: ReturnType<typeof setInterval>;
@@ -35,26 +35,29 @@ export class RoomManager {
    * Periodically save all dirty Yjs documents to PostgreSQL
    */
   private async saveDirtyRooms(): Promise<void> {
-    const roomsToSave = Array.from(this.dirtyRooms);
-    this.dirtyRooms.clear();
+    const docsToSave = Array.from(this.dirtyDocs);
+    this.dirtyDocs.clear();
 
-    for (const roomId of roomsToSave) {
-      const ydoc = this.ydocs.get(roomId);
+    for (const docId of docsToSave) {
+      const ydoc = this.ydocs.get(docId);
       if (!ydoc) continue;
+      
+      // If docId starts with canvas-, it's canvas data (not saved in File DB currently)
+      if (docId.startsWith('canvas-')) continue;
 
       try {
         const content = ydoc.getText('monaco').toString();
         const crdtState = Buffer.from(Y.encodeStateAsUpdate(ydoc));
         
-        const exists = await prisma.file.findUnique({ where: { id: roomId } });
+        const exists = await prisma.file.findUnique({ where: { id: docId } });
         if (exists) {
           await prisma.file.update({
-            where: { id: roomId },
+            where: { id: docId },
             data: { content, crdtState },
           });
         }
       } catch (err) {
-        console.error(`[WS] Failed to auto-save room snapshot ${roomId}:`, err);
+        console.error(`[WS] Failed to auto-save doc snapshot ${docId}:`, err);
       }
     }
   }
@@ -88,35 +91,39 @@ export class RoomManager {
 
   /**
    * Safely get or create a Y.Doc preventing race conditions.
+   * `docId` can be a file ID or `canvas-${roomId}`
    */
-  private async getOrCreateDoc(fileId: string): Promise<Y.Doc> {
-    if (this.ydocs.has(fileId)) return this.ydocs.get(fileId)!;
-    if (this.pendingDocs.has(fileId)) return this.pendingDocs.get(fileId)!;
+  async getOrCreateDoc(docId: string): Promise<Y.Doc> {
+    if (this.ydocs.has(docId)) return this.ydocs.get(docId)!;
+    if (this.pendingDocs.has(docId)) return this.pendingDocs.get(docId)!;
 
     const promise = (async () => {
       const ydoc = new Y.Doc();
       try {
-        const file = await prisma.file.findUnique({
-          where: { id: fileId },
-          select: { content: true, crdtState: true },
-        });
+        // If it's a file, try to seed it from DB
+        if (!docId.startsWith('canvas-')) {
+          const file = await prisma.file.findUnique({
+            where: { id: docId },
+            select: { content: true, crdtState: true },
+          });
 
-        if (file) {
-          if (file.crdtState) {
-            Y.applyUpdate(ydoc, new Uint8Array(file.crdtState));
-          } else if (file.content) {
-            ydoc.getText('monaco').insert(0, file.content);
+          if (file) {
+            if (file.crdtState) {
+              Y.applyUpdate(ydoc, new Uint8Array(file.crdtState));
+            } else if (file.content) {
+              ydoc.getText('monaco').insert(0, file.content);
+            }
           }
         }
       } catch (err) {
-        console.error(`[WS] Failed to seed Y.Doc for ${fileId}:`, err);
+        console.error(`[WS] Failed to seed Y.Doc for ${docId}:`, err);
       }
-      this.ydocs.set(fileId, ydoc);
-      this.pendingDocs.delete(fileId);
+      this.ydocs.set(docId, ydoc);
+      this.pendingDocs.delete(docId);
       return ydoc;
     })();
 
-    this.pendingDocs.set(fileId, promise);
+    this.pendingDocs.set(docId, promise);
     return promise;
   }
 
@@ -300,30 +307,38 @@ export class RoomManager {
 
     // Clean up empty rooms
     if (room.size === 0) {
-      const ydoc = this.ydocs.get(roomId);
-      if (ydoc) {
-        try {
-          const content = ydoc.getText('monaco').toString();
-          const crdtState = Buffer.from(Y.encodeStateAsUpdate(ydoc));
-          // Update only if file still exists in DB
-          const exists = await prisma.file.findUnique({ where: { id: roomId } });
-          if (exists) {
+      // Save all active Y.Docs for this room
+      try {
+        const files = await prisma.file.findMany({ where: { roomId }, select: { id: true } });
+        for (const file of files) {
+          const docId = file.id;
+          const ydoc = this.ydocs.get(docId);
+          if (ydoc) {
+            const content = ydoc.getText('monaco').toString();
+            const crdtState = Buffer.from(Y.encodeStateAsUpdate(ydoc));
             await prisma.file.update({
-              where: { id: roomId },
+              where: { id: docId },
               data: { content, crdtState },
             });
           }
-        } catch (err) {
-          console.error(`[WS] Failed to save file ${roomId} on room destroy:`, err);
         }
+      } catch (err) {
+        console.error(`[WS] Failed to save files on room destroy:`, err);
       }
       
       // Check room size AGAIN because a user might have reconnected (e.g. refreshed) 
       // while we were waiting for the database!
       if (room.size === 0) {
         this.rooms.delete(roomId);
-        this.dirtyRooms.delete(roomId);
-        this.ydocs.delete(roomId);
+        try {
+          const files = await prisma.file.findMany({ where: { roomId }, select: { id: true } });
+          for (const file of files) {
+            this.dirtyDocs.delete(file.id);
+            this.ydocs.delete(file.id);
+          }
+          this.dirtyDocs.delete(`canvas-${roomId}`);
+          this.ydocs.delete(`canvas-${roomId}`);
+        } catch (err) {}
         console.log(`[WS] Room destroyed: ${roomId}`);
       } else {
         console.log(`[WS] Room ${roomId} was saved but not destroyed because a user joined during save`);
@@ -416,15 +431,15 @@ export class RoomManager {
    * Apply a Yjs update to the server's in-memory document.
    * Returns true if successful, false otherwise.
    */
-  applyYjsUpdate(roomId: string, updateBase64: string): boolean {
-    const ydoc = this.ydocs.get(roomId);
+  applyYjsUpdate(docId: string, updateBase64: string): boolean {
+    const ydoc = this.ydocs.get(docId);
     if (ydoc) {
       try {
         Y.applyUpdate(ydoc, toByteArray(updateBase64));
-        this.dirtyRooms.add(roomId);
+        this.dirtyDocs.add(docId);
         return true;
       } catch (err) {
-        console.error(`[WS] Failed to apply Yjs update for room ${roomId}:`, err);
+        console.error(`[WS] Failed to apply Yjs update for doc ${docId}:`, err);
         return false;
       }
     }

@@ -8,6 +8,7 @@ type WSMessageType =
   | 'yjs-sync'
   | 'yjs-update'
   | 'awareness-update'
+  | 'sync-doc'
   | 'error'
   | 'ping'
   | 'pong';

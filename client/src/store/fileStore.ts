@@ -139,7 +139,7 @@ export const useFileStore = create<FileStore>((set, get) => ({
       // Need to import yjsService inside the function to avoid circular dependency
       // if fileStore is imported by yjsService (which it currently isn't, but safe practice)
       const { yjsService } = await import('../services/yjsService');
-      contentToSave = yjsService.getTextContent(file.id);
+      contentToSave = yjsService.getTextContent(file.roomId, file.id);
     } catch (e) {
       console.error('Failed to get content from Yjs, using fallback state', e);
     }

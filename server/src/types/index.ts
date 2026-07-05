@@ -75,6 +75,7 @@ export type WSMessageType =
   | 'yjs-update'
   | 'yjs-sync'
   | 'awareness-update'
+  | 'sync-doc'
   | 'error'
   | 'ping'
   | 'pong';

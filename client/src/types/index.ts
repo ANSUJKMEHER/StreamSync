@@ -5,6 +5,7 @@ export interface FileItem {
   language: string;
   parentId: string | null;
   isFolder: boolean;
+  roomId: string;
   createdAt: string;
   updatedAt: string;
 }

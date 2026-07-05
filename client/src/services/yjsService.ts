@@ -5,8 +5,8 @@ import { wsService } from './websocket';
 import { useAuthStore } from '../store/authStore';
 
 class YjsService {
-  private docs = new Map<string, Y.Doc>();
-  private awarenesses = new Map<string, Awareness>();
+  private docs = new Map<string, Y.Doc>(); // docId -> Y.Doc
+  private awarenesses = new Map<string, Awareness>(); // docId -> Awareness
   private unsubscribers: Array<() => void> = [];
 
   constructor() {
@@ -15,9 +15,9 @@ class YjsService {
       wsService.on('yjs-sync', (msg) => {
         if (!msg.roomId || !msg.payload) return;
         const payload = msg.payload as any;
-        console.log('[Yjs] Received yjs-sync for room:', msg.roomId);
-        if (typeof payload.update === 'string') {
-          const doc = this.getDoc(msg.roomId);
+        if (typeof payload.update === 'string' && payload.docId) {
+          console.log(`[Yjs] Received yjs-sync for doc: ${payload.docId} in room: ${msg.roomId}`);
+          const doc = this.getDoc(msg.roomId, payload.docId);
           Y.applyUpdate(doc, toByteArray(payload.update), 'remote');
         }
       })
@@ -28,9 +28,8 @@ class YjsService {
       wsService.on('yjs-update', (msg) => {
         if (!msg.roomId || !msg.payload) return;
         const payload = msg.payload as any;
-        console.log('[Yjs] Received yjs-update for room:', msg.roomId);
-        if (typeof payload.update === 'string') {
-          const doc = this.getDoc(msg.roomId);
+        if (typeof payload.update === 'string' && payload.docId) {
+          const doc = this.getDoc(msg.roomId, payload.docId);
           Y.applyUpdate(doc, toByteArray(payload.update), 'remote');
         }
       })
@@ -41,9 +40,8 @@ class YjsService {
       wsService.on('awareness-update', (msg) => {
         if (!msg.roomId || !msg.payload) return;
         const payload = msg.payload as any;
-        console.log('[Yjs] Received awareness-update for room:', msg.roomId);
-        if (typeof payload.update === 'string') {
-          const awareness = this.getAwareness(msg.roomId);
+        if (typeof payload.update === 'string' && payload.docId) {
+          const awareness = this.getAwareness(msg.roomId, payload.docId);
           import('y-protocols/awareness').then(({ applyAwarenessUpdate }) => {
             applyAwarenessUpdate(awareness, toByteArray(payload.update), 'remote');
           });
@@ -53,21 +51,24 @@ class YjsService {
   }
 
   /**
-   * Get or create a Y.Doc for a specific room.
+   * Get or create a Y.Doc for a specific document (file or canvas) multiplexed over the workspace room.
    */
-  getDoc(roomId: string): Y.Doc {
-    if (this.docs.has(roomId)) {
-      return this.docs.get(roomId)!;
+  getDoc(roomId: string, docId: string): Y.Doc {
+    if (this.docs.has(docId)) {
+      return this.docs.get(docId)!;
     }
 
     const doc = new Y.Doc();
-    this.docs.set(roomId, doc);
+    this.docs.set(docId, doc);
+
+    // Request initial state from server
+    wsService.sendToRoom(roomId, { docId }, 'sync-doc');
 
     // Broadcast local updates
     doc.on('update', (update: Uint8Array, origin: any) => {
       // Don't broadcast if the update came from the network or client seed
       if (origin !== 'remote' && origin !== 'client-seed') {
-        wsService.sendToRoom(roomId, { update: fromByteArray(update) }, 'yjs-update');
+        wsService.sendToRoom(roomId, { docId, update: fromByteArray(update) }, 'yjs-update');
       }
     });
 
@@ -75,16 +76,16 @@ class YjsService {
   }
 
   /**
-   * Get or create an Awareness instance for a specific room.
+   * Get or create an Awareness instance for a specific document.
    */
-  getAwareness(roomId: string): Awareness {
-    if (this.awarenesses.has(roomId)) {
-      return this.awarenesses.get(roomId)!;
+  getAwareness(roomId: string, docId: string): Awareness {
+    if (this.awarenesses.has(docId)) {
+      return this.awarenesses.get(docId)!;
     }
 
-    const doc = this.getDoc(roomId);
+    const doc = this.getDoc(roomId, docId);
     const awareness = new Awareness(doc);
-    this.awarenesses.set(roomId, awareness);
+    this.awarenesses.set(docId, awareness);
 
     // Set local user info
     const user = useAuthStore.getState().user;
@@ -104,7 +105,7 @@ class YjsService {
       if (origin !== 'remote') {
         import('y-protocols/awareness').then(({ encodeAwarenessUpdate }) => {
           const update = encodeAwarenessUpdate(awareness, added.concat(updated, removed));
-          wsService.sendToRoom(roomId, { update: fromByteArray(update) }, 'awareness-update');
+          wsService.sendToRoom(roomId, { docId, update: fromByteArray(update) }, 'awareness-update');
         });
       }
     });
@@ -113,20 +114,18 @@ class YjsService {
   }
 
   /**
-   * Get the Y.Map for canvas shapes from the shared Y.Doc.
-   * This lives in the same document as the editor's Y.Text,
-   * enabling the Link Engine to correlate shapes with files.
+   * Get the Y.Map for canvas shapes from the dedicated canvas Y.Doc.
    */
   getCanvasMap(roomId: string): Y.Map<any> {
-    const doc = this.getDoc(roomId);
-    return doc.getMap('canvas');
+    const doc = this.getDoc(roomId, `canvas-${roomId}`);
+    return doc.getMap('canvas_data');
   }
 
   /**
-   * Get the current text content from the Yjs document.
+   * Get the current text content from a file's Yjs document.
    */
-  getTextContent(roomId: string): string {
-    const doc = this.getDoc(roomId);
+  getTextContent(roomId: string, fileId: string): string {
+    const doc = this.getDoc(roomId, fileId);
     return doc.getText('monaco').toString();
   }
 }

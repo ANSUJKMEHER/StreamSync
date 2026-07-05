@@ -4,6 +4,8 @@ import { URL } from 'url';
 import { RoomManager, roomManager } from './roomManager';
 import { verifyToken } from '../middleware/auth';
 import { WSMessage } from '../types';
+import * as Y from 'yjs';
+import { fromByteArray } from 'base64-js';
 
 const HEARTBEAT_INTERVAL = 30_000; // 30 seconds
 
@@ -166,9 +168,9 @@ async function handleMessage(
         return;
       }
       const payload = message.payload as any;
-      if (typeof payload.update === 'string') {
+      if (typeof payload.update === 'string' && payload.docId) {
         // Validate FIRST, broadcast ONLY if valid
-        const applied = roomManager.applyYjsUpdate(message.roomId, payload.update);
+        const applied = roomManager.applyYjsUpdate(payload.docId, payload.update);
         if (applied) {
           const roomClients = roomManager.getRoomUsers(message.roomId);
           console.log(`[YJS] Update from user ${userId} for file ${message.roomId}, broadcasting to ${roomClients.length - 1} other clients`);
@@ -187,7 +189,28 @@ async function handleMessage(
 
     case 'awareness-update': {
       if (!message.roomId || !message.payload) return;
-      roomManager.broadcast(message.roomId, message, connectionId);
+      const payload = message.payload as any;
+      if (typeof payload.update === 'string' && payload.docId) {
+        roomManager.broadcast(message.roomId, message, connectionId);
+      }
+      break;
+    }
+
+    case 'sync-doc': {
+      if (!message.roomId || !message.payload) return;
+      const payload = message.payload as any;
+      if (payload.docId) {
+        // Fetch or create the doc and send the initial state back
+        const ydoc = await roomManager.getOrCreateDoc(payload.docId);
+        const state = Y.encodeStateAsUpdate(ydoc);
+        roomManager.sendToClient(connectionId, {
+          type: 'yjs-sync',
+          roomId: message.roomId,
+          payload: { docId: payload.docId, update: fromByteArray(state) },
+          timestamp: new Date().toISOString(),
+        });
+        console.log(`[WS] Sent yjs-sync to ${connectionId} for doc ${payload.docId}`);
+      }
       break;
     }
 

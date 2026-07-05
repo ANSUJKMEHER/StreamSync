@@ -13,7 +13,6 @@ function MonacoEditor() {
   const editorRef = useRef<monacoEditor.IStandaloneCodeEditor | null>(null);
   const bindingRef = useRef<MonacoBinding | null>(null);
   const aiProviderDisposable = useRef<IDisposable | null>(null);
-  const seededFileIds = useRef<Set<string>>(new Set());
   const [editorReady, setEditorReady] = useState(false);
   const {
     files,
@@ -75,100 +74,124 @@ function MonacoEditor() {
     if (!editorReady || !editorRef.current || !activeFileId) return;
 
     const editor = editorRef.current;
-    const model = editor.getModel();
-    if (!model) return;
+    
+    let currentStyleEl: HTMLStyleElement | null = null;
+    let currentAwareness: any = null;
+    let currentUpdateCursorStyles: (() => void) | null = null;
 
-    // Get Y.Doc and Awareness for this file
-    const doc = yjsService.getDoc(activeFileId);
-    const ytext = doc.getText('monaco');
-    const awareness = yjsService.getAwareness(activeFileId);
+    const bindModel = () => {
+      const model = editor.getModel();
+      if (!model) return;
 
-    // Clean up previous binding before recreating
-    if (bindingRef.current) {
-      bindingRef.current.destroy();
-      bindingRef.current = null;
-    }
+      // Ensure the model currently in the editor corresponds to our active file.
+      // @monaco-editor/react sets the model URI using the `path` prop (which we set to activeFile.id)
+      if (!model.uri.path.includes(activeFileId) && !model.uri.toString().includes(activeFileId)) {
+        return;
+      }
 
-    // CRITICAL: Only seed Y.Text from file.content if:
-    // 1. Y.Text is completely empty (server hasn't sent content yet)
-    // 2. The file actually has content (GitHub imported files)
-    // 3. We haven't already seeded this file in this session
-    const alreadySeeded = seededFileIds.current.has(activeFileId);
-    if (!alreadySeeded && ytext.length === 0 && activeFile?.content) {
-      doc.transact(() => {
-        ytext.insert(0, activeFile.content);
-      }, 'client-seed'); // origin tag — server will ignore this echo
-      seededFileIds.current.add(activeFileId);
-    }
+      const roomId = useFileStore.getState().files.find(f => f.id === activeFileId)?.roomId;
+      if (!roomId) return;
+      
+      const doc = yjsService.getDoc(roomId, activeFileId);
+      const ytext = doc.getText('monaco');
+      const awareness = yjsService.getAwareness(roomId, activeFileId);
+      currentAwareness = awareness;
 
-    // Bind Yjs to Monaco
-    bindingRef.current = new MonacoBinding(
-      ytext,
-      model,
-      new Set([editor]),
-      awareness
-    );
+      // Clean up previous binding before recreating
+      if (bindingRef.current) {
+        bindingRef.current.destroy();
+        bindingRef.current = null;
+      }
+      
+      if (currentStyleEl) {
+        currentStyleEl.remove();
+        currentStyleEl = null;
+      }
+      if (currentUpdateCursorStyles && currentAwareness) {
+        currentAwareness.off('change', currentUpdateCursorStyles);
+        currentUpdateCursorStyles = null;
+      }
 
-    // Dynamically inject CSS for each remote user's cursor color
-    const styleEl = document.createElement('style');
-    styleEl.id = `yjs-cursor-styles-${activeFileId}`;
-    document.head.appendChild(styleEl);
+      // Force editor model to match Y.Text before binding
+      if (model.getValue() !== ytext.toString()) {
+        model.setValue(ytext.toString());
+      }
 
-    const updateCursorStyles = () => {
-      const styles: string[] = [];
-      awareness.getStates().forEach((state, clientID) => {
-        if (clientID === awareness.clientID) return; // skip self
-        const user = state.user;
-        if (!user) return;
-        const color = user.color || '#ff8c00';
-        const name = user.name || 'Anonymous';
-        styles.push(`
-          .yRemoteSelection-${clientID} {
-            background-color: ${color}33;
-          }
-          .yRemoteSelectionHead-${clientID} {
-            position: absolute;
-            border-left: 2px solid ${color};
-            border-top: 2px solid ${color};
-            border-bottom: none;
-            height: 100%;
-            box-sizing: border-box;
-          }
-          .yRemoteSelectionHead-${clientID}::after {
-            content: '${name.replace(/'/g, "\\'")}';
-            position: absolute;
-            top: -18px;
-            left: -2px;
-            padding: 1px 6px;
-            background: ${color};
-            color: #fff;
-            font-size: 11px;
-            font-weight: 600;
-            font-family: system-ui, sans-serif;
-            border-radius: 3px 3px 3px 0;
-            white-space: nowrap;
-            pointer-events: none;
-            z-index: 100;
-            line-height: 15px;
-          }
-        `);
-      });
-      styleEl.textContent = styles.join('\n');
+      // Bind Yjs to Monaco
+      bindingRef.current = new MonacoBinding(
+        ytext,
+        model,
+        new Set([editor]),
+        awareness
+      );
+
+      // Dynamically inject CSS for each remote user's cursor color
+      currentStyleEl = document.createElement('style');
+      currentStyleEl.id = `yjs-cursor-styles-${activeFileId}`;
+      document.head.appendChild(currentStyleEl);
+
+      currentUpdateCursorStyles = () => {
+        if (!currentStyleEl) return;
+        const styles: string[] = [];
+        awareness.getStates().forEach((state, clientID) => {
+          if (clientID === awareness.clientID) return; // skip self
+          const user = state.user;
+          if (!user) return;
+          const color = user.color || '#ff8c00';
+          const name = user.name || 'Anonymous';
+          styles.push(`
+            .yRemoteSelection-${clientID} {
+              background-color: ${color}33;
+            }
+            .yRemoteSelectionHead-${clientID} {
+              position: absolute;
+              border-left: 2px solid ${color};
+              border-top: 2px solid ${color};
+              border-bottom: none;
+              height: 100%;
+              box-sizing: border-box;
+            }
+            .yRemoteSelectionHead-${clientID}::after {
+              content: '${name.replace(/'/g, "\\'")}';
+              position: absolute;
+              top: -18px;
+              left: -2px;
+              padding: 1px 6px;
+              background: ${color};
+              color: #fff;
+              font-size: 11px;
+              font-weight: 600;
+              font-family: system-ui, sans-serif;
+              border-radius: 3px 3px 3px 0;
+              white-space: nowrap;
+              pointer-events: none;
+              z-index: 100;
+              line-height: 15px;
+            }
+          `);
+        });
+        currentStyleEl.textContent = styles.join('\n');
+      };
+
+      awareness.on('change', currentUpdateCursorStyles);
+      currentUpdateCursorStyles(); // Initial render
     };
 
-    awareness.on('change', updateCursorStyles);
-    updateCursorStyles(); // Initial render
+    // Try to bind immediately in case the model is already swapped
+    bindModel();
 
-    // Register AI Inline Completions Provider
+    // Listen for model changes to bind once the correct model is swapped in
+    const disposable = editor.onDidChangeModel(() => {
+      bindModel();
+    });
+
+    // Register AI Inline Completions Provider globally
     if (!aiProviderDisposable.current) {
       const monaco = (window as any).monaco;
       if (monaco) {
         aiProviderDisposable.current = monaco.languages.registerInlineCompletionsProvider('*', {
           provideInlineCompletions: async (model: any, position: any, context: any) => {
-            // 0 = Automatic (typing), 1 = Explicit (shortcut)
-            if (context.triggerKind !== 1) {
-              return { items: [] };
-            }
+            if (context.triggerKind !== 1) return { items: [] };
 
             const state = useFileStore.getState();
             if (!state.activeFileId) return { items: [] };
@@ -198,32 +221,47 @@ function MonacoEditor() {
 
             if (!snippet) return { items: [] };
 
-            return {
-              items: [
-                {
-                  insertText: snippet,
-                },
-              ],
-            };
+            return { items: [{ insertText: snippet }] };
           },
-          freeInlineCompletions: () => {},
+          disposeInlineCompletions: () => {},
         });
       }
     }
 
     return () => {
+      disposable.dispose();
       if (bindingRef.current) {
         bindingRef.current.destroy();
         bindingRef.current = null;
       }
-      awareness.off('change', updateCursorStyles);
-      styleEl.remove();
+      if (currentAwareness && currentUpdateCursorStyles) {
+        currentAwareness.off('change', currentUpdateCursorStyles);
+      }
+      if (currentStyleEl) {
+        currentStyleEl.remove();
+      }
       if (aiProviderDisposable.current) {
         aiProviderDisposable.current.dispose();
         aiProviderDisposable.current = null;
       }
     };
-  }, [editorReady, activeFileId, yjsService.getDoc(activeFileId || '').guid]);
+  }, [editorReady, activeFileId]);
+
+  // Handle container resize (e.g., when unhiding or resizing split view)
+  useEffect(() => {
+    if (!editorReady || !editorRef.current) return;
+    const container = document.querySelector('.editor-container');
+    if (!container) return;
+
+    const ro = new ResizeObserver(() => {
+      window.requestAnimationFrame(() => {
+        editorRef.current?.layout();
+      });
+    });
+    ro.observe(container);
+
+    return () => ro.disconnect();
+  }, [editorReady]);
 
   // Empty state
   if (!activeFile) {
@@ -255,7 +293,7 @@ function MonacoEditor() {
   return (
     <div className="editor-container">
       <Editor
-        key={activeFile.id}
+        path={activeFile.id}
         height="100%"
         language={activeFile.language}
         theme="vs-dark"

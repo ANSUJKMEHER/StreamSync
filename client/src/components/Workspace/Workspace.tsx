@@ -4,6 +4,7 @@ import { useFileStore } from '../../store/fileStore';
 import { useAuthStore } from '../../store/authStore';
 import { useRoomStore } from '../../store/roomStore';
 import { wsService } from '../../services/websocket';
+import { yjsService } from '../../services/yjsService';
 import { roomService, type Room } from '../../services/roomService';
 import { useCanvasStore } from '../../store/canvasStore';
 import { buildAutoGraph } from '../../services/graphEngine';
@@ -24,7 +25,7 @@ type ActivityView = 'explorer' | 'search' | 'github' | 'extensions';
 export default function Workspace() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
-  const { files, activeFileId, fetchFiles, isLoading, isSidebarOpen } = useFileStore();
+  const { files, activeFileId, openFileIds, fetchFiles, isLoading, isSidebarOpen } = useFileStore();
   const { user, token } = useAuthStore();
   const { setActiveRoom, roomUsers } = useRoomStore();
   
@@ -86,20 +87,29 @@ export default function Workspace() {
     };
   }, [roomId, token, fetchFiles]);
 
-  // Join room when active file changes
+  // Join room based on Workspace ID (roomId), NOT active file
   useEffect(() => {
-    if (!activeFileId) {
+    if (!roomId) {
       setActiveRoom(null);
       return;
     }
 
-    setActiveRoom(activeFileId);
-    wsService.joinRoom(activeFileId);
+    setActiveRoom(roomId);
+    wsService.joinRoom(roomId);
 
     return () => {
-      wsService.leaveRoom(activeFileId);
+      wsService.leaveRoom(roomId);
     };
-  }, [activeFileId, setActiveRoom]);
+  }, [roomId, setActiveRoom]);
+
+  // Preload Y.Docs for all open files to ensure background tabs receive yjs-sync updates
+  useEffect(() => {
+    if (!roomId) return;
+    openFileIds.forEach(fileId => {
+      // Calling getDoc will instantiate the Y.Doc and send sync-doc to the server
+      yjsService.getDoc(roomId, fileId);
+    });
+  }, [roomId, openFileIds]);
 
 
 
