@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
-import './InviteModal.css';
 
 interface InviteModalProps {
   roomId: string;
@@ -55,22 +54,28 @@ export default function InviteModal({ roomId, onClose }: InviteModalProps) {
   };
 
   return (
-    <div className="invite-modal-overlay" onClick={onClose}>
-      <div className="invite-modal" onClick={e => e.stopPropagation()}>
-        <div className="invite-modal-header">
-          <h2>Share Project</h2>
-          <button className="close-btn" onClick={onClose}>&times;</button>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[1000] animate-in fade-in duration-200" onClick={onClose}>
+      <div className="bg-surface border border-outline-variant/30 shadow-2xl rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-on-surface m-0">Share Project</h2>
+          <button 
+            className="text-on-surface-variant hover:bg-surface-variant hover:text-on-surface w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
+            onClick={onClose}
+          >
+            <span className="material-symbols-outlined text-xl">close</span>
+          </button>
         </div>
         
-        <p className="invite-modal-desc">
+        <p className="text-body-md text-on-surface-variant mb-6">
           Invite collaborators by their GitHub username to grant them secure access to this workspace.
         </p>
 
-        <form onSubmit={handleInvite} className="invite-form">
-          <div className="input-group">
+        <form onSubmit={handleInvite} className="flex flex-col">
+          <div className="flex gap-2 mb-4">
             <input 
               type="text" 
               placeholder="GitHub Username" 
+              className="flex-1 bg-surface-container border border-outline-variant rounded-lg px-4 py-2.5 text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all placeholder:text-on-surface-variant/50"
               value={username}
               onChange={e => setUsername(e.target.value)}
               disabled={isLoading || success}
@@ -80,22 +85,27 @@ export default function InviteModal({ roomId, onClose }: InviteModalProps) {
               value={role} 
               onChange={e => setRole(e.target.value as 'VIEW' | 'EDIT')}
               disabled={isLoading || success}
+              className="bg-surface-container border border-outline-variant rounded-lg px-4 py-2.5 text-on-surface focus:outline-none focus:border-primary transition-all cursor-pointer"
             >
               <option value="EDIT">Editor</option>
               <option value="VIEW">Viewer</option>
             </select>
           </div>
           
-          {error && <div className="invite-error">{error}</div>}
-          {success && <div className="invite-success">Invite sent successfully!</div>}
+          {error && <div className="text-error text-label-md mb-4 bg-error/10 p-3 rounded-lg">{error}</div>}
+          {success && <div className="text-[#10b981] text-label-md mb-4 bg-[#10b981]/10 p-3 rounded-lg">Invite sent successfully!</div>}
 
-          <div className="invite-modal-actions">
-            <button type="button" className="btn-secondary" onClick={onClose}>
+          <div className="flex justify-end gap-3 mt-2">
+            <button 
+              type="button" 
+              className="px-4 py-2 rounded-lg font-label-md font-bold text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors"
+              onClick={onClose}
+            >
               Cancel
             </button>
             <button 
               type="submit" 
-              className="btn-primary" 
+              className="px-4 py-2 rounded-lg font-label-md font-bold text-on-primary bg-primary hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
               disabled={!username.trim() || isLoading || success}
             >
               {isLoading ? 'Sending...' : 'Send Invite'}
