@@ -7,21 +7,16 @@ import { wsService } from '../../services/websocket';
 import { roomService, type Room } from '../../services/roomService';
 import { useCanvasStore } from '../../store/canvasStore';
 import { buildAutoGraph } from '../../services/graphEngine';
-import SplitPane from '../Layout/SplitPane';
 import FileExplorer from '../Sidebar/FileExplorer';
 import ActivityBar from '../Sidebar/ActivityBar';
 import FileTabs from '../Tabs/FileTabs';
 import MonacoEditor from '../Editor/MonacoEditor';
 import CanvasPanel from '../Canvas/CanvasPanel';
-import StatusBar from '../StatusBar/StatusBar';
 import BottomPanel from '../Panel/BottomPanel';
 import UserDropdown from '../Auth/UserDropdown';
 import InviteModal from './InviteModal';
 import GitHubPanel from '../Sidebar/GitHubPanel';
 import '../../App.css';
-import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
-import { LuShare2, LuPlay, LuTerminal, LuArchive, LuImage, LuGithub } from 'react-icons/lu';
 
 type ViewMode = 'editor' | 'canvas' | 'split';
 type ActivityView = 'explorer' | 'search' | 'github';
@@ -106,27 +101,7 @@ export default function Workspace() {
     };
   }, [activeFileId, setActiveRoom]);
 
-  const handleExportZip = async () => {
-    if (files.length === 0) return;
-    const zip = new JSZip();
-    files.forEach(f => {
-      if (!f.isFolder) {
-        zip.file(f.name, f.content);
-      }
-    });
-    const blob = await zip.generateAsync({ type: 'blob' });
-    saveAs(blob, `${roomData?.name || 'project'}-export.zip`);
-  };
 
-  const handleExportPng = () => {
-    const stage = (window as any).__KONVA_STAGE__;
-    if (stage) {
-      const dataUrl = stage.toDataURL({ pixelRatio: 2 });
-      saveAs(dataUrl, `${roomData?.name || 'canvas'}-diagram.png`);
-    } else {
-      alert("Canvas not found. Open the canvas view to export it.");
-    }
-  };
 
   const handleRunCode = async () => {
     if (!activeFile || !token) return;

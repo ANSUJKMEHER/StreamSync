@@ -177,7 +177,7 @@ export default function Dashboard() {
         {/* Welcome Text */}
         <div className="mb-12">
           <h1 className="text-4xl font-bold text-on-surface mb-2">
-            Welcome back, {useAuthStore.getState().user?.name?.split(' ')[0] || 'Developer'}
+            Welcome back, {useAuthStore.getState().user?.username?.split(' ')[0] || 'Developer'}
           </h1>
           <p className="text-on-surface-variant text-body-lg">Here's an overview of your recent projects and repositories.</p>
         </div>
