@@ -252,9 +252,6 @@ export class RoomManager {
 
     // Clean up empty rooms
     if (room.size === 0) {
-      this.rooms.delete(roomId);
-      this.dirtyRooms.delete(roomId);
-      
       const ydoc = this.ydocs.get(roomId);
       if (ydoc) {
         try {
@@ -271,10 +268,18 @@ export class RoomManager {
         } catch (err) {
           console.error(`[WS] Failed to save file ${roomId} on room destroy:`, err);
         }
-        this.ydocs.delete(roomId);
       }
       
-      console.log(`[WS] Room destroyed: ${roomId}`);
+      // Check room size AGAIN because a user might have reconnected (e.g. refreshed) 
+      // while we were waiting for the database!
+      if (room.size === 0) {
+        this.rooms.delete(roomId);
+        this.dirtyRooms.delete(roomId);
+        this.ydocs.delete(roomId);
+        console.log(`[WS] Room destroyed: ${roomId}`);
+      } else {
+        console.log(`[WS] Room ${roomId} was saved but not destroyed because a user joined during save`);
+      }
     }
   }
 
