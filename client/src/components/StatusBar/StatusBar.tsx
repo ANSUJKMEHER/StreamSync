@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useFileStore } from '../../store/fileStore';
 import { useAuthStore } from '../../store/authStore';
-import { useDriftStore } from '../../store/driftStore';
 import { wsService } from '../../services/websocket';
 import './StatusBar.css';
 
@@ -10,7 +9,6 @@ type ConnectionStatus = 'disconnected' | 'connecting' | 'connected';
 function StatusBar() {
   const { files, activeFileId, cursorPosition } = useFileStore();
   const { user } = useAuthStore();
-  const { driftEdges, isAnalyzing } = useDriftStore();
   const activeFile = files.find((f) => f.id === activeFileId);
   const [wsStatus, setWsStatus] = useState<ConnectionStatus>('disconnected');
 
@@ -47,16 +45,6 @@ function StatusBar() {
             <span className="statusbar-username">{user.username}</span>
           </div>
         )}
-
-        <div className="statusbar-divider" />
-
-        {/* Drift Indicator */}
-        <div className="statusbar-item" style={{ color: driftEdges.length > 0 ? '#ef4444' : '#22c55e' }}>
-          <span style={{ marginRight: '6px' }}>📐</span>
-          <span>
-            {isAnalyzing ? 'Analyzing...' : `${driftEdges.length} Drifts`}
-          </span>
-        </div>
       </div>
 
       {/* Right section */}
