@@ -136,8 +136,8 @@ export function buildAutoGraph(
   const shapes: CanvasShape[] = nodes.map(n => ({
     id: n.id,
     type: 'rect',
-    x: n.x ?? 0,
-    y: n.y ?? 0,
+    x: isNaN(n.x as number) ? 0 : (n.x as number),
+    y: isNaN(n.y as number) ? 0 : (n.y as number),
     width: 140,
     height: 50,
     label: n.file.name.split('/').pop() || 'file',
