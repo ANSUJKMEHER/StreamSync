@@ -2,7 +2,6 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { useFileStore } from '../../store/fileStore';
 import { useCanvasStore } from '../../store/canvasStore';
-import { getFileIcon } from '../../utils/fileUtils';
 import type { FileItem } from '../../types';
 import './FileExplorer.css';
 
@@ -46,6 +45,34 @@ function buildFileTree(files: FileItem[]): TreeNode {
 
   return root;
 }
+
+import { VscFolder, VscFolderOpened, VscFile, VscJson, VscMarkdown, VscSettingsGear } from 'react-icons/vsc';
+import { SiJavascript, SiTypescript, SiHtml5, SiCss, SiPython, SiGo, SiRust, SiReact } from 'react-icons/si';
+
+const getVscFileIcon = (filename: string) => {
+  const parts = filename.split('.');
+  const ext = parts.length > 1 ? parts.pop()!.toLowerCase() : '';
+  const size = 16;
+  
+  if (filename.includes('vite.config') || filename.includes('eslint.config')) return <SiJavascript size={size} color="#f7df1e" />;
+  if (filename === 'package.json' || filename === 'package-lock.json') return <VscJson size={size} color="#cb3837" />;
+  
+  switch (ext) {
+    case 'js': return <SiJavascript size={size} color="#f7df1e" />;
+    case 'jsx': return <SiReact size={size} color="#61dafb" />;
+    case 'ts': return <SiTypescript size={size} color="#3178c6" />;
+    case 'tsx': return <SiReact size={size} color="#61dafb" />;
+    case 'py': return <SiPython size={size} color="#3776ab" />;
+    case 'go': return <SiGo size={size} color="#00add8" />;
+    case 'rs': return <SiRust size={size} color="#ce422b" />;
+    case 'html': return <SiHtml5 size={size} color="#e34f26" />;
+    case 'css': return <SiCss size={size} color="#264de4" />;
+    case 'json': return <VscJson size={size} color="#cb3837" />;
+    case 'md': return <VscMarkdown size={size} color="#ffffff" />;
+    case 'gitignore': return <VscSettingsGear size={size} color="#a1a1aa" />;
+    default: return <VscFile size={size} color="#71717a" />;
+  }
+};
 
 const FileTreeNodeUI = ({
   node,
@@ -98,10 +125,10 @@ const FileTreeNodeUI = ({
         
         <span className="flex items-center justify-center mr-2">
           {!node.isFile ? (
-            <span className="material-symbols-outlined text-[16px] text-tertiary-fixed-dim" style={{ fontVariationSettings: "'FILL' 1" }}>folder</span>
+            isExpanded ? <VscFolderOpened size={16} color="#dcb67a" /> : <VscFolder size={16} color="#dcb67a" />
           ) : (
             <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center' }}>
-               {getFileIcon(node.name).icon}
+               {getVscFileIcon(node.name)}
             </span>
           )}
         </span>

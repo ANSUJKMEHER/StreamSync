@@ -19,7 +19,7 @@ import GitHubPanel from '../Sidebar/GitHubPanel';
 import '../../App.css';
 
 type ViewMode = 'editor' | 'canvas' | 'split';
-type ActivityView = 'explorer' | 'search' | 'github';
+type ActivityView = 'explorer' | 'search' | 'github' | 'extensions';
 
 export default function Workspace() {
   const { roomId } = useParams<{ roomId: string }>();
