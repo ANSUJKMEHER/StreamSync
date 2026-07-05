@@ -215,7 +215,8 @@ function CanvasPanel() {
 
     const observer = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        const { width, height } = entry.contentRect;
+        const width = Math.max(10, entry.contentRect.width);
+        const height = Math.max(10, entry.contentRect.height);
         setStageSize({ width, height });
       }
     });
@@ -450,7 +451,7 @@ function CanvasPanel() {
 
   // Render a single shape
   const renderShape = (shape: CanvasShape) => {
-    if (isNaN(shape.x) || isNaN(shape.y) || isNaN(shape.width) || isNaN(shape.height)) return null;
+    if (isNaN(shape.x) || isNaN(shape.y) || isNaN(shape.width) || isNaN(shape.height) || shape.width <= 0 || shape.height <= 0) return null;
 
     const isSelected = selectedId === shape.id;
     const isArrowSource = arrowStartId === shape.id;
