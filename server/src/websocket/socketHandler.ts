@@ -189,6 +189,8 @@ async function handleMessage(
 
     case 'awareness-update': {
       if (!message.roomId || !message.payload) return;
+      await roomManager.waitForJoinLock(message.roomId, connectionId);
+      
       const payload = message.payload as any;
       if (typeof payload.update === 'string' && payload.docId) {
         roomManager.broadcast(message.roomId, message, connectionId);
@@ -198,6 +200,8 @@ async function handleMessage(
 
     case 'sync-doc': {
       if (!message.roomId || !message.payload) return;
+      await roomManager.waitForJoinLock(message.roomId, connectionId);
+      
       const payload = message.payload as any;
       if (payload.docId) {
         // Fetch or create the doc and send the initial state back

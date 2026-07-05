@@ -433,14 +433,21 @@ export class RoomManager {
   }
 
   /**
-   * Get the cached permission for a user in a room.
-   * Awaits any pending join operation for this connection to prevent race conditions.
+   * Wait for a pending join operation for this connection to prevent race conditions.
    */
-  async getPermission(roomId: string, connectionId: string, userId: string): Promise<'VIEW' | 'EDIT'> {
+  async waitForJoinLock(roomId: string, connectionId: string): Promise<void> {
     const lockKey = `${roomId}:${connectionId}`;
     if (this.joinLocks.has(lockKey)) {
       await this.joinLocks.get(lockKey);
     }
+  }
+
+  /**
+   * Get the cached permission for a user in a room.
+   * Awaits any pending join operation for this connection to prevent race conditions.
+   */
+  async getPermission(roomId: string, connectionId: string, userId: string): Promise<'VIEW' | 'EDIT'> {
+    await this.waitForJoinLock(roomId, connectionId);
     return this.permissions.get(`${roomId}:${userId}`) || 'VIEW';
   }
 
