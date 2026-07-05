@@ -13,6 +13,7 @@ function MonacoEditor() {
   const editorRef = useRef<monacoEditor.IStandaloneCodeEditor | null>(null);
   const bindingRef = useRef<MonacoBinding | null>(null);
   const aiProviderDisposable = useRef<IDisposable | null>(null);
+  const seededFileIds = useRef<Set<string>>(new Set());
   const [editorReady, setEditorReady] = useState(false);
   const {
     files,
@@ -86,6 +87,18 @@ function MonacoEditor() {
     if (bindingRef.current) {
       bindingRef.current.destroy();
       bindingRef.current = null;
+    }
+
+    // CRITICAL: Only seed Y.Text from file.content if:
+    // 1. Y.Text is completely empty (server hasn't sent content yet)
+    // 2. The file actually has content (GitHub imported files)
+    // 3. We haven't already seeded this file in this session
+    const alreadySeeded = seededFileIds.current.has(activeFileId);
+    if (!alreadySeeded && ytext.length === 0 && activeFile?.content) {
+      doc.transact(() => {
+        ytext.insert(0, activeFile.content);
+      }, 'client-seed'); // origin tag — server will ignore this echo
+      seededFileIds.current.add(activeFileId);
     }
 
     // Bind Yjs to Monaco
@@ -246,7 +259,7 @@ function MonacoEditor() {
         height="100%"
         language={activeFile.language}
         theme="vs-dark"
-        defaultValue={activeFile.content}
+        defaultValue=""
         onMount={handleMount}
         loading={
           <div className="editor-loading">

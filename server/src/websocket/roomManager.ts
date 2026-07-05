@@ -13,6 +13,7 @@ export class RoomManager {
   private rooms = new Map<string, Set<string>>();
   // roomId -> Y.Doc
   private ydocs = new Map<string, Y.Doc>();
+  private pendingDocs = new Map<string, Promise<Y.Doc>>();
   // userId -> ConnectedClient
   private clients = new Map<string, ConnectedClient>();
   // To prevent race conditions on room creation DB fetch
@@ -56,6 +57,67 @@ export class RoomManager {
         console.error(`[WS] Failed to auto-save room snapshot ${roomId}:`, err);
       }
     }
+  }
+
+  /**
+   * Get a Y.Doc if it exists in memory without hitting the DB.
+   */
+  getDocIfExists(fileId: string): Y.Doc | null {
+    return this.ydocs.get(fileId) ?? null;
+  }
+
+  /**
+   * Force save all active Y.Docs for a given room (workspace).
+   */
+  async saveRoomNow(roomId: string): Promise<void> {
+    for (const [fileId, ydoc] of this.ydocs.entries()) {
+      const file = await prisma.file.findUnique({
+        where: { id: fileId },
+        select: { roomId: true },
+      });
+      if (file?.roomId !== roomId) continue;
+
+      const content = ydoc.getText('monaco').toString();
+      const crdtState = Buffer.from(Y.encodeStateAsUpdate(ydoc));
+      await prisma.file.update({
+        where: { id: fileId },
+        data: { content, crdtState },
+      });
+    }
+  }
+
+  /**
+   * Safely get or create a Y.Doc preventing race conditions.
+   */
+  private async getOrCreateDoc(fileId: string): Promise<Y.Doc> {
+    if (this.ydocs.has(fileId)) return this.ydocs.get(fileId)!;
+    if (this.pendingDocs.has(fileId)) return this.pendingDocs.get(fileId)!;
+
+    const promise = (async () => {
+      const ydoc = new Y.Doc();
+      try {
+        const file = await prisma.file.findUnique({
+          where: { id: fileId },
+          select: { content: true, crdtState: true },
+        });
+
+        if (file) {
+          if (file.crdtState) {
+            Y.applyUpdate(ydoc, new Uint8Array(file.crdtState));
+          } else if (file.content) {
+            ydoc.getText('monaco').insert(0, file.content);
+          }
+        }
+      } catch (err) {
+        console.error(`[WS] Failed to seed Y.Doc for ${fileId}:`, err);
+      }
+      this.ydocs.set(fileId, ydoc);
+      this.pendingDocs.delete(fileId);
+      return ydoc;
+    })();
+
+    this.pendingDocs.set(fileId, promise);
+    return promise;
   }
 
   /**
@@ -160,26 +222,13 @@ export class RoomManager {
       // Store permission
       this.permissions.set(`${roomId}:${userId}`, permission);
 
-      // Create room if it doesn't exist — reuse the file data we already fetched
+      // Create room if it doesn't exist
       if (!this.rooms.has(roomId)) {
         this.rooms.set(roomId, new Set());
         console.log(`[WS] Room created: ${roomId}`);
-
-        const ydoc = new Y.Doc();
-        this.ydocs.set(roomId, ydoc);
-
-        // Initialize Y.Doc from the file data we already have (no second DB query!)
-        try {
-          if (file.crdtState) {
-            Y.applyUpdate(ydoc, new Uint8Array(file.crdtState));
-          } else if (file.content) {
-            const ytext = ydoc.getText('monaco');
-            ytext.insert(0, file.content);
-          }
-        } catch (err) {
-          console.error(`[WS] Failed to init Y.Doc for ${roomId}:`, err);
-        }
       }
+
+      const ydoc = await this.getOrCreateDoc(roomId);
 
       const room = this.rooms.get(roomId)!;
       if (room.has(connectionId)) return; // Already in room
@@ -209,7 +258,6 @@ export class RoomManager {
       });
 
       // Send initial Yjs state
-      const ydoc = this.ydocs.get(roomId);
       if (ydoc) {
         const state = Y.encodeStateAsUpdate(ydoc);
         this.sendToClient(connectionId, {
@@ -415,3 +463,5 @@ export class RoomManager {
     }
   }
 }
+
+export const roomManager = new RoomManager();

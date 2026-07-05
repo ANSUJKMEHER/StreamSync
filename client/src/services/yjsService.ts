@@ -65,8 +65,8 @@ class YjsService {
 
     // Broadcast local updates
     doc.on('update', (update: Uint8Array, origin: any) => {
-      // Don't broadcast if the update came from the network
-      if (origin !== 'remote') {
+      // Don't broadcast if the update came from the network or client seed
+      if (origin !== 'remote' && origin !== 'client-seed') {
         wsService.sendToRoom(roomId, { update: fromByteArray(update) }, 'yjs-update');
       }
     });

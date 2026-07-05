@@ -1,7 +1,7 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { IncomingMessage, Server as HttpServer } from 'http';
 import { URL } from 'url';
-import { RoomManager } from './roomManager';
+import { RoomManager, roomManager } from './roomManager';
 import { verifyToken } from '../middleware/auth';
 import { WSMessage } from '../types';
 
@@ -12,8 +12,6 @@ const HEARTBEAT_INTERVAL = 30_000; // 30 seconds
  * and handle connection lifecycle + message routing.
  */
 export function initWebSocket(httpServer: HttpServer): RoomManager {
-  const roomManager = new RoomManager();
-
   const wss = new WebSocketServer({
     server: httpServer,
     path: '/ws',

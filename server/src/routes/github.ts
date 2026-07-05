@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../db';
 import { authenticateToken } from '../middleware/auth';
 import { decryptToken } from './oauth';
+import { roomManager } from '../websocket/roomManager';
 
 const router = Router();
 
@@ -248,12 +249,22 @@ router.post('/push', authenticateToken, async (req: Request, res: Response): Pro
     const latestCommitData = await fetchGithubAPI(`https://api.github.com/repos/${repo}/git/commits/${latestCommitSha}`, pat);
     const baseTreeSha = latestCommitData.tree.sha;
 
+    // Force-flush any pending Yjs snapshots to DB
+    await roomManager.saveRoomNow(roomId);
+
     const newTree = [];
     for (const file of room.files) {
       if (file.isFolder) continue; 
       
+      // Try to get live content from in-memory Y.Doc first
+      // Falls back to DB content if the file hasn't been opened this session
+      const liveDoc = roomManager.getDocIfExists(file.id);
+      const liveContent = liveDoc
+        ? liveDoc.getText('monaco').toString()
+        : file.content;
+      
       const blobData = await fetchGithubAPI(`https://api.github.com/repos/${repo}/git/blobs`, pat, 'POST', {
-        content: file.content,
+        content: liveContent,
         encoding: 'utf-8'
       });
       
