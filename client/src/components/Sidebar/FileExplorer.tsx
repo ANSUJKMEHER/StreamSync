@@ -6,7 +6,6 @@ import { getFileIcon } from '../../utils/fileUtils';
 import type { FileItem } from '../../types';
 import './FileExplorer.css';
 
-// --- Tree Data Structures ---
 type TreeNode = {
   name: string;
   path: string;
@@ -48,7 +47,6 @@ function buildFileTree(files: FileItem[]): TreeNode {
   return root;
 }
 
-// --- Recursive Component ---
 const FileTreeNodeUI = ({
   node,
   depth,
@@ -71,10 +69,9 @@ const FileTreeNodeUI = ({
   const isExpanded = expandedFolders.has(node.path);
   const isActiveFile = node.isFile && node.file?.id === activeFileId;
   const isActiveFolder = !node.isFile && node.path === activeFolderPath;
-  const paddingLeft = depth * 12 + 8;
+  const paddingLeft = depth * 12 + 16;
 
   const childrenNodes = Object.values(node.children).sort((a, b) => {
-    // Folders first, then files alphabetically
     if (a.isFile === b.isFile) return a.name.localeCompare(b.name);
     return a.isFile ? 1 : -1;
   });
@@ -82,7 +79,7 @@ const FileTreeNodeUI = ({
   return (
     <div>
       <div
-        className={`tree-node ${isActiveFile ? 'active-file' : ''} ${isActiveFolder ? 'active-folder' : ''}`}
+        className={`flex items-center py-1.5 cursor-pointer rounded-r-md ml-1 my-0.5 relative group ${isActiveFile ? 'text-primary bg-primary/10 border-l-2 border-primary font-medium' : isActiveFolder ? 'bg-surface-variant/30 text-on-surface' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/30'}`}
         style={{ paddingLeft: `${paddingLeft}px` }}
         onClick={(e) => {
           e.stopPropagation();
@@ -93,20 +90,29 @@ const FileTreeNodeUI = ({
           }
         }}
       >
-        <span className="tree-node-icon">
+        {!node.isFile && (
+          <span className={`material-symbols-outlined text-[18px] text-outline mr-1 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
+            arrow_right
+          </span>
+        )}
+        
+        <span className="flex items-center justify-center mr-2">
           {!node.isFile ? (
-            <span className={`folder-chevron ${isExpanded ? 'expanded' : ''}`}>▶</span>
+            <span className="material-symbols-outlined text-[16px] text-tertiary-fixed-dim" style={{ fontVariationSettings: "'FILL' 1" }}>folder</span>
           ) : (
-            getFileIcon(node.name).icon
+            <span style={{ width: '16px', height: '16px', display: 'flex', alignItems: 'center' }}>
+               {getFileIcon(node.name).icon}
+            </span>
           )}
         </span>
-        <span className="tree-node-name">{node.name}</span>
+        
+        <span className="font-body-md text-body-md truncate">{node.name}</span>
 
         {/* Inline Actions */}
         {node.file && (
-          <div className="tree-node-actions">
-            <button className="tree-node-action-btn" onClick={(e) => onFileAction('rename', node.file!.id, node.file!.name, e)}>✎</button>
-            <button className="tree-node-action-btn delete" onClick={(e) => onFileAction('delete', node.file!.id, node.file!.name, e)}>✕</button>
+          <div className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-surface-container/80 backdrop-blur-sm rounded">
+            <button className="text-[14px] hover:text-primary p-0.5" onClick={(e) => onFileAction('rename', node.file!.id, node.file!.name, e)}><span className="material-symbols-outlined text-[14px]">edit</span></button>
+            <button className="text-[14px] hover:text-error p-0.5" onClick={(e) => onFileAction('delete', node.file!.id, node.file!.name, e)}><span className="material-symbols-outlined text-[14px]">close</span></button>
           </div>
         )}
       </div>
@@ -133,7 +139,6 @@ const FileTreeNodeUI = ({
 };
 
 
-// --- Main Component ---
 export default function FileExplorer() {
   const { roomId } = useParams<{ roomId: string }>();
   const {
@@ -160,7 +165,6 @@ export default function FileExplorer() {
 
   const rootNode = useMemo(() => buildFileTree(files), [files]);
 
-  // Expand folders that contain the active file
   useEffect(() => {
     if (activeFileId) {
       const activeFile = files.find(f => f.id === activeFileId);
@@ -241,19 +245,19 @@ export default function FileExplorer() {
   }, [renamingId, renameValue, files, renameFile, shapes, updateShape]);
 
   return (
-    <div className="file-explorer" onClick={() => setActiveFolderPath(null)}>
+    <div className="h-full flex flex-col" onClick={() => setActiveFolderPath(null)}>
       {/* Header */}
-      <div className="explorer-header" onClick={(e) => e.stopPropagation()}>
-        <span className="explorer-title">EXPLORER</span>
-        <div className="explorer-actions">
-          <button className="explorer-action-btn" onClick={() => setIsCreating('file')} title="New File">📄</button>
-          <button className="explorer-action-btn" onClick={() => setIsCreating('folder')} title="New Folder">📁</button>
-          <button className="explorer-action-btn" onClick={() => setExpandedFolders(new Set())} title="Collapse All">➖</button>
+      <div className="px-4 py-3 flex items-center justify-between border-b border-outline-variant/10" onClick={(e) => e.stopPropagation()}>
+        <span className="font-label-md text-label-md font-bold tracking-wider text-on-surface-variant uppercase">Project</span>
+        <div className="flex gap-2 text-on-surface-variant">
+          <button className="hover:text-primary transition-colors" onClick={() => setIsCreating('file')} title="New File"><span className="material-symbols-outlined text-[16px]">note_add</span></button>
+          <button className="hover:text-primary transition-colors" onClick={() => setIsCreating('folder')} title="New Folder"><span className="material-symbols-outlined text-[16px]">create_new_folder</span></button>
+          <button className="hover:text-primary transition-colors" onClick={() => setExpandedFolders(new Set())} title="Collapse All"><span className="material-symbols-outlined text-[16px]">unfold_less</span></button>
         </div>
       </div>
 
       {/* Tree View */}
-      <div className="explorer-files">
+      <div className="flex-1 overflow-y-auto py-2">
         {Object.values(rootNode.children).map(node => (
           <FileTreeNodeUI
             key={node.path}
@@ -270,11 +274,11 @@ export default function FileExplorer() {
 
         {/* Create Input */}
         {isCreating && (
-          <div className="tree-create-input-wrapper" style={{ paddingLeft: activeFolderPath ? '20px' : '8px' }}>
-            <span className="tree-node-icon">{isCreating === 'folder' ? '📁' : '📄'}</span>
+          <div className="flex items-center px-4 py-1.5" style={{ paddingLeft: activeFolderPath ? '20px' : '16px' }}>
+            <span className="material-symbols-outlined text-[16px] text-tertiary-fixed-dim mr-2">{isCreating === 'folder' ? 'folder' : 'description'}</span>
             <input
               ref={inputRef}
-              className="tree-create-input"
+              className="bg-surface-variant text-on-surface font-body-md border border-outline-variant rounded px-2 py-0.5 w-full outline-none focus:border-primary"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onBlur={handleCreate}
@@ -289,10 +293,11 @@ export default function FileExplorer() {
 
         {/* Rename Input */}
         {renamingId && (
-          <div className="tree-rename-overlay">
-            <div className="tree-rename-box">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/50 backdrop-blur-sm">
+            <div className="bg-surface-container-high p-4 rounded-lg shadow-xl border border-outline-variant w-80">
               <input
                 ref={inputRef}
+                className="bg-surface-dim text-on-surface w-full px-3 py-2 rounded border border-outline focus:border-primary outline-none"
                 value={renameValue}
                 onChange={(e) => setRenameValue(e.target.value)}
                 onBlur={submitRename}
@@ -301,12 +306,13 @@ export default function FileExplorer() {
                   if (e.key === 'Escape') setRenamingId(null);
                 }}
               />
+              <div className="text-on-surface-variant text-xs mt-2 text-right">Press Enter to save, Esc to cancel</div>
             </div>
           </div>
         )}
 
         {files.length === 0 && !isCreating && (
-          <div className="explorer-empty" onClick={() => setIsCreating('file')}>
+          <div className="px-4 py-4 text-center text-on-surface-variant text-sm cursor-pointer hover:text-primary" onClick={() => setIsCreating('file')}>
             No files. Click to create one.
           </div>
         )}

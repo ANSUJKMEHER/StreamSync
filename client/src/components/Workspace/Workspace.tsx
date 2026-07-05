@@ -47,6 +47,9 @@ export default function Workspace() {
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionOutput, setExecutionOutput] = useState<{ stdout: string; stderr: string } | null>(null);
   
+  // Split pane state
+  const [splitWidth, setSplitWidth] = useState(50);
+  
   // Invite Modal
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
@@ -187,16 +190,16 @@ export default function Workspace() {
   };
 
   const renderEditorArea = () => (
-    <div className="editor-area">
+    <div className="flex flex-col h-full w-full overflow-hidden">
       <FileTabs />
-      <div className="editor-panel">
+      <div className="flex-1 relative">
         <MonacoEditor />
       </div>
     </div>
   );
 
   const renderCanvasArea = () => (
-    <div className="canvas-area">
+    <div className="h-full w-full relative">
       <CanvasPanel />
     </div>
   );
@@ -204,34 +207,55 @@ export default function Workspace() {
   const renderMainArea = () => {
     // Use a stable DOM structure for editor and canvas to prevent React from unmounting components when switching modes
     let content = (
-      <div className={viewMode === 'split' ? 'split-workspace' : ''} style={{ display: 'flex', width: '100%', height: '100%' }}>
+      <div className="flex w-full h-full relative" ref={(el) => {
+          if (el && !el.dataset.listenerAttached) {
+            el.dataset.listenerAttached = 'true';
+          }
+        }}>
         
         {/* Editor Area */}
         <div 
-          className={viewMode === 'split' ? 'split-workspace-left' : ''} 
-          style={{ 
-            display: viewMode === 'canvas' ? 'none' : 'flex', 
-            flexDirection: 'column',
-            flex: viewMode === 'split' ? 1 : 1, // Let SplitPane styles handle flex when in split mode
-            width: viewMode === 'split' ? undefined : '100%',
-            height: '100%'
-          }}
+          className={`flex-col h-full border-r border-outline-variant/20 relative z-20 ${viewMode === 'canvas' ? 'hidden' : 'flex'}`}
+          style={{ width: viewMode === 'split' ? `${splitWidth}%` : '100%' }}
         >
           {renderEditorArea()}
         </div>
         
         {/* Divider */}
-        {viewMode === 'split' && <div className="split-workspace-divider" />}
+        {viewMode === 'split' && (
+          <div 
+            className="w-1 bg-surface cursor-col-resize hover:bg-primary/50 transition-colors flex items-center justify-center relative z-40 group shrink-0"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              const startX = e.clientX;
+              const startWidth = splitWidth;
+              
+              const onMouseMove = (moveEvent: MouseEvent) => {
+                const deltaX = moveEvent.clientX - startX;
+                const containerWidth = window.innerWidth - (isSidebarOpen ? 260 : 0) - 48; // Account for activity bar and sidebar
+                const deltaPercent = (deltaX / containerWidth) * 100;
+                setSplitWidth(Math.max(10, Math.min(90, startWidth + deltaPercent)));
+              };
+              
+              const onMouseUp = () => {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+                document.body.style.cursor = 'default';
+              };
+              
+              document.addEventListener('mousemove', onMouseMove);
+              document.addEventListener('mouseup', onMouseUp);
+              document.body.style.cursor = 'col-resize';
+            }}
+          >
+            <div className="w-[2px] h-8 bg-outline-variant/30 group-hover:bg-primary rounded-full pointer-events-none"></div>
+          </div>
+        )}
         
         {/* Canvas Area */}
         <div 
-          className={viewMode === 'split' ? 'split-workspace-right' : ''} 
-          style={{ 
-            display: viewMode === 'editor' ? 'none' : 'block', 
-            flex: viewMode === 'split' ? 1 : 1,
-            width: viewMode === 'split' ? undefined : '100%',
-            height: '100%'
-          }}
+          className={`flex-col h-full relative z-10 ${viewMode === 'editor' ? 'hidden' : 'flex'}`}
+          style={{ width: viewMode === 'split' ? `calc(${100 - splitWidth}% - 4px)` : '100%' }}
         >
           {renderCanvasArea()}
         </div>
@@ -241,20 +265,14 @@ export default function Workspace() {
 
     // Wrap main content with vertical flex container to ensure React doesn't unmount the editor
     return (
-      <div className="editor-with-panel" style={{ display: 'flex', flexDirection: 'column', height: '100%', width: '100%' }}>
-        <div style={{ flex: 1, overflow: 'hidden', minHeight: 0 }}>
+      <div className="flex flex-col h-full w-full bg-surface-dim relative overflow-hidden">
+        <div className="flex-1 overflow-hidden min-h-0 relative z-10">
           {content}
         </div>
         {isBottomPanelOpen && (
           <>
             <div 
-              className="panel-resizer" 
-              style={{ 
-                height: '4px', 
-                background: 'var(--border-subtle)', 
-                cursor: 'row-resize',
-                zIndex: 10
-              }} 
+              className="h-1 bg-surface cursor-row-resize hover:bg-primary/50 transition-colors flex items-center justify-center relative z-40 group"
               onMouseDown={(e) => {
                 const startY = e.clientY;
                 const startHeight = bottomPanelHeight;
@@ -272,8 +290,10 @@ export default function Workspace() {
                 document.addEventListener('mousemove', onMouseMove);
                 document.addEventListener('mouseup', onMouseUp);
               }}
-            />
-            <div style={{ height: `${bottomPanelHeight}px`, flexShrink: 0, overflow: 'hidden' }}>
+            >
+              <div className="w-8 h-[2px] bg-outline-variant/30 group-hover:bg-primary rounded-full" />
+            </div>
+            <div style={{ height: `${bottomPanelHeight}px`, flexShrink: 0, overflow: 'hidden' }} className="relative z-30">
                <BottomPanel 
                   executionOutput={executionOutput} 
                   isExecuting={isExecuting} 
@@ -287,148 +307,113 @@ export default function Workspace() {
   };
 
   return (
-    <div className="app-root">
-      {/* Title Bar */}
-      <div className="titlebar">
-        <div className="titlebar-left">
-          <div className="titlebar-logo" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
-            <div className="titlebar-logo-icon">S</div>
-            <span className="titlebar-logo-text" style={{ fontSize: '14px' }}>StreamSync</span>
+    <div className="bg-background text-on-surface h-screen w-screen overflow-hidden flex flex-col font-body-md text-body-md select-none">
+      {/* Top Navigation Bar */}
+      <header className="bg-surface/60 backdrop-blur-md shadow-sm border-b border-outline-variant/30 flex justify-between items-center px-gutter h-14 w-full flex-shrink-0 z-50 fixed top-0 left-0 right-0">
+        {/* Left: Logo & Nav */}
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-80" onClick={() => navigate('/')}>
+            <div className="h-8 w-8 rounded-md bg-gradient-to-br from-primary to-accent text-white flex items-center justify-center font-bold text-lg shadow-[0_2px_8px_rgba(208,188,255,0.4)]">
+              S
+            </div>
+            <span className="font-headline-md text-headline-md font-bold text-primary tracking-tight">StreamSync</span>
           </div>
           
-          <div className="titlebar-divider" />
-          
-          {roomData && (
-             <div className="titlebar-project-info">
-               <span className="titlebar-roomname">{roomData.name}</span>
-               {roomData.access === 'VIEW' && <span className="titlebar-badge read-only">Read-Only</span>}
-               {roomData.githubRepo && (
-                 <span className="titlebar-badge github" title={`Connected to ${roomData.githubRepo}`}>
-                   <LuGithub size={12} />
-                 </span>
-               )}
-             </div>
-          )}
-        </div>
-
-        <div className="titlebar-center">
-          {/* View mode toggle */}
-          <div className="view-toggle">
+          <nav className="hidden md:flex items-center gap-1">
             <button
-              className={`view-toggle-btn ${viewMode === 'editor' ? 'active' : ''}`}
+              className={`px-3 py-1.5 rounded font-bold transition-colors active:scale-95 duration-200 ${viewMode === 'editor' ? 'text-primary border-b-2 border-primary pb-1 hover:text-primary' : 'text-on-surface-variant font-body-md text-body-md hover:text-primary'}`}
               onClick={() => setViewMode('editor')}
               title="Code Editor"
             >
               Code
             </button>
             <button
-              className={`view-toggle-btn ${viewMode === 'split' ? 'active' : ''}`}
-              onClick={() => setViewMode('split')}
-              title="Split View"
-            >
-              Split
-            </button>
-            <button
-              className={`view-toggle-btn ${viewMode === 'canvas' ? 'active' : ''}`}
+              className={`px-3 py-1.5 rounded font-bold transition-colors active:scale-95 duration-200 ${viewMode === 'canvas' ? 'text-primary border-b-2 border-primary pb-1 hover:text-primary' : 'text-on-surface-variant font-body-md text-body-md hover:text-primary'}`}
               onClick={() => setViewMode('canvas')}
               title="Canvas"
             >
               Canvas
             </button>
-          </div>
+            <button
+              className={`px-3 py-1.5 rounded font-bold transition-colors active:scale-95 duration-200 ${viewMode === 'split' ? 'text-primary border-b-2 border-primary pb-1 hover:text-primary' : 'text-on-surface-variant font-body-md text-body-md hover:text-primary'}`}
+              onClick={() => setViewMode('split')}
+              title="Split View"
+            >
+              Split
+            </button>
+          </nav>
         </div>
 
-        <div className="titlebar-right">
-          {/* Share Action */}
+        {/* Right: Actions & Profile */}
+        <div className="flex items-center gap-4">
           {roomData && roomData.ownerId === user?.id && (
             <button 
-              className="titlebar-btn action-share" 
-              onClick={() => setIsInviteModalOpen(true)} 
-              title="Share Project"
+              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-outline-variant/50 text-on-surface-variant hover:bg-surface-variant/50 hover:text-on-surface hover:border-outline transition-colors text-label-md font-label-md"
+              onClick={() => setIsInviteModalOpen(true)}
             >
-              <LuShare2 size={14} />
-              <span>Share</span>
+              <span className="material-symbols-outlined text-[18px]">share</span>
+              Share
             </button>
           )}
 
-          {/* Run Action */}
           <button 
-            className="titlebar-btn action-run" 
-            onClick={handleRunCode} 
-            title="Run Code"
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-primary-container to-inverse-primary text-on-primary-container font-label-md font-bold shadow-[0_0_10px_rgba(160,120,255,0.2)] hover:shadow-[0_0_15px_rgba(160,120,255,0.4)] transition-all active:scale-95 ${isExecuting || !activeFile ? 'opacity-50 cursor-not-allowed' : ''}`}
+            onClick={handleRunCode}
             disabled={isExecuting || !activeFile}
           >
-            <LuPlay size={14} />
-            <span>Run</span>
+            <span className="material-symbols-outlined text-[18px]">play_arrow</span>
+            Run Code
           </button>
           
-          {/* Terminal Toggle */}
           <button 
-            className="titlebar-btn action-terminal" 
+            className="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-full hover:bg-surface-variant/50"
             onClick={() => setIsBottomPanelOpen(!isBottomPanelOpen)} 
-            title="Toggle Panel"
+            title="Toggle Terminal"
           >
-            <LuTerminal size={14} />
-            <span>Terminal</span>
+            <span className="material-symbols-outlined text-[20px]">terminal</span>
           </button>
-          
-          <div className="titlebar-divider" />
-          
-          {/* Export Actions */}
-          <div className="titlebar-icon-group">
-            <button className="titlebar-icon-btn" onClick={handleExportZip} title="Export Code as ZIP">
-              <LuArchive size={15} />
-            </button>
-            <button className="titlebar-icon-btn" onClick={handleExportPng} title="Export Canvas as PNG">
-              <LuImage size={15} />
-            </button>
+
+          {/* Profile/Collaborators */}
+          <div className="flex items-center -space-x-2 border-l border-outline-variant/30 pl-4 ml-2">
+            {activeFileId && roomUsers.filter(u => u.userId !== user?.id).map((u, i) => (
+              <div 
+                key={u.userId}
+                className="w-7 h-7 rounded-full border-2 border-surface flex items-center justify-center font-label-md text-[10px] bg-accent text-white shadow-sm hover:-translate-y-0.5 hover:scale-110 transition-transform"
+                style={{ zIndex: 20 - i }}
+                title={u.username}
+              >
+                {u.username.charAt(0).toUpperCase()}
+              </div>
+            ))}
+            
+            {user ? (
+              <div className="z-30 ml-2">
+                <UserDropdown />
+              </div>
+            ) : (
+              <div className="w-7 h-7 rounded-full border-2 border-surface bg-surface-variant text-on-surface-variant flex items-center justify-center font-label-md text-[10px] z-30">
+                G
+              </div>
+            )}
           </div>
-          
-          <div className="titlebar-divider" />
-
-          {/* Active room users */}
-          {activeFileId && roomUsers.filter(u => u.userId !== user?.id).length > 0 && (
-            <div className="titlebar-active-users">
-              {roomUsers.filter(u => u.userId !== user?.id).map((u, i) => (
-                <div 
-                  key={u.userId} 
-                  className="titlebar-user-avatar remote-user" 
-                  title={u.username}
-                  style={{ zIndex: 10 - i }}
-                >
-                  {u.username.charAt(0).toUpperCase()}
-                </div>
-              ))}
-              <div className="titlebar-divider" />
-            </div>
-          )}
-
-          {/* User info */}
-          {user ? (
-            <UserDropdown />
-          ) : (
-            <div className="titlebar-user">
-              <span className="titlebar-user-name">Guest</span>
-            </div>
-          )}
         </div>
-      </div>
+      </header>
 
-      {/* Main Content Layout */}
-      <div className="main-content" style={{ display: 'flex', flexDirection: 'row', height: 'calc(100vh - 40px - 24px)' }}>
+      {/* Main Content Area (Below Header) */}
+      <div className="flex flex-1 pt-14 h-full w-full overflow-hidden relative">
         <ActivityBar activeView={activeActivityView} setActiveView={setActiveActivityView} />
         
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'row', height: '100%', overflow: 'hidden' }}>
-          <SplitPane
-            left={renderSidebar()}
-            right={renderMainArea()}
-          />
-        </div>
+        {isSidebarOpen && (
+          <aside className="w-[260px] flex-shrink-0 bg-surface-container-low/80 backdrop-blur-md border-r border-outline-variant/20 flex flex-col h-full z-30">
+            {renderSidebar()}
+          </aside>
+        )}
+        
+        <main className="flex-1 flex w-full h-full relative z-20 overflow-hidden bg-surface-dim">
+           {renderMainArea()}
+        </main>
       </div>
 
-      {/* Status Bar */}
-      <StatusBar />
-      
       {/* Modals */}
       {isInviteModalOpen && roomData && (
         <InviteModal roomId={roomData.id} onClose={() => setIsInviteModalOpen(false)} />

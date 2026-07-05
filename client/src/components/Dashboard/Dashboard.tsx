@@ -148,167 +148,209 @@ export default function Dashboard() {
   const filteredRepos = repos.filter(r => r.full_name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   if (loading) {
-    return <div className="dashboard-loading">Loading workspaces...</div>;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-on-surface-variant animate-pulse font-code text-lg">Loading workspaces...</div>
+      </div>
+    );
   }
 
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
-        <div className="dashboard-brand">StreamSync</div>
-        <div className="dashboard-user" style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+    <div className="min-h-screen bg-background text-on-surface font-sans">
+      {/* Header */}
+      <header className="h-16 border-b border-outline-variant/30 flex items-center justify-between px-6 bg-surface">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 rounded-md bg-gradient-to-br from-primary to-accent text-white flex items-center justify-center font-bold text-lg shadow-[0_2px_8px_rgba(208,188,255,0.4)]">
+            S
+          </div>
+          <span className="font-headline-md font-bold text-primary tracking-tight text-xl">StreamSync</span>
+        </div>
+        
+        <div className="flex items-center gap-4">
           <NotificationsHub />
           <UserDropdown />
         </div>
       </header>
 
-      <main className="dashboard-main">
-        <div className="dashboard-actions-row" style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
-          <section className="create-room-section" style={{ flex: 1, minWidth: '300px' }}>
-            <h2>Create New Workspace</h2>
-            <form onSubmit={handleCreateRoom} className="create-room-form">
-              <input
-                type="text"
-                placeholder="Workspace Name (e.g. System Architecture)"
-                value={newRoomName}
-                onChange={(e) => setNewRoomName(e.target.value)}
-                required
-              />
-              <button type="submit" className="btn-primary">Create</button>
-            </form>
-          </section>
-
-          <section className="import-github-section" style={{ flex: 2, minWidth: '400px' }}>
-            <div className="import-github-header">
-              <h2>Import Git Repository</h2>
-            </div>
-            
-            <div className="import-github-controls">
-              <div className="import-dropdown">
-                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                  <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                </svg>
-                {repos.length > 0 ? repos[0].full_name.split('/')[0] : 'GitHub'}
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-              </div>
-              <div className="import-search">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--text-muted)'}}><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                <input 
-                  type="text" 
-                  placeholder="Search..." 
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="github-repo-list-container">
-              {reposLoading ? (
-                <div className="repo-loading">Loading repositories...</div>
-              ) : githubError ? (
-                <div className="no-repos-msg" style={{ color: '#ef4444' }}>
-                  {githubError}
-                  <br />
-                  <button onClick={() => window.open(`${import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://streamsync-cxox.onrender.com')}/api/v1/oauth/github`, 'GitHub OAuth', 'width=600,height=700')} className="btn-primary" style={{ marginTop: '1rem' }}>
-                    Connect GitHub
-                  </button>
-                </div>
-              ) : repos.length === 0 ? (
-                <div className="no-repos-msg">
-                  No repositories found. Ensure you are connected to GitHub.
-                </div>
-              ) : (
-                <div className="github-repo-list">
-                  {filteredRepos.map(repo => (
-                    <div key={repo.id} className="repo-list-item">
-                      <div className="repo-info">
-                        <div className="repo-icon-wrap">
-                          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                          </svg>
-                        </div>
-                        <div className="repo-name">
-                          {repo.name}
-                          {repo.private && (
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{color: 'var(--text-muted)'}}><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                          )}
-                          <span className="repo-time-ago">· {Math.round((Date.now() - new Date(repo.updated_at).getTime()) / (1000 * 60 * 60 * 24))}d ago</span>
-                        </div>
-                      </div>
-                      <button 
-                        className="btn-import-repo" 
-                        onClick={() => handleImportGithub(repo.full_name)}
-                        disabled={isImporting}
-                      >
-                        Import
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="import-manual-divider">
-              <span>or import via URL</span>
-            </div>
-
-            <div className="create-room-form manual-import-form">
-              <input
-                type="text"
-                placeholder="Repository URL (e.g. https://github.com/facebook/react)"
-                value={importRepo}
-                onChange={(e) => setImportRepo(e.target.value)}
-              />
-              <button 
-                className="btn-primary" 
-                disabled={isImporting || !importRepo.trim()} 
-                onClick={() => handleImportGithub(importRepo)}
-                style={{ background: 'var(--text-primary)', color: 'var(--bg-surface)' }}
-              >
-                Import URL
-              </button>
-            </div>
-          </section>
+      {/* Main Content */}
+      <main className="max-w-7xl mx-auto px-6 py-12">
+        {/* Welcome Text */}
+        <div className="mb-12">
+          <h1 className="text-4xl font-bold text-on-surface mb-2">
+            Welcome back, {useAuthStore.getState().user?.name?.split(' ')[0] || 'Developer'}
+          </h1>
+          <p className="text-on-surface-variant text-body-lg">Here's an overview of your recent projects and repositories.</p>
         </div>
 
-        <section className="rooms-list-section">
-          <h2>Your Workspaces</h2>
-          {rooms.length === 0 ? (
-            <p className="no-rooms-msg">You don't have any workspaces yet.</p>
-          ) : (
-            <div className="rooms-grid">
-              {rooms.map((room) => (
-                <div key={room.id} className="room-card" onClick={() => navigate(`/room/${room.id}`)}>
-                  <div className="room-card-header">
-                    <h3>{room.name}</h3>
-                    <button className="btn-icon delete" onClick={(e) => handleDeleteRoom(room.id, e)}>✕</button>
-                  </div>
-                  <div className="room-card-stats">
-                    {room._count?.files || 0} Files
-                  </div>
-                  <div className="room-card-sharing">
-                    <button 
-                      className={`btn-share-toggle ${room.isPublic ? 'active' : ''}`}
-                      onClick={(e) => handleTogglePublic(room, e)}
-                    >
-                      {room.isPublic ? '🌐 Public' : '🔒 Private'}
-                    </button>
-                    {room.isPublic && (
-                      <button 
-                        className="btn-access-toggle"
-                        onClick={(e) => handleToggleAccess(room, e)}
-                      >
-                        {room.publicAccess === 'VIEW' ? 'Read-Only' : 'Anyone can Edit'}
-                      </button>
+        {/* Two Columns */}
+        <div className="flex flex-col lg:flex-row gap-8">
+           {/* Left Column */}
+           <div className="flex-1 flex flex-col gap-8 min-w-[320px]">
+             {/* Create Workspace */}
+             <section>
+               <h2 className="text-title-lg font-semibold text-on-surface mb-4">Create New Workspace</h2>
+               <div className="bg-surface-container-low border border-outline-variant/30 rounded-2xl p-6">
+                 <form onSubmit={handleCreateRoom} className="flex flex-col gap-4">
+                   <div className="relative">
+                     <span className="absolute left-4 top-2 text-on-surface-variant text-xs font-code uppercase tracking-wider">Workspace Name</span>
+                     <input
+                       type="text"
+                       placeholder="e.g. System Architecture"
+                       value={newRoomName}
+                       onChange={(e) => setNewRoomName(e.target.value)}
+                       required
+                       className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl py-3 px-4 pt-8 text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:border-primary transition-colors font-code"
+                     />
+                   </div>
+                   <button type="submit" className="w-full bg-primary hover:bg-primary/90 text-on-primary font-label-lg rounded-xl py-3 transition-colors shadow-[0_4px_12px_rgba(208,188,255,0.2)]">
+                     Create Workspace
+                   </button>
+                 </form>
+               </div>
+             </section>
+
+             {/* Your Workspaces */}
+             <section>
+               <h2 className="text-title-lg font-semibold text-on-surface mb-4">Your Workspaces</h2>
+               <div className="flex flex-col gap-4">
+                  {rooms.length === 0 ? (
+                    <div className="text-on-surface-variant p-4">You don't have any workspaces yet.</div>
+                  ) : (
+                    rooms.map((room) => (
+                      <div key={room.id} onClick={() => navigate(`/room/${room.id}`)} className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-5 hover:border-primary/50 transition-colors cursor-pointer group flex flex-col gap-4">
+                        <div className="flex justify-between items-start">
+                          <h3 className="font-code-lg text-lg text-primary">{room.name}</h3>
+                          <button onClick={(e) => handleDeleteRoom(room.id, e)} className="text-on-surface-variant hover:text-error transition-colors p-1">
+                            <span className="material-symbols-outlined text-[20px]">close</span>
+                          </button>
+                        </div>
+                        <div className="text-on-surface-variant text-body-sm font-code">
+                          {room._count?.files || 0} Files
+                        </div>
+                        <div className="flex items-center gap-2">
+                           <button 
+                             onClick={(e) => handleTogglePublic(room, e)}
+                             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold hover:opacity-80 transition-opacity ${room.isPublic ? 'bg-success/10 text-success' : 'bg-surface-variant text-on-surface-variant'}`}
+                           >
+                             <span className="material-symbols-outlined text-[14px]">{room.isPublic ? 'public' : 'lock'}</span>
+                             {room.isPublic ? 'Public' : 'Private'}
+                           </button>
+                           {room.isPublic && (
+                             <button
+                               onClick={(e) => handleToggleAccess(room, e)}
+                               className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-surface-variant text-on-surface-variant hover:bg-surface-container-high transition-colors"
+                             >
+                               {room.publicAccess === 'VIEW' ? 'Read-Only' : 'Anyone can Edit'}
+                             </button>
+                           )}
+                        </div>
+                        <div className="text-on-surface-variant/70 text-xs font-code mt-2">
+                          Created {new Date(room.createdAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))
+                  )}
+               </div>
+             </section>
+           </div>
+
+           {/* Right Column */}
+           <div className="lg:w-[600px] flex-shrink-0 flex flex-col gap-8">
+             <section>
+               <h2 className="text-title-lg font-semibold text-on-surface mb-4">Import Git Repository</h2>
+               <div className="bg-surface-container-low border border-outline-variant/30 rounded-2xl overflow-hidden flex flex-col h-[700px]">
+                 
+                 {/* Top Controls */}
+                 <div className="p-4 border-b border-outline-variant/20 flex gap-4 bg-surface-container-lowest">
+                   <div className="flex items-center gap-2 bg-surface-variant rounded-lg px-3 py-2 text-on-surface">
+                     <span className="material-symbols-outlined text-[18px]">account_circle</span>
+                     <span className="font-label-md">{repos.length > 0 ? repos[0].full_name.split('/')[0] : 'GitHub'}</span>
+                     <span className="material-symbols-outlined text-[18px]">keyboard_arrow_down</span>
+                   </div>
+                   <div className="flex-1 flex items-center gap-2 bg-surface-container rounded-lg px-3 py-2 border border-outline-variant/30 focus-within:border-primary transition-colors">
+                     <span className="material-symbols-outlined text-[18px] text-on-surface-variant">search</span>
+                     <input 
+                       type="text" 
+                       placeholder="Search..." 
+                       className="bg-transparent border-none outline-none text-on-surface w-full placeholder-on-surface-variant/50 font-code text-sm"
+                       value={searchQuery}
+                       onChange={(e) => setSearchQuery(e.target.value)}
+                     />
+                   </div>
+                 </div>
+
+                 {/* Repo List */}
+                 <div className="flex-1 overflow-y-auto no-scrollbar">
+                    {reposLoading ? (
+                      <div className="p-8 text-center text-on-surface-variant animate-pulse font-code text-sm">Loading repositories...</div>
+                    ) : githubError ? (
+                      <div className="p-8 text-center flex flex-col items-center gap-4">
+                        <span className="text-error font-code text-sm">{githubError}</span>
+                        <button onClick={() => window.open(`${import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://streamsync-cxox.onrender.com')}/api/v1/oauth/github`, 'GitHub OAuth', 'width=600,height=700')} className="bg-surface-variant hover:bg-surface-container-highest text-on-surface px-4 py-2 rounded-lg transition-colors font-label-md">
+                          Connect GitHub
+                        </button>
+                      </div>
+                    ) : repos.length === 0 ? (
+                      <div className="p-8 text-center text-on-surface-variant font-code text-sm">
+                        No repositories found. Ensure you are connected to GitHub.
+                      </div>
+                    ) : (
+                      <div className="flex flex-col">
+                        {filteredRepos.map(repo => (
+                          <div key={repo.id} className="flex items-center justify-between p-4 border-b border-outline-variant/10 hover:bg-surface-container-lowest transition-colors">
+                            <div className="flex items-center gap-3">
+                              <span className="material-symbols-outlined text-[20px] text-on-surface-variant">folder_zip</span>
+                              <div className="flex flex-col">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-code text-on-surface text-sm">{repo.name}</span>
+                                  {repo.private && <span className="material-symbols-outlined text-[14px] text-on-surface-variant">lock</span>}
+                                </div>
+                                <span className="text-xs text-on-surface-variant font-code mt-1">
+                                  {Math.round((Date.now() - new Date(repo.updated_at).getTime()) / (1000 * 60 * 60 * 24))}d ago
+                                </span>
+                              </div>
+                            </div>
+                            <button 
+                              onClick={() => handleImportGithub(repo.full_name)}
+                              disabled={isImporting}
+                              className="bg-surface-variant hover:bg-surface-container-highest text-on-surface font-label-md px-4 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              Import
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     )}
-                  </div>
-                  <div className="room-card-footer">
-                    Created {new Date(room.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
+                 </div>
+
+                 {/* URL Import */}
+                 <div className="p-6 border-t border-outline-variant/20 bg-surface-container-lowest">
+                   <div className="relative text-center mb-6">
+                     <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-outline-variant/30"></div></div>
+                     <span className="relative bg-surface-container-lowest px-4 text-xs text-on-surface-variant font-code uppercase tracking-wider">or import via URL</span>
+                   </div>
+                   <div className="flex gap-4">
+                     <input
+                       type="text"
+                       placeholder="Repository URL (e.g. https://github.com/facebook/react)"
+                       value={importRepo}
+                       onChange={(e) => setImportRepo(e.target.value)}
+                       className="flex-1 bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-2.5 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors font-code text-sm"
+                     />
+                     <button 
+                       disabled={isImporting || !importRepo.trim()} 
+                       onClick={() => handleImportGithub(importRepo)}
+                       className="bg-surface-variant hover:bg-surface-container-highest text-on-surface font-label-md px-6 py-2.5 rounded-lg transition-colors disabled:opacity-50"
+                     >
+                       Import URL
+                     </button>
+                   </div>
+                 </div>
+
+               </div>
+             </section>
+           </div>
+        </div>
       </main>
     </div>
   );

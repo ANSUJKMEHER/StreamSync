@@ -1,9 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
-import Dashboard from './components/Dashboard/Dashboard';
-import Workspace from './components/Workspace/Workspace';
 import AuthModal from './components/Auth/AuthModal';
+import GlobalLoader from './components/Layout/GlobalLoader';
+
+// Lazy load heavy route components
+const Dashboard = lazy(() => import('./components/Dashboard/Dashboard'));
+const Workspace = lazy(() => import('./components/Workspace/Workspace'));
 
 function App() {
   const { isAuthenticated, restoreSession } = useAuthStore();
@@ -14,17 +17,9 @@ function App() {
     restoreSession().finally(() => setSessionChecked(true));
   }, [restoreSession]);
 
-  // Show loading while checking session
+  // Show global loader while checking session
   if (!sessionChecked) {
-    return (
-      <div className="app-loading">
-        <div className="app-loading-logo">S</div>
-        <div className="app-loading-text">STREAMSYNC</div>
-        <div className="app-loading-bar">
-          <div className="app-loading-bar-fill" />
-        </div>
-      </div>
-    );
+    return <GlobalLoader />;
   }
 
   // Show auth modal if not authenticated (except for public rooms, but we handle that in Workspace for now.
@@ -32,12 +27,12 @@ function App() {
   // but AuthModal covers the whole screen if they go to / without auth.
   
   return (
-    <>
+    <Suspense fallback={<GlobalLoader />}>
       <Routes>
         <Route path="/" element={isAuthenticated ? <Dashboard /> : <AuthModal />} />
         <Route path="/room/:roomId" element={<Workspace />} />
       </Routes>
-    </>
+    </Suspense>
   );
 }
 

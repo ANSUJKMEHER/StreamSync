@@ -18,20 +18,19 @@ export default function BottomPanel({ executionOutput, isExecuting, onClose }: B
   const xtermRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
 
-  // Initialize xterm
   useEffect(() => {
     if (!terminalRef.current) return;
 
     const term = new Terminal({
       theme: {
-        background: '#1e1e1e', // VS Code dark
-        foreground: '#cccccc',
-        cursor: '#ffffff',
+        background: '#11131c', // bg-surface-dim
+        foreground: '#e1e1ef', // on-surface
+        cursor: '#d0bcff', // primary
       },
-      fontFamily: 'Consolas, "Courier New", monospace',
+      fontFamily: '"JetBrains Mono", Consolas, monospace',
       fontSize: 13,
       cursorBlink: true,
-      disableStdin: true, // It's just for output right now
+      disableStdin: true,
     });
     const fitAddon = new FitAddon();
     term.loadAddon(fitAddon);
@@ -53,7 +52,6 @@ export default function BottomPanel({ executionOutput, isExecuting, onClose }: B
     };
   }, []);
 
-  // Handle execution output
   useEffect(() => {
     if (isExecuting && xtermRef.current) {
       xtermRef.current.write('\r\n\x1b[33mExecuting...\x1b[0m\r\n');
@@ -67,7 +65,6 @@ export default function BottomPanel({ executionOutput, isExecuting, onClose }: B
       term.writeln('\x1b[32m$ \x1b[0mExecution Complete');
       
       if (executionOutput.stdout) {
-        // Replace newlines with \r\n for xterm
         term.write(executionOutput.stdout.replace(/\n/g, '\r\n'));
       }
       if (executionOutput.stderr) {
@@ -78,7 +75,6 @@ export default function BottomPanel({ executionOutput, isExecuting, onClose }: B
     }
   }, [executionOutput]);
 
-  // Refit on tab change (xterm loses layout if hidden)
   useEffect(() => {
     if (activeTab === 'TERMINAL') {
       setTimeout(() => fitAddonRef.current?.fit(), 10);
@@ -86,45 +82,62 @@ export default function BottomPanel({ executionOutput, isExecuting, onClose }: B
   }, [activeTab]);
 
   return (
-    <div className="bottom-panel">
-      <div className="bottom-panel-header">
-        <div className="bottom-panel-tabs">
-          {(['PROBLEMS', 'OUTPUT', 'TERMINAL'] as Tab[]).map(tab => (
-            <button
-              key={tab}
-              className={`panel-tab ${activeTab === tab ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-        <div className="bottom-panel-actions">
-          <button className="panel-action-btn" onClick={onClose} title="Close Panel">✕</button>
+    <div className="h-full bg-surface-container border-t border-outline-variant/30 flex flex-col flex-shrink-0 relative z-30">
+      <div className="flex items-center px-4 h-8 border-b border-outline-variant/20 gap-4">
+        {(['TERMINAL', 'OUTPUT', 'PROBLEMS'] as Tab[]).map(tab => (
+          <button
+            key={tab}
+            className={`font-label-md text-label-md uppercase tracking-wider h-full transition-colors ${activeTab === tab ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-on-surface'}`}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab}
+          </button>
+        ))}
+        
+        <div className="ml-auto flex items-center gap-2">
+          <button 
+            className="p-1 rounded text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors"
+            onClick={() => {
+              if (xtermRef.current) {
+                xtermRef.current.clear();
+                xtermRef.current.writeln('\x1b[32m$ \x1b[0mStreamSync Terminal Initialized...');
+              }
+            }}
+            title="Clear Terminal"
+          >
+            <span className="material-symbols-outlined text-[16px]">delete</span>
+          </button>
+          <button 
+            className="p-1 rounded text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors"
+            onClick={onClose}
+            title="Close Panel"
+          >
+            <span className="material-symbols-outlined text-[16px]">keyboard_arrow_down</span>
+          </button>
         </div>
       </div>
       
-      <div className="bottom-panel-content">
+      <div className="flex-1 overflow-auto bg-surface-container-lowest font-code-md text-code-md">
         <div 
-          className="panel-tab-content terminal-wrapper" 
-          style={{ display: activeTab === 'TERMINAL' ? 'block' : 'none', height: '100%' }}
+          className="h-full w-full p-2" 
+          style={{ display: activeTab === 'TERMINAL' ? 'block' : 'none' }}
         >
           <div ref={terminalRef} style={{ height: '100%', width: '100%' }} />
         </div>
         
         {activeTab === 'OUTPUT' && (
-          <div className="panel-tab-content output-wrapper">
+          <div className="p-4 h-full text-on-surface whitespace-pre-wrap font-code-md text-code-md overflow-auto">
             {executionOutput ? (
-               <pre className="raw-output">{executionOutput.stdout || executionOutput.stderr}</pre>
+               <div className="raw-output text-on-surface">{executionOutput.stdout || executionOutput.stderr}</div>
             ) : (
-               <span className="muted">No output available. Run code to see output here.</span>
+               <div className="text-on-surface-variant">No output available. Run code to see output here.</div>
             )}
           </div>
         )}
 
         {activeTab === 'PROBLEMS' && (
-          <div className="panel-tab-content problems-wrapper">
-            <span className="muted">No problems have been detected in the workspace.</span>
+          <div className="p-4 h-full text-on-surface-variant font-code-md text-code-md">
+            No problems have been detected in the workspace.
           </div>
         )}
       </div>
