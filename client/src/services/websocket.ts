@@ -48,6 +48,7 @@ class WebSocketService {
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private pingTimer: ReturnType<typeof setInterval> | null = null;
   private joinedRooms: Set<string> = new Set();
+  private messageQueue: WSMessage[] = [];
 
   private _status: ConnectionStatus = 'disconnected';
   private _roomUsers: Map<string, Array<{ userId: string; username: string }>> = new Map();
@@ -87,6 +88,12 @@ class WebSocketService {
         // Rejoin rooms after reconnect
         for (const roomId of this.joinedRooms) {
           this.send({ type: 'join-room', roomId });
+        }
+
+        // Flush queued messages
+        while (this.messageQueue.length > 0) {
+          const msg = this.messageQueue.shift();
+          if (msg) this.send(msg);
         }
       };
 
@@ -136,15 +143,16 @@ class WebSocketService {
       this.reconnectTimer = null;
     }
     this.stopPing();
+    this.messageQueue = [];
 
     if (this.socket) {
-      this.socket.close(1000, 'Client disconnect');
+      this.socket.close(1000, 'Intentional disconnect');
       this.socket = null;
     }
-
-    this.joinedRooms.clear();
-    this._roomUsers.clear();
+    this.token = null;
     this.setStatus('disconnected');
+    this._roomUsers.clear();
+    this.joinedRooms.clear();
   }
 
   /**
@@ -207,6 +215,12 @@ class WebSocketService {
         console.log(`[WS] Sending ${message.type}:`, message);
       }
       this.socket.send(JSON.stringify({ ...message, timestamp: new Date().toISOString() }));
+    } else {
+      // Queue message if not connected yet
+      if (message.type !== 'ping' && message.type !== 'pong') {
+        console.log(`[WS] Queuing ${message.type} (socket not ready)`);
+        this.messageQueue.push(message);
+      }
     }
   }
 
