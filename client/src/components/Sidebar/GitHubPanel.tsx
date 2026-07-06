@@ -3,7 +3,8 @@ import { useAuthStore } from '../../store/authStore';
 import { useFileStore } from '../../store/fileStore';
 import { githubService } from '../../services/githubService';
 import type { Room } from '../../services/roomService';
-import './GitHubPanel.css';
+import { FaGithub } from 'react-icons/fa6';
+import { VscGitMerge } from 'react-icons/vsc';
 
 interface GitHubPanelProps {
   roomData: Room | null;
@@ -43,11 +44,11 @@ export default function GitHubPanel({ roomData }: GitHubPanelProps) {
 
   if (!roomData) {
     return (
-      <div className="sidebar-panel">
-        <div className="sidebar-header">
-          <h2>Source Control</h2>
+      <div className="h-full flex flex-col">
+        <div className="px-4 py-3 border-b border-outline-variant/10">
+          <h2 className="font-label-md text-label-md font-bold tracking-wider text-on-surface-variant uppercase m-0">Source Control</h2>
         </div>
-        <div className="sidebar-content" style={{ padding: '1rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+        <div className="p-4 text-center text-on-surface-variant font-body-md mt-10">
           Open a workspace to manage source control.
         </div>
       </div>
@@ -56,11 +57,11 @@ export default function GitHubPanel({ roomData }: GitHubPanelProps) {
 
   if (!roomData.githubRepo) {
     return (
-      <div className="sidebar-panel">
-        <div className="sidebar-header">
-          <h2>Source Control</h2>
+      <div className="h-full flex flex-col">
+        <div className="px-4 py-3 border-b border-outline-variant/10">
+          <h2 className="font-label-md text-label-md font-bold tracking-wider text-on-surface-variant uppercase m-0">Source Control</h2>
         </div>
-        <div className="sidebar-content" style={{ padding: '1rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+        <div className="p-4 text-center text-on-surface-variant font-body-md mt-10">
           This workspace is not linked to a GitHub repository.
         </div>
       </div>
@@ -68,25 +69,25 @@ export default function GitHubPanel({ roomData }: GitHubPanelProps) {
   }
 
   return (
-    <div className="sidebar-panel">
-      <div className="sidebar-header">
-        <h2>Source Control</h2>
+    <div className="h-full flex flex-col">
+      <div className="px-4 py-3 border-b border-outline-variant/10">
+        <h2 className="font-label-md text-label-md font-bold tracking-wider text-on-surface-variant uppercase m-0">Source Control</h2>
       </div>
-      <div className="sidebar-content github-panel-content">
-        <div className="github-repo-info">
-          <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-            <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-          </svg>
-          <span className="repo-name-text">{roomData.githubRepo}</span>
-        </div>
-        <div className="github-branch-info">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="3" x2="6" y2="15"></line><circle cx="18" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><path d="M18 9a9 9 0 0 1-9 9"></path></svg>
-          <span className="branch-name-text">{roomData.githubBranch || 'main'}</span>
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center gap-3 text-on-surface">
+            <FaGithub size={18} className="text-on-surface-variant" />
+            <span className="font-label-md bg-surface-variant/50 px-2 py-1 rounded-md border border-outline-variant/30">{roomData.githubRepo}</span>
+          </div>
+          <div className="flex items-center gap-3 text-on-surface">
+            <VscGitMerge size={18} className="text-on-surface-variant" />
+            <span className="font-label-md bg-surface-variant/50 px-2 py-1 rounded-md border border-outline-variant/30">{roomData.githubBranch || 'main'}</span>
+          </div>
         </div>
 
-        <div className="github-commit-box">
+        <div className="flex flex-col gap-3">
           <textarea
-            className="commit-input"
+            className="w-full min-h-[80px] bg-surface-container-highest border border-outline-variant/40 text-on-surface rounded-lg p-3 font-body-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/50 transition-colors resize-y"
             placeholder="Commit message"
             value={commitMessage}
             onChange={(e) => setCommitMessage(e.target.value)}
@@ -94,7 +95,7 @@ export default function GitHubPanel({ roomData }: GitHubPanelProps) {
             rows={3}
           />
           <button 
-            className="btn-commit-push"
+            className="w-full bg-on-surface text-surface py-2 rounded-lg font-label-md font-bold hover:bg-on-surface-variant disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
             onClick={handlePush}
             disabled={!commitMessage.trim() || isPushing}
           >
@@ -102,16 +103,16 @@ export default function GitHubPanel({ roomData }: GitHubPanelProps) {
           </button>
         </div>
 
-        {error && <div className="github-error">{error}</div>}
-        {success && <div className="github-success">Successfully pushed to GitHub!</div>}
+        {error && <div className="text-error font-body-sm bg-error/10 p-3 rounded-lg border border-error/20">{error}</div>}
+        {success && <div className="text-success font-body-sm bg-success/10 p-3 rounded-lg border border-success/20">Successfully pushed to GitHub!</div>}
 
-        <div className="github-changes-section">
-          <h3>Changes ({files.filter(f => !f.isFolder).length})</h3>
-          <div className="github-changed-files">
+        <div className="flex flex-col gap-3">
+          <h3 className="font-label-sm font-bold tracking-widest text-on-surface-variant uppercase m-0">Changes ({files.filter(f => !f.isFolder).length})</h3>
+          <div className="flex flex-col gap-1">
             {files.filter(f => !f.isFolder).map(f => (
-              <div key={f.id} className="github-changed-file">
-                <span className="changed-file-icon">M</span>
-                <span className="changed-file-name">{f.name}</span>
+              <div key={f.id} className="flex items-center gap-3 px-3 py-2 rounded-md hover:bg-surface-variant/50 group transition-colors">
+                <span className="font-mono text-[10px] font-bold text-warning w-4 text-center">M</span>
+                <span className="font-body-sm text-on-surface-variant group-hover:text-on-surface truncate">{f.name}</span>
               </div>
             ))}
           </div>

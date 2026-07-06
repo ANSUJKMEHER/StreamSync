@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuthStore } from '../../store/authStore';
-import './UserDropdown.css';
+import { MdSettings, MdLogout, MdKeyboardArrowDown } from 'react-icons/md';
 
 export default function UserDropdown() {
   const { user, logout } = useAuthStore();
@@ -20,46 +20,58 @@ export default function UserDropdown() {
   if (!user) return null;
 
   return (
-    <div className="user-dropdown-container" ref={dropdownRef}>
-      <div className="user-dropdown-trigger" onClick={() => setIsOpen(!isOpen)}>
+    <div className="relative" ref={dropdownRef}>
+      <button 
+        className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-surface-variant transition-colors group" 
+        onClick={() => setIsOpen(!isOpen)}
+      >
         {user.avatarUrl ? (
-          <img src={user.avatarUrl} alt={user.username} className="user-avatar-image" />
+          <img src={user.avatarUrl} alt={user.username} className="w-6 h-6 rounded-full object-cover border border-outline-variant/30" />
         ) : (
-          <div className="user-avatar-fallback">
+          <div className="w-6 h-6 rounded-full bg-gradient-to-br from-primary to-inverse-primary flex items-center justify-center font-bold text-[10px] text-on-primary">
             {user.username.charAt(0).toUpperCase()}
           </div>
         )}
-        <span className="user-dropdown-name">{user.username}</span>
-        <svg className="user-dropdown-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none">
-          <polyline points="6 9 12 15 18 9"></polyline>
-        </svg>
-      </div>
+        <span className="font-label-md text-on-surface-variant group-hover:text-on-surface max-w-[100px] truncate hidden md:block">
+          {user.username}
+        </span>
+        <MdKeyboardArrowDown className={`text-on-surface-variant transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} size={16} />
+      </button>
 
       {isOpen && (
-        <div className="user-dropdown-menu">
-          <div className="user-dropdown-header">
-            <span className="dropdown-username">{user.username}</span>
-            {user.githubId && <span className="dropdown-badge">GitHub Connected</span>}
+        <div className="absolute top-full right-0 mt-2 w-56 bg-surface-container-highest border border-outline-variant/30 rounded-xl shadow-2xl z-[9999] py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="px-4 py-3 flex flex-col gap-1">
+            <span className="font-label-lg font-bold text-on-surface truncate">{user.username}</span>
+            {user.githubId && (
+              <span className="text-[10px] font-label-sm font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full w-max">
+                GitHub Connected
+              </span>
+            )}
           </div>
           
-          <div className="user-dropdown-divider" />
+          <div className="h-px bg-outline-variant/20 my-1" />
           
-          <button className="user-dropdown-item" onClick={() => alert("Settings coming soon!")}>
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
+          <button 
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors font-label-md text-left" 
+            onClick={() => {
+              alert("Settings coming soon!");
+              setIsOpen(false);
+            }}
+          >
+            <MdSettings size={18} />
             Settings
           </button>
           
-          <div className="user-dropdown-divider" />
+          <div className="h-px bg-outline-variant/20 my-1" />
           
-          <button className="user-dropdown-item text-danger" onClick={logout}>
-            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-              <polyline points="16 17 21 12 16 7"></polyline>
-              <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
+          <button 
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-error hover:bg-error/10 transition-colors font-label-md text-left" 
+            onClick={() => {
+              setIsOpen(false);
+              logout();
+            }}
+          >
+            <MdLogout size={18} />
             Sign Out
           </button>
         </div>
