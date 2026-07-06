@@ -209,7 +209,7 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
       {Array.from(remoteStreams.entries()).map(([userId, _stream]) => {
         const u = roomUsers.find(ru => ru.userId === userId);
         return (
-          <div key={userId} className="w-24 h-24 rounded-full overflow-hidden border-2 border-primary/50 bg-surface-container-highest shadow-xl pointer-events-auto relative group">
+          <div key={userId} className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary/50 bg-surface-container-highest shadow-xl pointer-events-auto relative group">
             <video
               ref={el => { remoteVideoRefs.current[userId] = el; }}
               autoPlay
@@ -224,7 +224,7 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
       })}
 
       {/* Local Video */}
-      <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-primary bg-surface-container shadow-xl pointer-events-auto relative group flex flex-col justify-end">
+      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary bg-surface-container shadow-xl pointer-events-auto relative group flex flex-col justify-end">
         <video
           ref={localVideoRef}
           autoPlay
