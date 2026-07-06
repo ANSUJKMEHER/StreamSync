@@ -160,7 +160,11 @@ router.post('/flowchart', aiRateLimiter, async (req: Request, res: Response): Pr
     Keep the flowchart concise and focused directly on what the user asked. Only output valid JSON conforming to this schema.`;
 
     const result = await model.generateContent(systemPrompt);
-    const responseText = result.response.text();
+    let responseText = result.response.text();
+    
+    // Remove markdown code blocks anywhere in the response
+    responseText = responseText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    
     const parsedData = JSON.parse(responseText);
 
     res.json({
