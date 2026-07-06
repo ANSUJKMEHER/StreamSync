@@ -16,6 +16,7 @@ import MonacoEditor from '../Editor/MonacoEditor';
 import CanvasPanel from '../Canvas/CanvasPanel';
 import BottomPanel from '../Panel/BottomPanel';
 import UserDropdown from '../Auth/UserDropdown';
+import GlobalLoader from '../Layout/GlobalLoader';
 import InviteModal from './InviteModal';
 import GitHubPanel from '../Sidebar/GitHubPanel';
 import '../../App.css';
@@ -151,15 +152,7 @@ export default function Workspace() {
   }, [files]); // We only trigger on files change, not shapes/arrows, to avoid infinite loops!
 
   if (isInitialLoad && isLoading) {
-    return (
-      <div className="app-loading">
-        <div className="app-loading-logo">S</div>
-        <div className="app-loading-text">STREAMSYNC</div>
-        <div className="app-loading-bar">
-          <div className="app-loading-bar-fill" />
-        </div>
-      </div>
-    );
+    return <GlobalLoader subtitle="Loading Workspace..." />;
   }
 
   // --- Rendering Architecture ---
