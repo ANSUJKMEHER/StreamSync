@@ -25,11 +25,10 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
 
   // 1. Initialize local media
   useEffect(() => {
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+    navigator.mediaDevices.getUserMedia({ video: false, audio: true })
       .then(stream => {
-        // Mute tracks initially
+        // Mute audio initially
         stream.getAudioTracks().forEach(track => track.enabled = false);
-        stream.getVideoTracks().forEach(track => track.enabled = false);
         
         setLocalStream(stream);
         if (localVideoRef.current) {
@@ -154,17 +153,56 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
     }
   };
 
-  const toggleVideo = () => {
-    if (localStream) {
-      localStream.getVideoTracks().forEach(t => t.enabled = !t.enabled);
-      setIsVideoOff(!isVideoOff);
+  const toggleVideo = async () => {
+    if (!localStream) return;
+    
+    if (isVideoOff) {
+      try {
+        // Request camera access only when turned on
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const videoTrack = stream.getVideoTracks()[0];
+        localStream.addTrack(videoTrack);
+        
+        // Add track to existing peers and renegotiate
+        peersRef.current.forEach(({ pc }, targetUserId) => {
+          pc.addTrack(videoTrack, localStream);
+          pc.createOffer()
+            .then(offer => pc.setLocalDescription(offer))
+            .then(() => {
+              wsService.send({
+                type: 'webrtc-signal',
+                roomId,
+                payload: {
+                  targetUserId,
+                  signal: pc.localDescription
+                }
+              });
+            });
+        });
+        
+        setIsVideoOff(false);
+      } catch (err) {
+        console.error("Failed to turn on video:", err);
+      }
+    } else {
+      // Turn off video and completely stop hardware access
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.stop();
+        localStream.removeTrack(videoTrack);
+        peersRef.current.forEach(({ pc }) => {
+          const sender = pc.getSenders().find(s => s.track === videoTrack);
+          if (sender) pc.removeTrack(sender);
+        });
+      }
+      setIsVideoOff(true);
     }
   };
 
   if (!user) return null;
 
   return (
-    <div className="absolute top-4 right-4 z-50 flex items-center gap-3 pointer-events-auto bg-surface-container/90 backdrop-blur-md p-2 pl-4 rounded-full shadow-xl border border-outline-variant/30">
+    <div className="absolute top-16 right-4 z-50 flex items-center gap-3 pointer-events-auto bg-surface-container/90 backdrop-blur-md p-2 pl-4 rounded-full shadow-xl border border-outline-variant/30">
       <div className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mr-2 hidden md:block">Voice Call</div>
       
       {/* Remote Peers */}
