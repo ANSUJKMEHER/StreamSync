@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { MdMic, MdMicOff, MdVideocam, MdVideocamOff } from 'react-icons/md';
+import { MdMic, MdMicOff, MdVideocam, MdVideocamOff, MdCallEnd } from 'react-icons/md';
 import { useRoomStore } from '../../store/roomStore';
 import { useAuthStore } from '../../store/authStore';
 import { wsService } from '../../services/websocket';
@@ -10,7 +10,7 @@ interface PeerConnection {
   stream: MediaStream;
 }
 
-export default function VoiceChat({ roomId }: { roomId: string }) {
+export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onLeaveCall: () => void }) {
   const { user } = useAuthStore();
   const { roomUsers } = useRoomStore();
   
@@ -164,7 +164,9 @@ export default function VoiceChat({ roomId }: { roomId: string }) {
   if (!user) return null;
 
   return (
-    <div className="absolute top-4 right-4 z-50 flex gap-4 pointer-events-none">
+    <div className="absolute top-4 right-4 z-50 flex items-center gap-3 pointer-events-auto bg-surface-container/90 backdrop-blur-md p-2 pl-4 rounded-full shadow-xl border border-outline-variant/30">
+      <div className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mr-2 hidden md:block">Voice Call</div>
+      
       {/* Remote Peers */}
       {Array.from(remoteStreams.entries()).map(([userId, _stream]) => {
         const u = roomUsers.find(ru => ru.userId === userId);
@@ -208,6 +210,16 @@ export default function VoiceChat({ roomId }: { roomId: string }) {
           </button>
         </div>
       </div>
+      
+      <div className="w-[1px] h-10 bg-outline-variant/30 mx-1"></div>
+      
+      <button 
+        onClick={onLeaveCall}
+        className="w-12 h-12 rounded-full bg-error text-white shadow-md flex items-center justify-center hover:bg-error/90 hover:scale-105 active:scale-95 transition-all ml-1 group relative"
+        title="Leave Call"
+      >
+        <MdCallEnd size={22} />
+      </button>
     </div>
   );
 }

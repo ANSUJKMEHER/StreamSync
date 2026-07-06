@@ -9,7 +9,7 @@ import { roomService, type Room } from '../../services/roomService';
 import FileExplorer from '../Sidebar/FileExplorer';
 import ActivityBar from '../Sidebar/ActivityBar';
 import FileTabs from '../Tabs/FileTabs';
-import { MdShare, MdPlayArrow, MdTerminal } from 'react-icons/md';
+import { MdShare, MdPlayArrow, MdTerminal, MdCall } from 'react-icons/md';
 import MonacoEditor from '../Editor/MonacoEditor';
 import CanvasPanel from '../Canvas/CanvasPanel';
 import BottomPanel from '../Panel/BottomPanel';
@@ -47,6 +47,9 @@ export default function Workspace() {
   
   // Split pane state
   const [splitWidth, setSplitWidth] = useState(50);
+  
+  // Call State
+  const [isInCall, setIsInCall] = useState(false);
   
   // Invite Modal
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -272,7 +275,7 @@ export default function Workspace() {
   return (
     <div className="bg-background text-on-surface h-screen w-screen overflow-hidden flex flex-col font-body-md text-body-md select-none">
       {/* Voice Chat Component */}
-      {!isInitialLoad && roomId && <VoiceChat roomId={roomId} />}
+      {!isInitialLoad && roomId && isInCall && <VoiceChat roomId={roomId} onLeaveCall={() => setIsInCall(false)} />}
 
       {/* Top Navigation Bar */}
       <header className="bg-surface/60 backdrop-blur-md shadow-sm border-b border-outline-variant/30 flex justify-between items-center px-gutter h-14 w-full flex-shrink-0 z-50 fixed top-0 left-0 right-0">
@@ -319,6 +322,17 @@ export default function Workspace() {
             >
               <MdShare size={16} />
               Share
+            </button>
+          )}
+
+          {!isInCall && (
+            <button 
+              className="hover:bg-success/20 text-success px-3 py-1.5 rounded-md flex items-center gap-2 transition-colors font-label-md bg-success/10"
+              onClick={() => setIsInCall(true)}
+              title="Join Voice Call"
+            >
+              <MdCall size={16} />
+              Join Call
             </button>
           )}
 
