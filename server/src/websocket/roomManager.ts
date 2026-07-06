@@ -15,7 +15,7 @@ export class RoomManager {
   private ydocs = new Map<string, Y.Doc>();
   private pendingDocs = new Map<string, Promise<Y.Doc>>();
   // userId -> ConnectedClient
-  private clients = new Map<string, ConnectedClient>();
+  public clients = new Map<string, ConnectedClient>();
   // To prevent race conditions on room creation DB fetch
   private roomCreationLocks = new Map<string, Promise<void>>();
   // To prevent race conditions on client join (permission fetch)
