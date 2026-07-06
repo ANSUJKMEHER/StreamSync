@@ -136,6 +136,7 @@ export default function BottomPanel({ executionOutput, isExecuting, onClose }: B
           </button>
         ))}
         
+        <div className="ml-auto flex items-center gap-2">
           {activeTab === 'PREVIEW' && (
             <button 
               className="hover:text-primary transition-colors p-1 rounded hover:bg-surface-variant text-on-surface-variant"
