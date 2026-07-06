@@ -169,6 +169,9 @@ async function handleMessage(
       }
       const payload = message.payload as any;
       if (typeof payload.update === 'string' && payload.docId) {
+        // Ensure doc is loaded in memory before applying update to prevent race conditions
+        await roomManager.getOrCreateDoc(payload.docId);
+        
         // Validate FIRST, broadcast ONLY if valid
         const applied = roomManager.applyYjsUpdate(payload.docId, payload.update);
         if (applied) {
