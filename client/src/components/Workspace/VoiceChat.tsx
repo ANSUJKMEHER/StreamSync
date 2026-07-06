@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MdMic, MdMicOff, MdVideocam, MdVideocamOff } from 'react-icons/md';
 import { useRoomStore } from '../../store/roomStore';
 import { useAuthStore } from '../../store/authStore';
@@ -59,10 +59,13 @@ export default function VoiceChat({ roomId }: { roomId: string }) {
         await pc.setRemoteDescription(new RTCSessionDescription(signal));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        wsService.sendMessage('webrtc-signal', {
+        wsService.send({
+          type: 'webrtc-signal',
           roomId,
-          targetUserId: senderUserId,
-          signal: pc.localDescription
+          payload: {
+            targetUserId: senderUserId,
+            signal: pc.localDescription
+          }
         });
       } else if (signal.type === 'answer') {
         await pc.setRemoteDescription(new RTCSessionDescription(signal));
@@ -80,15 +83,18 @@ export default function VoiceChat({ roomId }: { roomId: string }) {
     if (!localStream || !user) return;
     
     roomUsers.forEach(u => {
-      if (u.id !== user.id && !peersRef.current.has(u.id)) {
+      if (u.userId !== user.id && !peersRef.current.has(u.userId)) {
         // We initiate the call to the new user
-        const pc = createPeer(u.id);
+        const pc = createPeer(u.userId);
         pc.createOffer().then(offer => {
           pc.setLocalDescription(offer);
-          wsService.sendMessage('webrtc-signal', {
+          wsService.send({
+            type: 'webrtc-signal',
             roomId,
-            targetUserId: u.id,
-            signal: offer
+            payload: {
+              targetUserId: u.userId,
+              signal: offer
+            }
           });
         });
       }
@@ -108,10 +114,13 @@ export default function VoiceChat({ roomId }: { roomId: string }) {
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
-        wsService.sendMessage('webrtc-signal', {
+        wsService.send({
+          type: 'webrtc-signal',
           roomId,
-          targetUserId,
-          signal: event.candidate
+          payload: {
+            targetUserId,
+            signal: event.candidate
+          }
         });
       }
     };
@@ -157,12 +166,12 @@ export default function VoiceChat({ roomId }: { roomId: string }) {
   return (
     <div className="absolute top-4 right-4 z-50 flex gap-4 pointer-events-none">
       {/* Remote Peers */}
-      {Array.from(remoteStreams.entries()).map(([userId, stream]) => {
-        const u = roomUsers.find(ru => ru.id === userId);
+      {Array.from(remoteStreams.entries()).map(([userId, _stream]) => {
+        const u = roomUsers.find(ru => ru.userId === userId);
         return (
           <div key={userId} className="w-24 h-24 rounded-full overflow-hidden border-2 border-primary/50 bg-surface-container-highest shadow-xl pointer-events-auto relative group">
             <video
-              ref={el => remoteVideoRefs.current[userId] = el}
+              ref={el => { remoteVideoRefs.current[userId] = el; }}
               autoPlay
               playsInline
               className="w-full h-full object-cover"
