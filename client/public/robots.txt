@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://streamsync-cxox.onrender.com/sitemap.xml
