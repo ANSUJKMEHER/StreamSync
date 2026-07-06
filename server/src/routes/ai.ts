@@ -106,6 +106,28 @@ router.post('/complete', aiRateLimiter, async (req: Request, res: Response): Pro
   }
 });
 
+// Add a debug endpoint to see available models for this specific API key
+router.get('/models', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      res.status(500).json({ success: false, error: 'GEMINI_API_KEY is not configured' });
+      return;
+    }
+    
+    // Fetch directly from REST API since the JS SDK might not easily expose ListModels
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+    const data = await response.json();
+    
+    res.json({
+      success: true,
+      data
+    });
+  } catch (error: any) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
 interface AiFlowchartRequest {
   prompt: string;
   files: { name: string; content: string }[];
