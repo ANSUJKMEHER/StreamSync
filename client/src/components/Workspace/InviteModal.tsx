@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../../store/authStore';
+import { MdClose } from 'react-icons/md';
 
 interface InviteModalProps {
   roomId: string;
@@ -58,11 +59,8 @@ export default function InviteModal({ roomId, onClose }: InviteModalProps) {
       <div className="bg-surface border border-outline-variant/30 shadow-2xl rounded-2xl w-full max-w-md p-6 animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-bold text-on-surface m-0">Share Project</h2>
-          <button 
-            className="text-on-surface-variant hover:bg-surface-variant hover:text-on-surface w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
-            onClick={onClose}
-          >
-            <span className="material-symbols-outlined text-xl">close</span>
+          <button onClick={onClose} className="p-2 hover:bg-surface-variant rounded-full text-on-surface-variant transition-colors" title="Close">
+            <MdClose size={20} />
           </button>
         </div>
         

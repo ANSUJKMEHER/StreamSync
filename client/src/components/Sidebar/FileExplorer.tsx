@@ -48,6 +48,7 @@ function buildFileTree(files: FileItem[]): TreeNode {
 
 import { VscFolder, VscFolderOpened, VscFile, VscJson, VscMarkdown, VscSettingsGear } from 'react-icons/vsc';
 import { SiJavascript, SiTypescript, SiHtml5, SiCss, SiPython, SiGo, SiRust, SiReact } from 'react-icons/si';
+import { MdArrowRight, MdEdit, MdClose, MdNoteAdd, MdCreateNewFolder, MdUnfoldLess, MdFolder, MdDescription } from 'react-icons/md';
 
 const getVscFileIcon = (filename: string) => {
   const parts = filename.split('.');
@@ -118,9 +119,10 @@ const FileTreeNodeUI = ({
         }}
       >
         {!node.isFile && (
-          <span className={`material-symbols-outlined text-[18px] text-outline mr-1 transition-transform ${isExpanded ? 'rotate-90' : ''}`}>
-            arrow_right
-          </span>
+          <MdArrowRight 
+            size={18} 
+            className={`text-outline mr-1 transition-transform ${isExpanded ? 'rotate-90' : ''}`} 
+          />
         )}
         
         <span className="flex items-center justify-center mr-2">
@@ -137,9 +139,9 @@ const FileTreeNodeUI = ({
 
         {/* Inline Actions */}
         {node.file && (
-          <div className="absolute right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1 bg-surface-container/80 backdrop-blur-sm rounded">
-            <button className="text-[14px] hover:text-primary p-0.5" onClick={(e) => onFileAction('rename', node.file!.id, node.file!.name, e)}><span className="material-symbols-outlined text-[14px]">edit</span></button>
-            <button className="text-[14px] hover:text-error p-0.5" onClick={(e) => onFileAction('delete', node.file!.id, node.file!.name, e)}><span className="material-symbols-outlined text-[14px]">close</span></button>
+          <div className="hidden group-hover:flex items-center gap-1 ml-auto shrink-0 mr-2">
+            <button className="text-[14px] hover:text-primary p-0.5" onClick={(e) => onFileAction('rename', node.file!.id, node.file!.name, e)}><MdEdit size={14} /></button>
+            <button className="text-[14px] hover:text-error p-0.5" onClick={(e) => onFileAction('delete', node.file!.id, node.file!.name, e)}><MdClose size={14} /></button>
           </div>
         )}
       </div>
@@ -276,10 +278,10 @@ export default function FileExplorer() {
       {/* Header */}
       <div className="px-4 py-3 flex items-center justify-between border-b border-outline-variant/10" onClick={(e) => e.stopPropagation()}>
         <span className="font-label-md text-label-md font-bold tracking-wider text-on-surface-variant uppercase">Project</span>
-        <div className="flex gap-2 text-on-surface-variant">
-          <button className="hover:text-primary transition-colors" onClick={() => setIsCreating('file')} title="New File"><span className="material-symbols-outlined text-[16px]">note_add</span></button>
-          <button className="hover:text-primary transition-colors" onClick={() => setIsCreating('folder')} title="New Folder"><span className="material-symbols-outlined text-[16px]">create_new_folder</span></button>
-          <button className="hover:text-primary transition-colors" onClick={() => setExpandedFolders(new Set())} title="Collapse All"><span className="material-symbols-outlined text-[16px]">unfold_less</span></button>
+        <div className="flex items-center gap-2 text-on-surface-variant">
+          <button className="hover:text-primary transition-colors" onClick={() => setIsCreating('file')} title="New File"><MdNoteAdd size={16} /></button>
+          <button className="hover:text-primary transition-colors" onClick={() => setIsCreating('folder')} title="New Folder"><MdCreateNewFolder size={16} /></button>
+          <button className="hover:text-primary transition-colors" onClick={() => setExpandedFolders(new Set())} title="Collapse All"><MdUnfoldLess size={16} /></button>
         </div>
       </div>
 
@@ -301,8 +303,8 @@ export default function FileExplorer() {
 
         {/* Create Input */}
         {isCreating && (
-          <div className="flex items-center px-4 py-1.5" style={{ paddingLeft: activeFolderPath ? '20px' : '16px' }}>
-            <span className="material-symbols-outlined text-[16px] text-tertiary-fixed-dim mr-2">{isCreating === 'folder' ? 'folder' : 'description'}</span>
+          <div className={`flex items-center px-2 py-1.5 ml-[${12 * (activeFolderPath?.split('/').length || 0)}px] mr-2 mb-1`}>
+            {isCreating === 'folder' ? <MdFolder size={16} className="text-tertiary-fixed-dim mr-2" /> : <MdDescription size={16} className="text-tertiary-fixed-dim mr-2" />}
             <input
               ref={inputRef}
               className="bg-surface-variant text-on-surface font-body-md border border-outline-variant rounded px-2 py-0.5 w-full outline-none focus:border-primary"

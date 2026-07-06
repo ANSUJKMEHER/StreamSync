@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useFileStore } from '../../store/fileStore';
 import { getFileIcon } from '../../utils/fileUtils';
+import { MdClose } from 'react-icons/md';
 import './FileTabs.css';
 
 function FileTabs() {
@@ -70,7 +71,7 @@ function FileTabs() {
               onClick={(e) => handleClose(id, e)}
               aria-label={`Close ${file.name}`}
             >
-              <span className="material-symbols-outlined text-[14px]">close</span>
+              <MdClose size={14} />
             </button>
           </div>
         );

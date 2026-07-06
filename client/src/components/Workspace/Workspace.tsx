@@ -11,6 +11,7 @@ import { buildAutoGraph } from '../../services/graphEngine';
 import FileExplorer from '../Sidebar/FileExplorer';
 import ActivityBar from '../Sidebar/ActivityBar';
 import FileTabs from '../Tabs/FileTabs';
+import { MdShare, MdPlayArrow, MdTerminal } from 'react-icons/md';
 import MonacoEditor from '../Editor/MonacoEditor';
 import CanvasPanel from '../Canvas/CanvasPanel';
 import BottomPanel from '../Panel/BottomPanel';
@@ -333,10 +334,10 @@ export default function Workspace() {
         <div className="flex items-center gap-4">
           {roomData && roomData.ownerId === user?.id && (
             <button 
-              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-outline-variant/50 text-on-surface-variant hover:bg-surface-variant/50 hover:text-on-surface hover:border-outline transition-colors text-label-md font-label-md"
+              className="bg-surface-variant hover:bg-surface-container-highest text-on-surface px-4 py-2 rounded-lg flex items-center gap-2 transition-colors border border-outline-variant/30 font-label-md shadow-sm"
               onClick={() => setIsInviteModalOpen(true)}
             >
-              <span className="material-symbols-outlined text-[18px]">share</span>
+              <MdShare size={18} />
               Share
             </button>
           )}
@@ -346,7 +347,7 @@ export default function Workspace() {
             onClick={handleRunCode}
             disabled={isExecuting || !activeFile}
           >
-            <span className="material-symbols-outlined text-[18px]">play_arrow</span>
+            <MdPlayArrow size={18} />
             Run Code
           </button>
           
@@ -355,7 +356,7 @@ export default function Workspace() {
             onClick={() => setIsBottomPanelOpen(!isBottomPanelOpen)} 
             title="Toggle Terminal"
           >
-            <span className="material-symbols-outlined text-[20px]">terminal</span>
+            <MdTerminal size={20} />
           </button>
 
           {/* Profile/Collaborators */}

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { roomService, type Room } from '../../services/roomService';
 import { githubService, type GithubRepo } from '../../services/githubService';
+import { MdClose, MdPublic, MdLock, MdAccountCircle, MdKeyboardArrowDown, MdSearch, MdFolderZip } from 'react-icons/md';
 import UserDropdown from '../Auth/UserDropdown';
 import NotificationsHub from './NotificationsHub';
 import './Dashboard.css';
@@ -221,7 +222,7 @@ export default function Dashboard() {
                         <div className="flex justify-between items-start">
                           <h3 className="font-code-lg text-lg text-primary">{room.name}</h3>
                           <button onClick={(e) => handleDeleteRoom(room.id, e)} className="text-on-surface-variant hover:text-error transition-colors p-1">
-                            <span className="material-symbols-outlined text-[20px]">close</span>
+                            <MdClose size={20} />
                           </button>
                         </div>
                         <div className="text-on-surface-variant text-body-sm font-code">
@@ -232,7 +233,7 @@ export default function Dashboard() {
                              onClick={(e) => handleTogglePublic(room, e)}
                              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold hover:opacity-80 transition-opacity ${room.isPublic ? 'bg-success/10 text-success' : 'bg-surface-variant text-on-surface-variant'}`}
                            >
-                             <span className="material-symbols-outlined text-[14px]">{room.isPublic ? 'public' : 'lock'}</span>
+                             {room.isPublic ? <MdPublic size={14} /> : <MdLock size={14} />}
                              {room.isPublic ? 'Public' : 'Private'}
                            </button>
                            {room.isPublic && (
@@ -263,12 +264,12 @@ export default function Dashboard() {
                  {/* Top Controls */}
                  <div className="p-4 border-b border-outline-variant/20 flex gap-4 bg-surface-container-lowest">
                    <div className="flex items-center gap-2 bg-surface-variant rounded-lg px-3 py-2 text-on-surface">
-                     <span className="material-symbols-outlined text-[18px]">account_circle</span>
+                     <MdAccountCircle size={18} />
                      <span className="font-label-md">{repos.length > 0 ? repos[0].full_name.split('/')[0] : 'GitHub'}</span>
-                     <span className="material-symbols-outlined text-[18px]">keyboard_arrow_down</span>
+                     <MdKeyboardArrowDown size={18} />
                    </div>
                    <div className="flex-1 flex items-center gap-2 bg-surface-container rounded-lg px-3 py-2 border border-outline-variant/30 focus-within:border-primary transition-colors">
-                     <span className="material-symbols-outlined text-[18px] text-on-surface-variant">search</span>
+                     <MdSearch size={18} className="text-on-surface-variant" />
                      <input 
                        type="text" 
                        placeholder="Search..." 
@@ -299,11 +300,11 @@ export default function Dashboard() {
                         {filteredRepos.map(repo => (
                           <div key={repo.id} className="flex items-center justify-between p-4 border-b border-outline-variant/10 hover:bg-surface-container-lowest transition-colors">
                             <div className="flex items-center gap-3">
-                              <span className="material-symbols-outlined text-[20px] text-on-surface-variant">folder_zip</span>
+                              <MdFolderZip size={20} className="text-on-surface-variant" />
                               <div className="flex flex-col">
                                 <div className="flex items-center gap-2">
                                   <span className="font-code text-on-surface text-sm">{repo.name}</span>
-                                  {repo.private && <span className="material-symbols-outlined text-[14px] text-on-surface-variant">lock</span>}
+                                  {repo.private && <MdLock size={14} className="text-on-surface-variant" />}
                                 </div>
                                 <span className="text-xs text-on-surface-variant font-code mt-1">
                                   {Math.round((Date.now() - new Date(repo.updated_at).getTime()) / (1000 * 60 * 60 * 24))}d ago

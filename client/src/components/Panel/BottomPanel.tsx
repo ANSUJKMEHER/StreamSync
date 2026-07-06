@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
+import { MdDelete, MdKeyboardArrowDown } from 'react-icons/md';
 import '@xterm/xterm/css/xterm.css';
 import './BottomPanel.css';
 
@@ -96,7 +97,7 @@ export default function BottomPanel({ executionOutput, isExecuting, onClose }: B
         
         <div className="ml-auto flex items-center gap-2">
           <button 
-            className="p-1 rounded text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors"
+            className="hover:text-error transition-colors p-1 rounded hover:bg-surface-variant text-on-surface-variant"
             onClick={() => {
               if (xtermRef.current) {
                 xtermRef.current.clear();
@@ -105,14 +106,15 @@ export default function BottomPanel({ executionOutput, isExecuting, onClose }: B
             }}
             title="Clear Terminal"
           >
-            <span className="material-symbols-outlined text-[16px]">delete</span>
+            <MdDelete size={16} />
           </button>
+          <div className="w-[1px] h-4 bg-outline-variant/30" />
           <button 
-            className="p-1 rounded text-on-surface-variant hover:bg-surface-variant hover:text-on-surface transition-colors"
+            className="hover:text-on-surface transition-colors p-1 rounded hover:bg-surface-variant text-on-surface-variant"
             onClick={onClose}
             title="Close Panel"
           >
-            <span className="material-symbols-outlined text-[16px]">keyboard_arrow_down</span>
+            <MdKeyboardArrowDown size={16} />
           </button>
         </div>
       </div>

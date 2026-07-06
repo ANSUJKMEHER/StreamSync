@@ -1,16 +1,17 @@
 import { useCanvasStore, type CanvasTool } from '../../store/canvasStore';
+import { MdNearMe, MdCropSquare, MdRadioButtonUnchecked, MdArrowRightAlt, MdDelete } from 'react-icons/md';
 
 interface ToolDef {
   tool: CanvasTool;
-  icon: string;
+  icon: React.ElementType;
   label: string;
 }
 
 const tools: ToolDef[] = [
-  { tool: 'select', icon: 'near_me', label: 'Select' },
-  { tool: 'rect', icon: 'crop_square', label: 'Rectangle' },
-  { tool: 'circle', icon: 'radio_button_unchecked', label: 'Circle' },
-  { tool: 'arrow', icon: 'arrow_right_alt', label: 'Arrow' },
+  { tool: 'select', icon: MdNearMe, label: 'Select' },
+  { tool: 'rect', icon: MdCropSquare, label: 'Rectangle' },
+  { tool: 'circle', icon: MdRadioButtonUnchecked, label: 'Circle' },
+  { tool: 'arrow', icon: MdArrowRightAlt, label: 'Arrow' },
 ];
 
 function CanvasToolbar() {
@@ -25,7 +26,7 @@ function CanvasToolbar() {
           onClick={() => setTool(t.tool)}
           title={t.label}
         >
-          <span className="material-symbols-outlined text-[20px]">{t.icon}</span>
+          <t.icon size={20} />
         </button>
       ))}
 
@@ -37,7 +38,7 @@ function CanvasToolbar() {
         disabled={!selectedId}
         title="Delete Selected"
       >
-        <span className="material-symbols-outlined text-[20px]">delete</span>
+        <MdDelete size={20} />
       </button>
     </div>
   );

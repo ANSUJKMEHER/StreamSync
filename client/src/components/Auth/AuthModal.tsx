@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { useAuthStore } from '../../store/authStore';
+import { MdPerson, MdLock, MdError, MdSync } from 'react-icons/md';
 import './AuthModal.css';
 
 type AuthMode = 'login' | 'register';
@@ -91,8 +92,8 @@ function AuthModal() {
               <label className="text-on-surface-variant font-label-md text-xs uppercase tracking-wider pl-1">
                 Username
               </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant/50 text-[20px]">person</span>
+              <div className="relative mt-2">
+                <MdPerson className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 text-xl" />
                 <input
                   ref={inputRef}
                   type="text"
@@ -111,8 +112,8 @@ function AuthModal() {
               <label className="text-on-surface-variant font-label-md text-xs uppercase tracking-wider pl-1">
                 Password
               </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-on-surface-variant/50 text-[20px]">lock</span>
+              <div className="relative mt-2">
+                <MdLock className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 text-xl" />
                 <input
                   type="password"
                   placeholder={mode === 'register' ? 'Create a password (4+ chars)' : 'Enter your password'}
@@ -126,22 +127,22 @@ function AuthModal() {
             </div>
 
             {error && (
-              <div className="bg-error-container/20 border border-error/30 text-error px-4 py-3 rounded-xl text-sm flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px]">error</span>
-                {error}
+              <div className="mb-6 p-4 rounded-xl bg-error/10 border border-error/20 flex items-center gap-3 text-error">
+                <MdError size={18} className="shrink-0" />
+                <span className="text-body-sm font-medium">{error}</span>
               </div>
             )}
 
             <button
               type="submit"
               disabled={isLoading || !username.trim() || !password.trim()}
-              className="mt-2 w-full bg-primary hover:bg-primary/90 text-on-primary font-label-lg rounded-xl py-3.5 transition-all shadow-[0_4px_12px_rgba(208,188,255,0.2)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full relative bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:hover:bg-primary text-on-primary font-label-lg font-bold rounded-xl py-4 transition-all shadow-[0_4px_16px_rgba(208,188,255,0.2)] hover:shadow-[0_4px_20px_rgba(208,188,255,0.3)] disabled:shadow-none overflow-hidden"
             >
               {isLoading ? (
-                <>
-                  <span className="material-symbols-outlined animate-spin text-[20px]">progress_activity</span>
-                  {mode === 'login' ? 'Signing in...' : 'Creating account...'}
-                </>
+                <div className="flex items-center justify-center gap-2">
+                  <MdSync className="animate-spin text-xl" />
+                  <span>{mode === 'login' ? 'Signing in...' : 'Creating account...'}</span>
+                </div>
               ) : (
                 mode === 'login' ? 'Sign In' : 'Create Account'
               )}
