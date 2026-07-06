@@ -298,23 +298,23 @@ export default function Workspace() {
             <span className="font-headline-md text-headline-md font-bold text-primary tracking-tight">StreamSync</span>
           </div>
           
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center bg-surface-variant/30 p-1 rounded-lg border border-outline-variant/20">
             <button
-              className={`px-3 py-1.5 rounded font-bold transition-colors active:scale-95 duration-200 ${viewMode === 'editor' ? 'text-primary border-b-2 border-primary pb-1 hover:text-primary' : 'text-on-surface-variant font-body-md text-body-md hover:text-primary'}`}
+              className={`px-4 py-1.5 rounded-md font-label-md transition-all duration-200 ${viewMode === 'editor' ? 'bg-surface shadow-sm text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'}`}
               onClick={() => setViewMode('editor')}
               title="Code Editor"
             >
               Code
             </button>
             <button
-              className={`px-3 py-1.5 rounded font-bold transition-colors active:scale-95 duration-200 ${viewMode === 'canvas' ? 'text-primary border-b-2 border-primary pb-1 hover:text-primary' : 'text-on-surface-variant font-body-md text-body-md hover:text-primary'}`}
+              className={`px-4 py-1.5 rounded-md font-label-md transition-all duration-200 ${viewMode === 'canvas' ? 'bg-surface shadow-sm text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'}`}
               onClick={() => setViewMode('canvas')}
               title="Canvas"
             >
               Canvas
             </button>
             <button
-              className={`px-3 py-1.5 rounded font-bold transition-colors active:scale-95 duration-200 ${viewMode === 'split' ? 'text-primary border-b-2 border-primary pb-1 hover:text-primary' : 'text-on-surface-variant font-body-md text-body-md hover:text-primary'}`}
+              className={`px-4 py-1.5 rounded-md font-label-md transition-all duration-200 ${viewMode === 'split' ? 'bg-surface shadow-sm text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'}`}
               onClick={() => setViewMode('split')}
               title="Split View"
             >
@@ -324,19 +324,21 @@ export default function Workspace() {
         </div>
 
         {/* Right: Actions & Profile */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {roomData && roomData.ownerId === user?.id && (
             <button 
-              className="bg-surface-variant hover:bg-surface-container-highest text-on-surface px-4 py-2 rounded-lg flex items-center gap-2 transition-colors border border-outline-variant/30 font-label-md shadow-sm"
+              className="hover:bg-surface-variant text-on-surface-variant hover:text-on-surface px-3 py-1.5 rounded-md flex items-center gap-2 transition-colors font-label-md"
               onClick={() => setIsInviteModalOpen(true)}
             >
-              <MdShare size={18} />
+              <MdShare size={16} />
               Share
             </button>
           )}
 
+          <div className="w-[1px] h-6 bg-outline-variant/30 hidden md:block" />
+
           <button 
-            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-primary-container to-inverse-primary text-on-primary-container font-label-md font-bold shadow-[0_0_10px_rgba(160,120,255,0.2)] hover:shadow-[0_0_15px_rgba(160,120,255,0.4)] transition-all active:scale-95 ${isExecuting || !activeFile ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`flex items-center gap-2 px-4 py-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 font-label-md transition-all active:scale-95 ${isExecuting || !activeFile ? 'opacity-50 cursor-not-allowed' : ''}`}
             onClick={handleRunCode}
             disabled={isExecuting || !activeFile}
           >
@@ -345,7 +347,7 @@ export default function Workspace() {
           </button>
           
           <button 
-            className="text-on-surface-variant hover:text-primary transition-colors p-1 rounded-full hover:bg-surface-variant/50"
+            className="text-on-surface-variant hover:text-primary transition-colors p-1.5 rounded-md hover:bg-surface-variant/50"
             onClick={() => setIsBottomPanelOpen(!isBottomPanelOpen)} 
             title="Toggle Terminal"
           >
@@ -353,24 +355,26 @@ export default function Workspace() {
           </button>
 
           {/* Profile/Collaborators */}
-          <div className="flex items-center -space-x-2 border-l border-outline-variant/30 pl-4 ml-2">
-            {activeFileId && roomUsers.filter(u => u.userId !== user?.id).map((u, i) => (
-              <div 
-                key={u.userId}
-                className="w-7 h-7 rounded-full border-2 border-surface flex items-center justify-center font-label-md text-[10px] bg-accent text-white shadow-sm hover:-translate-y-0.5 hover:scale-110 transition-transform"
-                style={{ zIndex: 20 - i }}
-                title={u.username}
-              >
-                {u.username.charAt(0).toUpperCase()}
-              </div>
-            ))}
+          <div className="flex items-center pl-2 ml-1 border-l border-outline-variant/30">
+            <div className="flex items-center -space-x-2 mr-3">
+              {activeFileId && roomUsers.filter(u => u.userId !== user?.id).map((u, i) => (
+                <div 
+                  key={u.userId}
+                  className="w-7 h-7 rounded-full border-2 border-surface flex items-center justify-center font-label-md text-[10px] bg-accent text-white shadow-sm hover:-translate-y-0.5 hover:scale-110 transition-transform"
+                  style={{ zIndex: 20 - i }}
+                  title={u.username}
+                >
+                  {u.username.charAt(0).toUpperCase()}
+                </div>
+              ))}
+            </div>
             
             {user ? (
-              <div className="z-30 ml-2">
+              <div className="z-30">
                 <UserDropdown />
               </div>
             ) : (
-              <div className="w-7 h-7 rounded-full border-2 border-surface bg-surface-variant text-on-surface-variant flex items-center justify-center font-label-md text-[10px] z-30">
+              <div className="w-8 h-8 rounded-full border-2 border-surface bg-surface-variant text-on-surface-variant flex items-center justify-center font-label-md text-[12px] z-30">
                 G
               </div>
             )}

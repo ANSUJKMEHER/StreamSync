@@ -278,10 +278,10 @@ export default function FileExplorer() {
       {/* Header */}
       <div className="px-4 py-3 flex items-center justify-between border-b border-outline-variant/10" onClick={(e) => e.stopPropagation()}>
         <span className="font-label-md text-label-md font-bold tracking-wider text-on-surface-variant uppercase">Project</span>
-        <div className="flex items-center gap-2 text-on-surface-variant">
-          <button className="hover:text-primary transition-colors" onClick={() => setIsCreating('file')} title="New File"><MdNoteAdd size={16} /></button>
-          <button className="hover:text-primary transition-colors" onClick={() => setIsCreating('folder')} title="New Folder"><MdCreateNewFolder size={16} /></button>
-          <button className="hover:text-primary transition-colors" onClick={() => setExpandedFolders(new Set())} title="Collapse All"><MdUnfoldLess size={16} /></button>
+        <div className="flex items-center gap-1 text-on-surface-variant">
+          <button className="hover:text-on-surface hover:bg-surface-variant p-1.5 rounded-md transition-colors" onClick={() => setIsCreating('file')} title="New File"><MdNoteAdd size={16} /></button>
+          <button className="hover:text-on-surface hover:bg-surface-variant p-1.5 rounded-md transition-colors" onClick={() => setIsCreating('folder')} title="New Folder"><MdCreateNewFolder size={16} /></button>
+          <button className="hover:text-on-surface hover:bg-surface-variant p-1.5 rounded-md transition-colors" onClick={() => setExpandedFolders(new Set())} title="Collapse All"><MdUnfoldLess size={16} /></button>
         </div>
       </div>
 
