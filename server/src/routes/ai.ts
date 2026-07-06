@@ -171,9 +171,9 @@ router.post('/flowchart', aiRateLimiter, async (req: Request, res: Response): Pr
       success: true,
       data: parsedData
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('[AI] Flowchart error:', error);
-    res.status(500).json({ success: false, error: 'Failed to generate flowchart' });
+    res.status(500).json({ success: false, error: error.message || 'Failed to generate flowchart' });
   }
 });
 
