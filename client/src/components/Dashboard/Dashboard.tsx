@@ -5,7 +5,6 @@ import { roomService, type Room } from '../../services/roomService';
 import { githubService, type GithubRepo } from '../../services/githubService';
 import UserDropdown from '../Auth/UserDropdown';
 import NotificationsHub from './NotificationsHub';
-import GlobalLoader from '../Layout/GlobalLoader';
 import './Dashboard.css';
 
 export default function Dashboard() {
@@ -17,13 +16,8 @@ export default function Dashboard() {
   const [reposLoading, setReposLoading] = useState(false);
   const [githubError, setGithubError] = useState<string | null>(null);
   const [newRoomName, setNewRoomName] = useState('');
-  const [isTransitioning, setIsTransitioning] = useState(false);
-
   const navigateToRoom = (roomId: string) => {
-    setIsTransitioning(true);
-    setTimeout(() => {
-      navigate(`/room/${roomId}`);
-    }, 800);
+    navigate(`/room/${roomId}`);
   };
 
   useEffect(() => {
@@ -167,7 +161,6 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background text-on-surface font-sans">
-      {isTransitioning && <GlobalLoader />}
       {/* Header */}
       <header className="h-16 border-b border-outline-variant/30 flex items-center justify-between px-6 bg-surface">
         <div className="flex items-center gap-3">
@@ -223,7 +216,7 @@ export default function Dashboard() {
              {/* Your Workspaces */}
              <section>
                <h2 className="text-title-lg font-semibold text-on-surface mb-4">Your Workspaces</h2>
-               <div className="flex flex-col gap-4">
+               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {rooms.length === 0 ? (
                     <div className="text-on-surface-variant p-4">You don't have any workspaces yet.</div>
                   ) : (

@@ -1,0 +1,104 @@
+.global-loader-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: #11131c; /* bg-background */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.global-loader-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  animation: gl-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.global-loader-logo-container {
+  position: relative;
+}
+
+.global-loader-logo-glow {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(208, 188, 255, 0.2);
+  filter: blur(24px);
+  border-radius: 9999px;
+  transform: scale(1.5);
+  animation: gl-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.global-loader-logo {
+  position: relative;
+  height: 64px;
+  width: 64px;
+  border-radius: 16px;
+  background: linear-gradient(to bottom right, #d0bcff, #6d3bd7);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 36px;
+  box-shadow: 0 4px 16px rgba(208, 188, 255, 0.4);
+}
+
+.global-loader-text-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.global-loader-title {
+  font-family: 'Geist', sans-serif;
+  font-size: 24px;
+  font-weight: bold;
+  color: #d0bcff;
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+.global-loader-subtitle {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: #cbc3d7;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.global-loader-progress-track {
+  width: 192px;
+  height: 4px;
+  background-color: #282933;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-top: 16px;
+  position: relative;
+}
+
+.global-loader-progress-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background-color: #d0bcff;
+  border-radius: 9999px;
+  width: 33.333%;
+  animation: gl-slide 1.5s ease-in-out infinite;
+}
+
+@keyframes gl-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .5; }
+}
+
+@keyframes gl-slide {
+  0% { left: -33%; }
+  50% { left: 100%; }
+  100% { left: -33%; }
+}
