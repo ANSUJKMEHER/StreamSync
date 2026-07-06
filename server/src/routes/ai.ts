@@ -1,4 +1,5 @@
 import { Router, Request, Response, RequestHandler } from 'express';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const router = Router();
 
@@ -102,6 +103,73 @@ router.post('/complete', aiRateLimiter, async (req: Request, res: Response): Pro
   } catch (error) {
     console.error('[AI] Completion error:', error);
     res.status(500).json({ success: false, error: 'Internal server error' });
+  }
+});
+
+interface AiFlowchartRequest {
+  prompt: string;
+  files: { name: string; content: string }[];
+}
+
+router.post('/flowchart', aiRateLimiter, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { prompt, files } = req.body as AiFlowchartRequest;
+    
+    if (!prompt) {
+      res.status(400).json({ success: false, error: 'Prompt is required' });
+      return;
+    }
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      res.status(500).json({ success: false, error: 'GEMINI_API_KEY is not configured on the server' });
+      return;
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-pro", generationConfig: { responseMimeType: "application/json" } });
+
+    let context = "Project Files:\n";
+    // Limit to 10 files to avoid massive context issues just in case
+    for (const f of files.slice(0, 10)) {
+      context += `\n--- ${f.name} ---\n${f.content}\n`;
+    }
+
+    const systemPrompt = `You are an AI architect generating a flowchart based on the user's codebase.
+    
+    The user asked: "${prompt}"
+    
+    ${context}
+    
+    You must output a JSON object with exactly two arrays: "shapes" and "arrows".
+    
+    "shapes" is an array of objects:
+    {
+       "id": string (unique node ID),
+       "label": string (short description, e.g., "React App" or "Auth Service"),
+       "type": "rect" or "circle"
+    }
+    
+    "arrows" is an array of objects representing directed edges between shapes:
+    {
+       "id": string (unique arrow ID),
+       "fromId": string (matches a shape id),
+       "toId": string (matches a shape id)
+    }
+    
+    Keep the flowchart concise and focused directly on what the user asked. Only output valid JSON conforming to this schema.`;
+
+    const result = await model.generateContent(systemPrompt);
+    const responseText = result.response.text();
+    const parsedData = JSON.parse(responseText);
+
+    res.json({
+      success: true,
+      data: parsedData
+    });
+  } catch (error) {
+    console.error('[AI] Flowchart error:', error);
+    res.status(500).json({ success: false, error: 'Failed to generate flowchart' });
   }
 });
 
