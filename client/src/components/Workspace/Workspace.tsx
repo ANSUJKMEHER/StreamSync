@@ -143,7 +143,8 @@ export default function Workspace() {
   const renderSidebar = () => {
     if (!isSidebarOpen) return null;
     if (activeActivityView === 'explorer') return <FileExplorer />;
-    if (activeActivityView === 'github') return <GitHubPanel roomData={roomData} />;
+    if (activeActivityView === 'github') return <GitHubPanel />;
+    if (activeActivityView === 'ai') return <AICopilotPanel />;
     return (
       <div style={{ padding: '16px', color: 'var(--text-muted)' }}>
         {activeActivityView.charAt(0).toUpperCase() + activeActivityView.slice(1)} coming soon...

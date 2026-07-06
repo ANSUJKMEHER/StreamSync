@@ -9,6 +9,7 @@ type WSMessageType =
   | 'yjs-update'
   | 'awareness-update'
   | 'sync-doc'
+  | 'webrtc-signal'
   | 'error'
   | 'ping'
   | 'pong';
