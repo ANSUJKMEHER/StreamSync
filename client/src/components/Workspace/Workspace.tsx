@@ -6,7 +6,6 @@ import { useRoomStore } from '../../store/roomStore';
 import { wsService } from '../../services/websocket';
 import { yjsService } from '../../services/yjsService';
 import { roomService, type Room } from '../../services/roomService';
-import { useCanvasStore } from '../../store/canvasStore';
 import FileExplorer from '../Sidebar/FileExplorer';
 import ActivityBar from '../Sidebar/ActivityBar';
 import FileTabs from '../Tabs/FileTabs';
