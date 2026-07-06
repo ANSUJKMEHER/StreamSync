@@ -3,7 +3,7 @@ require('dotenv').config();
 async function run() {
   try {
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro', generationConfig: { responseMimeType: 'application/json' } });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash', generationConfig: { responseMimeType: 'application/json' } });
     const systemPrompt = `You are an AI architect generating a flowchart based on the user's codebase.
     
     The user asked: "Explain authentication"
