@@ -9,7 +9,7 @@ export default defineConfig({
       output: {
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('@monaco-editor')) return 'monaco';
+            if (id.includes('monaco-editor')) return 'monaco';
             if (id.includes('yjs') || id.includes('y-protocols') || id.includes('y-monaco')) return 'yjs';
             if (id.includes('konva') || id.includes('react-konva')) return 'konva';
             if (id.includes('react') || id.includes('react-dom') || id.includes('react-router') || id.includes('zustand')) return 'react-vendor';

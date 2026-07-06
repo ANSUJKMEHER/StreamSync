@@ -102,7 +102,17 @@ export const useAuthStore = create<AuthStore>((set) => ({
     }
 
     try {
-      // Validate token with server
+      // Optimistic update: set auth state from cache immediately to unblock rendering
+      if (userStr) {
+        try {
+          const cachedUser = JSON.parse(userStr);
+          set({ user: cachedUser, token, isAuthenticated: true });
+        } catch (e) {
+          // ignore cache parse error
+        }
+      }
+
+      // Validate token with server in background
       const res = await fetch(`${API_BASE}/api/v1/auth/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -114,16 +124,10 @@ export const useAuthStore = create<AuthStore>((set) => ({
         // Token expired or invalid
         localStorage.removeItem(TOKEN_KEY);
         localStorage.removeItem(USER_KEY);
-        set({ isAuthenticated: false });
+        set({ isAuthenticated: false, user: null, token: null });
       }
     } catch {
-      // Server unreachable — use cached user data
-      try {
-        const user = JSON.parse(userStr);
-        set({ user, token, isAuthenticated: true });
-      } catch {
-        set({ isAuthenticated: false });
-      }
+      // Server unreachable - optimistic state remains intact
     }
   },
 

@@ -151,13 +151,7 @@ export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const filteredRepos = repos.filter(r => r.full_name.toLowerCase().includes(searchQuery.toLowerCase()));
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-on-surface-variant animate-pulse font-code text-lg">Loading workspaces...</div>
-      </div>
-    );
-  }
+
 
   return (
     <div className="min-h-screen bg-background text-on-surface font-sans">
@@ -217,7 +211,9 @@ export default function Dashboard() {
              <section>
                <h2 className="text-title-lg font-semibold text-on-surface mb-4">Your Workspaces</h2>
                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {rooms.length === 0 ? (
+                  {loading ? (
+                    <div className="text-on-surface-variant p-4 animate-pulse">Loading workspaces...</div>
+                  ) : rooms.length === 0 ? (
                     <div className="text-on-surface-variant p-4">You don't have any workspaces yet.</div>
                   ) : (
                     rooms.map((room) => (

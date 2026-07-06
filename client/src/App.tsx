@@ -12,9 +12,11 @@ function App() {
   const { isAuthenticated, restoreSession } = useAuthStore();
   const [sessionChecked, setSessionChecked] = useState(false);
 
-  // Restore session on mount
   useEffect(() => {
-    restoreSession().finally(() => setSessionChecked(true));
+    restoreSession();
+    // Don't block rendering if we have cached credentials.
+    // If we don't have them, the UI will just render the AuthModal instantly.
+    setSessionChecked(true);
   }, [restoreSession]);
 
   // Show global loader while checking session
