@@ -17,10 +17,12 @@ import UserDropdown from '../Auth/UserDropdown';
 import GlobalLoader from '../Layout/GlobalLoader';
 import InviteModal from './InviteModal';
 import GitHubPanel from '../Sidebar/GitHubPanel';
+import AICopilotPanel from '../Sidebar/AICopilotPanel';
+import VoiceChat from './VoiceChat';
 import '../../App.css';
 
 type ViewMode = 'editor' | 'canvas' | 'split';
-type ActivityView = 'explorer' | 'search' | 'github' | 'extensions';
+type ActivityView = 'explorer' | 'search' | 'github' | 'extensions' | 'ai';
 
 export default function Workspace() {
   const { roomId } = useParams<{ roomId: string }>();
@@ -268,6 +270,9 @@ export default function Workspace() {
 
   return (
     <div className="bg-background text-on-surface h-screen w-screen overflow-hidden flex flex-col font-body-md text-body-md select-none">
+      {/* Voice Chat Component */}
+      {!isInitialLoad && roomId && <VoiceChat roomId={roomId} />}
+
       {/* Top Navigation Bar */}
       <header className="bg-surface/60 backdrop-blur-md shadow-sm border-b border-outline-variant/30 flex justify-between items-center px-gutter h-14 w-full flex-shrink-0 z-50 fixed top-0 left-0 right-0">
         {/* Left: Logo & Nav */}

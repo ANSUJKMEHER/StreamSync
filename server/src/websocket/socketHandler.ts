@@ -221,6 +221,31 @@ async function handleMessage(
       break;
     }
 
+    case 'webrtc-signal': {
+      if (!message.roomId || !message.payload) return;
+      const payload = message.payload as any;
+      if (payload.targetUserId) {
+        // Find the connection for targetUserId in this room
+        const targetClients = Array.from(roomManager.clients.values()).filter(c => c.userId === payload.targetUserId && c.rooms.has(message.roomId!));
+        
+        // Include the sender's userId in the payload
+        const enrichedPayload = {
+          ...payload,
+          senderUserId: userId
+        };
+
+        targetClients.forEach(targetClient => {
+          roomManager.sendToClient(targetClient.connectionId, {
+            type: 'webrtc-signal',
+            roomId: message.roomId,
+            payload: enrichedPayload,
+            timestamp: new Date().toISOString(),
+          });
+        });
+      }
+      break;
+    }
+
     default: {
       roomManager.sendToClient(connectionId, {
         type: 'error',

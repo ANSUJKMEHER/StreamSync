@@ -1,9 +1,9 @@
-import { VscFiles, VscSearch, VscSourceControl, VscExtensions, VscSettingsGear } from 'react-icons/vsc';
+import { VscFiles, VscSearch, VscSourceControl, VscExtensions, VscSettingsGear, VscSparkle } from 'react-icons/vsc';
 import './ActivityBar.css';
 
 interface ActivityBarProps {
-  activeView: 'explorer' | 'search' | 'github' | 'extensions';
-  setActiveView: (view: 'explorer' | 'search' | 'github' | 'extensions') => void;
+  activeView: 'explorer' | 'search' | 'github' | 'extensions' | 'ai';
+  setActiveView: (view: 'explorer' | 'search' | 'github' | 'extensions' | 'ai') => void;
 }
 
 export default function ActivityBar({ activeView, setActiveView }: ActivityBarProps) {
@@ -47,6 +47,15 @@ export default function ActivityBar({ activeView, setActiveView }: ActivityBarPr
         >
           <VscExtensions className="text-2xl" />
           <div className="absolute left-14 bg-surface-container-highest text-on-surface px-2 py-1 rounded text-label-md font-label-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Extensions</div>
+        </button>
+
+        <button 
+          className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${activeView === 'ai' ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
+          onClick={() => setActiveView('ai')}
+          title="AI Copilot"
+        >
+          <VscSparkle className="text-2xl" />
+          <div className="absolute left-14 bg-surface-container-highest text-on-surface px-2 py-1 rounded text-label-md font-label-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">AI Copilot</div>
         </button>
       </div>
 

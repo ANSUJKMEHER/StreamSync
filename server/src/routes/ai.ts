@@ -128,6 +128,70 @@ router.get('/models', async (req: Request, res: Response): Promise<void> => {
   }
 });
 
+interface AiChatRequest {
+  prompt: string;
+  files: { name: string; content: string }[];
+  activeFile: { name: string; content: string } | null;
+  cursorPosition: { lineNumber: number; column: number } | null;
+  history?: { role: 'user' | 'model'; parts: { text: string }[] }[];
+}
+
+router.post('/chat', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      res.status(500).json({ success: false, error: 'GEMINI_API_KEY is not configured on the server' });
+      return;
+    }
+
+    const { prompt, files, activeFile, cursorPosition, history = [] } = req.body as AiChatRequest;
+
+    if (!prompt) {
+      res.status(400).json({ success: false, error: 'Prompt is required' });
+      return;
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+    // Build context string
+    let context = "You are an expert AI pair programmer inside a real-time collaborative code editor (StreamSync).\n\n";
+    
+    if (files && files.length > 0) {
+      context += "--- WORKSPACE FILES ---\n";
+      files.slice(0, 10).forEach(f => {
+        context += `File: ${f.name}\n\`\`\`\n${f.content.substring(0, 3000)}\n\`\`\`\n\n`;
+      });
+    }
+
+    if (activeFile) {
+      context += `--- ACTIVE FILE: ${activeFile.name} ---\n`;
+      if (cursorPosition) {
+        context += `The user's cursor is currently at Line ${cursorPosition.lineNumber}, Column ${cursorPosition.column}.\n`;
+      }
+    }
+
+    const chat = model.startChat({
+      history: [
+        { role: 'user', parts: [{ text: context }] },
+        { role: 'model', parts: [{ text: "Understood. I have reviewed the workspace context and am ready to assist as an expert pair programmer." }] },
+        ...history
+      ]
+    });
+
+    const result = await chat.sendMessage(prompt);
+    const responseText = result.response.text();
+
+    res.json({
+      success: true,
+      data: responseText
+    });
+  } catch (error: any) {
+    console.error('[AI] Chat error:', error);
+    res.status(500).json({ success: false, error: error.message || 'Failed to chat with AI' });
+  }
+});
+
 interface AiFlowchartRequest {
   prompt: string;
   files: { name: string; content: string }[];

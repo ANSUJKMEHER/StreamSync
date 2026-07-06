@@ -1,0 +1,16 @@
+.ai-messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.ai-messages-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.ai-messages-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+
+.ai-messages-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
