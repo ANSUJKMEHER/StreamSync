@@ -25,12 +25,14 @@ function CanvasToolbar() {
   const files = useFileStore((state) => state.files);
   const { roomId } = useParams<{ roomId: string }>();
 
+  const API_BASE = (import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://streamsync-cxox.onrender.com')).replace(/\/$/, '');
+
   const handleAIGenerate = async () => {
     if (!prompt.trim() || !roomId) return;
     setIsGenerating(true);
     
     try {
-      const response = await fetch('/api/ai/flowchart', {
+      const response = await fetch(`${API_BASE}/api/v1/ai/flowchart`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
