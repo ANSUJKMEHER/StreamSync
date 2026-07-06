@@ -116,6 +116,10 @@ function MonacoEditor() {
       if (model.getValue() !== ytext.toString()) {
         model.setValue(ytext.toString());
       }
+      
+      // CRITICAL: Force LF (\n) line endings to perfectly align Monaco's character offsets with Y.Text!
+      // If Windows defaults to CRLF (\r\n), every newline shifts the Y.Text sync offset by 1 character.
+      model.setEOL(0); // 0 = EndOfLineSequence.LF
 
       // Bind Yjs to Monaco
       bindingRef.current = new MonacoBinding(
