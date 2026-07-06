@@ -77,10 +77,11 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
     return () => unsubscribe();
   }, [localStream]);
 
-  // 3. Initiate connections when new users join
+  // 3. Initiate connections when new users join and clean up when they leave
   useEffect(() => {
     if (!localStream || !user) return;
     
+    // Check for new users
     roomUsers.forEach(u => {
       if (u.userId !== user.id && !peersRef.current.has(u.userId)) {
         // We initiate the call to the new user
@@ -95,6 +96,19 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
               signal: offer
             }
           });
+        });
+      }
+    });
+
+    // Check for users who left
+    peersRef.current.forEach((peer, targetUserId) => {
+      if (!roomUsers.find(u => u.userId === targetUserId)) {
+        peer.pc.close();
+        peersRef.current.delete(targetUserId);
+        setRemoteStreams(prev => {
+          const next = new Map(prev);
+          next.delete(targetUserId);
+          return next;
         });
       }
     });
@@ -133,6 +147,17 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
     };
 
     peersRef.current.set(targetUserId, { pc, stream: new MediaStream() });
+    
+    // Instantly render the empty bubble for this peer
+    setRemoteStreams(prev => {
+      if (!prev.has(targetUserId)) {
+        const next = new Map(prev);
+        next.set(targetUserId, new MediaStream());
+        return next;
+      }
+      return prev;
+    });
+
     return pc;
   };
 
