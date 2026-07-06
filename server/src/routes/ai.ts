@@ -127,7 +127,7 @@ router.post('/flowchart', aiRateLimiter, async (req: Request, res: Response): Pr
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest", generationConfig: { responseMimeType: "application/json" } });
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
     let context = "Project Files:\n";
     // Limit to 10 files to avoid massive context issues just in case
