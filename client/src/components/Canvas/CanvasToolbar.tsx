@@ -77,11 +77,11 @@ function CanvasToolbar() {
         );
         setPrompt('');
       } else {
-        alert('Failed to generate flowchart');
+        alert(`Failed to generate flowchart: ${data.error || 'Unknown error'}`);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Error connecting to AI');
+      alert(`Error connecting to AI: ${err.message}`);
     } finally {
       setIsGenerating(false);
     }
