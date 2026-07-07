@@ -50,6 +50,7 @@ export default function Workspace() {
   
   // Call State
   const [isInCall, setIsInCall] = useState(false);
+  const [activeCallUsers, setActiveCallUsers] = useState<Map<string, string>>(new Map());
   
   // Invite Modal
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -91,6 +92,104 @@ export default function Workspace() {
       wsService.disconnect();
     };
   }, [roomId, token, fetchFiles]);
+
+  // Track active call participants in the room
+  useEffect(() => {
+    if (!roomId) return;
+
+    const handleRoomMessage = (msg: any) => {
+      const { payload } = msg;
+      if (!payload || !payload.action) return;
+
+      const { action, userId, username } = payload;
+
+      if (action === 'call-query') {
+        if (isInCall && user) {
+          wsService.send({
+            type: 'room-message',
+            roomId,
+            payload: {
+              action: 'call-present',
+              userId: user.id,
+              username: user.username
+            }
+          });
+        }
+      } else if (action === 'call-joined' || action === 'call-present') {
+        if (userId) {
+          setActiveCallUsers(prev => {
+            const next = new Map(prev);
+            next.set(userId, username || 'User');
+            return next;
+          });
+        }
+      } else if (action === 'call-left') {
+        if (userId) {
+          setActiveCallUsers(prev => {
+            const next = new Map(prev);
+            next.delete(userId);
+            return next;
+          });
+        }
+      }
+    };
+
+    const unsubscribe = wsService.on('room-message', handleRoomMessage);
+
+    // Query active calls in the workspace after a brief delay
+    const timer = setTimeout(() => {
+      wsService.send({
+        type: 'room-message',
+        roomId,
+        payload: {
+          action: 'call-query'
+        }
+      });
+    }, 1500);
+
+    return () => {
+      unsubscribe();
+      clearTimeout(timer);
+    };
+  }, [roomId, isInCall, user]);
+
+  // Handle local user joining/leaving call
+  useEffect(() => {
+    if (!roomId || !isInCall || !user) return;
+
+    wsService.send({
+      type: 'room-message',
+      roomId,
+      payload: {
+        action: 'call-joined',
+        userId: user.id,
+        username: user.username
+      }
+    });
+
+    setActiveCallUsers(prev => {
+      const next = new Map(prev);
+      next.set(user.id, user.username);
+      return next;
+    });
+
+    return () => {
+      wsService.send({
+        type: 'room-message',
+        roomId,
+        payload: {
+          action: 'call-left',
+          userId: user.id,
+          username: user.username
+        }
+      });
+      setActiveCallUsers(prev => {
+        const next = new Map(prev);
+        next.delete(user.id);
+        return next;
+      });
+    };
+  }, [roomId, isInCall, user]);
 
   // Join room based on Workspace ID (roomId), NOT active file
   useEffect(() => {
@@ -327,12 +426,16 @@ export default function Workspace() {
 
           {!isInCall && (
             <button 
-              className="hover:bg-success/20 text-success px-3 py-1.5 rounded-md flex items-center gap-2 transition-colors font-label-md bg-success/10"
+              className={`px-3 py-1.5 rounded-md flex items-center gap-2 transition-all font-label-md relative overflow-hidden ${
+                activeCallUsers.size > 0
+                  ? 'bg-success text-white hover:bg-success/90 animate-pulse font-bold'
+                  : 'hover:bg-success/20 text-success bg-success/10'
+              }`}
               onClick={() => setIsInCall(true)}
               title="Join Voice Call"
             >
               <MdCall size={16} />
-              Join Call
+              {activeCallUsers.size > 0 ? `Join Call (${activeCallUsers.size} active)` : 'Join Call'}
             </button>
           )}
 

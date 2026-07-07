@@ -80,42 +80,76 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
     return () => unsubscribe();
   }, [localStream, roomUsers]);
 
-  // 3. Initiate connections when new users join and clean up when they leave
+  // 3. Coordinate call participants and WebRTC connections
   useEffect(() => {
-    if (!localStream || !user) return;
-    
-    // Check for new users
-    roomUsers.forEach(u => {
-      if (u.userId !== user.id && !peersRef.current.has(u.userId)) {
-        // We initiate the call to the new user
-        const pc = createPeer(u.userId);
-        pc.createOffer().then(offer => {
-          pc.setLocalDescription(offer);
-          wsService.send({
-            type: 'webrtc-signal',
-            roomId,
-            payload: {
-              targetUserId: u.userId,
-              signal: offer
-            }
-          });
+    if (!localStream || !user || !roomId) return;
+
+    const handleRoomMessage = (msg: any) => {
+      const { payload } = msg;
+      if (!payload || !payload.action) return;
+
+      const { action, userId } = payload;
+
+      if (action === 'call-query') {
+        // Reply that we are in the call
+        wsService.send({
+          type: 'room-message',
+          roomId,
+          payload: {
+            action: 'call-present',
+            userId: user.id,
+            username: user.username
+          }
         });
+      } else if (action === 'call-joined' || action === 'call-present') {
+        if (userId && userId !== user.id && !peersRef.current.has(userId)) {
+          // A new user has joined the call, or responded that they are in the call.
+          // We can now safely initiate WebRTC connection!
+          const pc = createPeer(userId);
+          pc.createOffer().then(offer => {
+            pc.setLocalDescription(offer);
+            wsService.send({
+              type: 'webrtc-signal',
+              roomId,
+              payload: {
+                targetUserId: userId,
+                signal: offer
+              }
+            });
+          });
+        }
+      } else if (action === 'call-left') {
+        if (userId && peersRef.current.has(userId)) {
+          // Close peer connection
+          const peer = peersRef.current.get(userId);
+          if (peer) {
+            peer.pc.close();
+            peersRef.current.delete(userId);
+          }
+          setRemoteStreams(prev => {
+            const next = new Map(prev);
+            next.delete(userId);
+            return next;
+          });
+        }
+      }
+    };
+
+    const unsubscribe = wsService.on('room-message', handleRoomMessage);
+
+    // Ask if there are others already in the call
+    wsService.send({
+      type: 'room-message',
+      roomId,
+      payload: {
+        action: 'call-query'
       }
     });
 
-    // Check for users who left
-    peersRef.current.forEach((peer, targetUserId) => {
-      if (!roomUsers.find(u => u.userId === targetUserId)) {
-        peer.pc.close();
-        peersRef.current.delete(targetUserId);
-        setRemoteStreams(prev => {
-          const next = new Map(prev);
-          next.delete(targetUserId);
-          return next;
-        });
-      }
-    });
-  }, [roomUsers, localStream]);
+    return () => {
+      unsubscribe();
+    };
+  }, [localStream, roomId, user]);
 
   const createPeer = (targetUserId: string) => {
     const pc = new RTCPeerConnection({
