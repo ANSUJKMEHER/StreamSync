@@ -199,26 +199,37 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
       try {
         // Request camera access only when turned on
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-        const videoTrack = stream.getVideoTracks()[0];
-        localStream.addTrack(videoTrack);
+        const newVideoTrack = stream.getVideoTracks()[0];
+        localStream.addTrack(newVideoTrack);
         
-        // Add track to existing peers and renegotiate
+        // Add track to existing peers using replaceTrack
         peersRef.current.forEach(({ pc }, targetUserId) => {
-          pc.addTrack(videoTrack, localStream);
-          pc.createOffer()
-            .then(offer => pc.setLocalDescription(offer))
-            .then(() => {
-              wsService.send({
-                type: 'webrtc-signal',
-                roomId,
-                payload: {
-                  targetUserId,
-                  signal: pc.localDescription
-                }
+          const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
+          if (sender) {
+            // Seamlessly resume sending video data without renegotiation!
+            sender.replaceTrack(newVideoTrack);
+          } else {
+            // If there is no video transceiver yet, add it and renegotiate (first time only)
+            pc.addTrack(newVideoTrack, localStream);
+            pc.createOffer()
+              .then(offer => pc.setLocalDescription(offer))
+              .then(() => {
+                wsService.send({
+                  type: 'webrtc-signal',
+                  roomId,
+                  payload: {
+                    targetUserId,
+                    signal: pc.localDescription
+                  }
+                });
               });
-            });
+          }
         });
         
+        // Force update local video reference
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = localStream;
+        }
         setIsVideoOff(false);
       } catch (err) {
         console.error("Failed to turn on video:", err);
@@ -227,11 +238,15 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
       // Turn off video and completely stop hardware access
       const videoTrack = localStream.getVideoTracks()[0];
       if (videoTrack) {
-        videoTrack.stop();
+        videoTrack.stop(); // Stops camera light
         localStream.removeTrack(videoTrack);
+        
         peersRef.current.forEach(({ pc }) => {
           const sender = pc.getSenders().find(s => s.track === videoTrack);
-          if (sender) pc.removeTrack(sender);
+          if (sender) {
+            // Replaces track with null to pause video sending without breaking connection state
+            sender.replaceTrack(null);
+          }
         });
       }
       setIsVideoOff(true);
