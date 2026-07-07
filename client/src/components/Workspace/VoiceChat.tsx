@@ -22,6 +22,9 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
   const peersRef = useRef<Map<string, PeerConnection>>(new Map());
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
   const remoteVideoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
+  
+  // Local state tracking active call participants (userId -> username)
+  const [callParticipants, setCallParticipants] = useState<Map<string, string>>(new Map());
 
   console.log('[VoiceChat] Rendered state:', {
     roomUsersCount: roomUsers.length,
@@ -58,12 +61,9 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
       const { senderUserId, signal } = payload;
       if (!signal) return;
       
-      const foundUser = roomUsers.find(u => u.userId === senderUserId);
-      console.log('[VoiceChat] handleSignal: received signal from', senderUserId, 'signal.type =', signal.type || 'candidate', 'foundUser =', foundUser, 'roomUsers =', roomUsers);
-      
-      // Prevent phantom bubbles: Ignore signals from users not in our room state
-      if (!foundUser) {
-        console.warn('[VoiceChat] handleSignal rejected signal from unknown user:', senderUserId);
+      // Allow signals only from verified call participants
+      if (!callParticipants.has(senderUserId)) {
+        console.warn('[VoiceChat] handleSignal rejected signal from non-participant:', senderUserId);
         return;
       }
       
@@ -94,7 +94,7 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
 
     const unsubscribe = wsService.on('webrtc-signal', handleSignal);
     return () => unsubscribe();
-  }, [localStream, roomUsers]);
+  }, [localStream, callParticipants]);
 
   // 3. Coordinate call participants and WebRTC connections
   useEffect(() => {
@@ -104,7 +104,7 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
       const { payload } = msg;
       if (!payload || !payload.action) return;
 
-      const { action, userId } = payload;
+      const { action, userId, username } = payload;
 
       if (action === 'call-query') {
         // Reply that we are in the call
@@ -118,36 +118,53 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
           }
         });
       } else if (action === 'call-joined' || action === 'call-present') {
-        console.log('[VoiceChat] handleRoomMessage: received action =', action, 'from userId =', userId, 'roomUsers =', roomUsers);
-        if (userId && userId !== user.id && !peersRef.current.has(userId)) {
-          // A new user has joined the call, or responded that they are in the call.
-          // We can now safely initiate WebRTC connection!
-          const pc = createPeer(userId);
-          pc.createOffer().then(offer => {
-            pc.setLocalDescription(offer);
-            wsService.send({
-              type: 'webrtc-signal',
-              roomId,
-              payload: {
-                targetUserId: userId,
-                signal: offer
-              }
-            });
+        if (userId) {
+          // Update callParticipants mapping
+          setCallParticipants(prev => {
+            const next = new Map(prev);
+            next.set(userId, username || 'User');
+            return next;
           });
+
+          if (userId !== user.id && !peersRef.current.has(userId)) {
+            // A new user has joined the call, or responded that they are in the call.
+            // We can now safely initiate WebRTC connection!
+            const pc = createPeer(userId);
+            pc.createOffer().then(offer => {
+              pc.setLocalDescription(offer);
+              wsService.send({
+                type: 'webrtc-signal',
+                roomId,
+                payload: {
+                  targetUserId: userId,
+                  signal: offer
+                }
+              });
+            });
+          }
         }
       } else if (action === 'call-left') {
-        if (userId && peersRef.current.has(userId)) {
-          // Close peer connection
-          const peer = peersRef.current.get(userId);
-          if (peer) {
-            peer.pc.close();
-            peersRef.current.delete(userId);
-          }
-          setRemoteStreams(prev => {
+        if (userId) {
+          // Remove from callParticipants mapping
+          setCallParticipants(prev => {
             const next = new Map(prev);
             next.delete(userId);
             return next;
           });
+
+          if (peersRef.current.has(userId)) {
+            // Close peer connection
+            const peer = peersRef.current.get(userId);
+            if (peer) {
+              peer.pc.close();
+              peersRef.current.delete(userId);
+            }
+            setRemoteStreams(prev => {
+              const next = new Map(prev);
+              next.delete(userId);
+              return next;
+            });
+          }
         }
       }
     };
@@ -333,7 +350,7 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
       
       {/* Remote Peers */}
       {Array.from(remoteStreams.entries()).map(([userId, stream]) => {
-        const u = roomUsers.find(ru => ru.userId === userId);
+        const username = callParticipants.get(userId) || 'User';
         const hasVideo = stream && stream.getVideoTracks().length > 0;
         
         return (
@@ -346,11 +363,11 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
             />
             {!hasVideo && (
               <div className="absolute inset-0 flex items-center justify-center bg-surface-container-highest text-on-surface-variant text-2xl font-bold">
-                {u?.username ? u.username.charAt(0).toUpperCase() : 'U'}
+                {username.charAt(0).toUpperCase()}
               </div>
             )}
-            <div className="absolute bottom-1 left-0 right-0 text-center text-[10px] font-bold text-white bg-black/50 px-1 truncate z-10">
-              {u?.username || 'User'}
+            <div className="absolute bottom-1 left-0 right-0 text-center text-[10px] font-bold text-white bg-black/50 px-1 truncate z-10 font-sans">
+              {username}
             </div>
           </div>
         );
