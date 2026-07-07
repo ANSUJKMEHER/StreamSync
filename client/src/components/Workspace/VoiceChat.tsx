@@ -291,15 +291,23 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
         const newVideoTrack = stream.getVideoTracks()[0];
         localStream.addTrack(newVideoTrack);
         
-        // Add track to existing peers using replaceTrack
+        // Add track to existing peers using transceiver-aware track replacement
         peersRef.current.forEach(({ pc }, targetUserId) => {
-          const sender = pc.getSenders().find(s => s.track && s.track.kind === 'video');
-          if (sender) {
+          const videoTransceiver = pc.getTransceivers().find(t => t.receiver.track.kind === 'video');
+          
+          if (videoTransceiver && videoTransceiver.sender && videoTransceiver.direction === 'sendrecv') {
             // Seamlessly resume sending video data without renegotiation!
-            sender.replaceTrack(newVideoTrack);
+            videoTransceiver.sender.replaceTrack(newVideoTrack);
           } else {
-            // If there is no video transceiver yet, add it and renegotiate (first time only)
-            pc.addTrack(newVideoTrack, localStream);
+            // If the transceiver exists but is not set to send, or doesn't exist yet:
+            if (videoTransceiver) {
+              videoTransceiver.direction = 'sendrecv';
+              videoTransceiver.sender.replaceTrack(newVideoTrack);
+            } else {
+              pc.addTrack(newVideoTrack, localStream);
+            }
+            
+            // Renegotiate to update the remote peer of the new track/direction
             pc.createOffer()
               .then(offer => pc.setLocalDescription(offer))
               .then(() => {
@@ -331,10 +339,10 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
         localStream.removeTrack(videoTrack);
         
         peersRef.current.forEach(({ pc }) => {
-          const sender = pc.getSenders().find(s => s.track === videoTrack);
-          if (sender) {
+          const videoTransceiver = pc.getTransceivers().find(t => t.receiver.track.kind === 'video');
+          if (videoTransceiver && videoTransceiver.sender) {
             // Replaces track with null to pause video sending without breaking connection state
-            sender.replaceTrack(null);
+            videoTransceiver.sender.replaceTrack(null);
           }
         });
       }
