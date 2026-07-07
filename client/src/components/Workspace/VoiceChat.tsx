@@ -51,8 +51,12 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
 
   // 2. Handle Signaling
   useEffect(() => {
-    const handleSignal = async (payload: any) => {
+    const handleSignal = async (msg: any) => {
+      const payload = msg.payload;
+      if (!payload) return;
+      
       const { senderUserId, signal } = payload;
+      if (!signal) return;
       
       const foundUser = roomUsers.find(u => u.userId === senderUserId);
       console.log('[VoiceChat] handleSignal: received signal from', senderUserId, 'signal.type =', signal.type || 'candidate', 'foundUser =', foundUser, 'roomUsers =', roomUsers);
