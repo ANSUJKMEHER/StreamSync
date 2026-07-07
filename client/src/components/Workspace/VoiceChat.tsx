@@ -23,6 +23,12 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
   const remoteVideoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
 
+  console.log('[VoiceChat] Rendered state:', {
+    roomUsersCount: roomUsers.length,
+    roomUsers,
+    remoteStreamsKeys: Array.from(remoteStreams.keys())
+  });
+
   // 1. Initialize local media
   useEffect(() => {
     navigator.mediaDevices.getUserMedia({ video: false, audio: true })
@@ -48,8 +54,14 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
     const handleSignal = async (payload: any) => {
       const { senderUserId, signal } = payload;
       
+      const foundUser = roomUsers.find(u => u.userId === senderUserId);
+      console.log('[VoiceChat] handleSignal: received signal from', senderUserId, 'signal.type =', signal.type || 'candidate', 'foundUser =', foundUser, 'roomUsers =', roomUsers);
+      
       // Prevent phantom bubbles: Ignore signals from users not in our room state
-      if (!roomUsers.find(u => u.userId === senderUserId)) return;
+      if (!foundUser) {
+        console.warn('[VoiceChat] handleSignal rejected signal from unknown user:', senderUserId);
+        return;
+      }
       
       let pc = peersRef.current.get(senderUserId)?.pc;
       
@@ -102,6 +114,7 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
           }
         });
       } else if (action === 'call-joined' || action === 'call-present') {
+        console.log('[VoiceChat] handleRoomMessage: received action =', action, 'from userId =', userId, 'roomUsers =', roomUsers);
         if (userId && userId !== user.id && !peersRef.current.has(userId)) {
           // A new user has joined the call, or responded that they are in the call.
           // We can now safely initiate WebRTC connection!
