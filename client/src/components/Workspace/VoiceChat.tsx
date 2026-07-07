@@ -137,6 +137,17 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
 
     const unsubscribe = wsService.on('room-message', handleRoomMessage);
 
+    // Broadcast that we have joined the call (since our localStream is now fully ready)
+    wsService.send({
+      type: 'room-message',
+      roomId,
+      payload: {
+        action: 'call-joined',
+        userId: user.id,
+        username: user.username
+      }
+    });
+
     // Ask if there are others already in the call
     wsService.send({
       type: 'room-message',
@@ -148,6 +159,16 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
 
     return () => {
       unsubscribe();
+      // Broadcast that we are leaving the call
+      wsService.send({
+        type: 'room-message',
+        roomId,
+        payload: {
+          action: 'call-left',
+          userId: user.id,
+          username: user.username
+        }
+      });
     };
   }, [localStream, roomId, user]);
 

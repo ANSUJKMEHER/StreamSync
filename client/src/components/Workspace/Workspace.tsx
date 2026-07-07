@@ -155,17 +155,7 @@ export default function Workspace() {
 
   // Handle local user joining/leaving call
   useEffect(() => {
-    if (!roomId || !isInCall || !user) return;
-
-    wsService.send({
-      type: 'room-message',
-      roomId,
-      payload: {
-        action: 'call-joined',
-        userId: user.id,
-        username: user.username
-      }
-    });
+    if (!isInCall || !user) return;
 
     setActiveCallUsers(prev => {
       const next = new Map(prev);
@@ -174,22 +164,13 @@ export default function Workspace() {
     });
 
     return () => {
-      wsService.send({
-        type: 'room-message',
-        roomId,
-        payload: {
-          action: 'call-left',
-          userId: user.id,
-          username: user.username
-        }
-      });
       setActiveCallUsers(prev => {
         const next = new Map(prev);
         next.delete(user.id);
         return next;
       });
     };
-  }, [roomId, isInCall, user]);
+  }, [isInCall, user]);
 
   // Join room based on Workspace ID (roomId), NOT active file
   useEffect(() => {
