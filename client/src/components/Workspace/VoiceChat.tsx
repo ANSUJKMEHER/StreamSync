@@ -48,6 +48,9 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
     const handleSignal = async (payload: any) => {
       const { senderUserId, signal } = payload;
       
+      // Prevent phantom bubbles: Ignore signals from users not in our room state
+      if (!roomUsers.find(u => u.userId === senderUserId)) return;
+      
       let pc = peersRef.current.get(senderUserId)?.pc;
       
       if (!pc) {
@@ -75,7 +78,7 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
 
     const unsubscribe = wsService.on('webrtc-signal', handleSignal);
     return () => unsubscribe();
-  }, [localStream]);
+  }, [localStream, roomUsers]);
 
   // 3. Initiate connections when new users join and clean up when they leave
   useEffect(() => {
@@ -139,9 +142,18 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
     };
 
     pc.ontrack = (event) => {
+      // Force a new stream reference so React detects the update
+      const newStream = new MediaStream(event.streams[0].getTracks());
+      
+      // Force update the video element immediately to bypass React race conditions
+      const el = remoteVideoRefs.current[targetUserId];
+      if (el) {
+        el.srcObject = newStream;
+      }
+
       setRemoteStreams(prev => {
         const next = new Map(prev);
-        next.set(targetUserId, event.streams[0]);
+        next.set(targetUserId, newStream);
         return next;
       });
     };
