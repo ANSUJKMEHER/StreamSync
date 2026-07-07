@@ -141,30 +141,29 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
       }
     };
 
+    const peerStream = new MediaStream();
+    peersRef.current.set(targetUserId, { pc, stream: peerStream });
+
     pc.ontrack = (event) => {
-      // Force a new stream reference so React detects the update
-      const newStream = new MediaStream(event.streams[0].getTracks());
+      peerStream.addTrack(event.track);
       
-      // Force update the video element immediately to bypass React race conditions
       const el = remoteVideoRefs.current[targetUserId];
-      if (el) {
-        el.srcObject = newStream;
+      if (el && el.srcObject !== peerStream) {
+        el.srcObject = peerStream;
       }
 
       setRemoteStreams(prev => {
         const next = new Map(prev);
-        next.set(targetUserId, newStream);
+        next.set(targetUserId, peerStream);
         return next;
       });
     };
-
-    peersRef.current.set(targetUserId, { pc, stream: new MediaStream() });
     
     // Instantly render the empty bubble for this peer
     setRemoteStreams(prev => {
       if (!prev.has(targetUserId)) {
         const next = new Map(prev);
-        next.set(targetUserId, new MediaStream());
+        next.set(targetUserId, peerStream);
         return next;
       }
       return prev;
