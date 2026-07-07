@@ -148,8 +148,11 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
       peerStream.addTrack(event.track);
       
       const el = remoteVideoRefs.current[targetUserId];
-      if (el && el.srcObject !== peerStream) {
+      if (el) {
+        // Kickstart the browser's video decoder by forcing a reload of the stream
+        el.srcObject = null;
         el.srcObject = peerStream;
+        el.play().catch(e => console.log('Video auto-play suppressed', e));
       }
 
       setRemoteStreams(prev => {
@@ -242,17 +245,24 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
       <div className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mr-2 hidden md:block">Voice Call</div>
       
       {/* Remote Peers */}
-      {Array.from(remoteStreams.entries()).map(([userId, _stream]) => {
+      {Array.from(remoteStreams.entries()).map(([userId, stream]) => {
         const u = roomUsers.find(ru => ru.userId === userId);
+        const hasVideo = stream && stream.getVideoTracks().length > 0;
+        
         return (
-          <div key={userId} className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary/50 bg-surface-container-highest shadow-xl pointer-events-auto relative group">
+          <div key={userId} className="w-16 h-16 rounded-full overflow-hidden border-2 border-primary/50 bg-surface-container-highest shadow-xl pointer-events-auto relative group flex flex-col justify-end">
             <video
               ref={el => { remoteVideoRefs.current[userId] = el; }}
               autoPlay
               playsInline
-              className="w-full h-full object-cover"
+              className={`w-full h-full object-cover absolute inset-0 ${!hasVideo ? 'hidden' : ''}`}
             />
-            <div className="absolute bottom-1 left-0 right-0 text-center text-[10px] font-bold text-white bg-black/50 px-1 truncate">
+            {!hasVideo && (
+              <div className="absolute inset-0 flex items-center justify-center bg-surface-container-highest text-on-surface-variant text-2xl font-bold">
+                {u?.username ? u.username.charAt(0).toUpperCase() : 'U'}
+              </div>
+            )}
+            <div className="absolute bottom-1 left-0 right-0 text-center text-[10px] font-bold text-white bg-black/50 px-1 truncate z-10">
               {u?.username || 'User'}
             </div>
           </div>
