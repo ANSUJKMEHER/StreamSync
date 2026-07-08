@@ -226,6 +226,10 @@ export default function Workspace() {
     };
   }, [roomId, setActiveRoom]);
 
+  useEffect(() => {
+    console.log('[Workspace] roomUsers state updated:', roomUsers);
+  }, [roomUsers]);
+
   // Preload Y.Docs for all open files to ensure background tabs receive yjs-sync updates
   useEffect(() => {
     if (!roomId) return;
