@@ -11,7 +11,7 @@
 
   **A Real-Time, AI-Powered Collaborative Workspace for Modern Engineering Teams**
 
-  StreamSync is a fully-featured, multiplayer workspace combining live code collaboration, remote code execution, and an infinite canvas powered by state-of-the-art AI. Break down silos and build together, in real-time.
+  StreamSync is a fully-featured, multiplayer workspace combining live code collaboration, remote/local code execution, and an infinite canvas powered by state-of-the-art AI. Break down silos and build together, in real-time.
 
   [![React](https://img.shields.io/badge/React-18-blue.svg?style=flat&logo=react)](https://reactjs.org/)
   [![Node.js](https://img.shields.io/badge/Node.js-Express-green.svg?style=flat&logo=node.js)](https://nodejs.org/)
@@ -23,44 +23,150 @@
 
 <hr />
 
-## ✨ Key Features
+## 🌟 The Core Innovation: Shared CRDT & Link Engine
 
-- **👨‍💻 Multiplayer Code Editor**: Write code together in real-time. Built with Monaco Editor and Yjs for true conflict-free resolution (CRDTs) and live cursors.
-- **🏃‍♂️ Remote Code Execution**: Instantly run your code in the cloud across multiple languages (via Judge0).
-- **🎨 Collaborative Infinite Canvas**: Draw architectures, flows, and brainstorm seamlessly. Synchronized perfectly for all connected peers.
-- **🤖 AI Flowchart Generator**: Ask the built-in Gemini 2.5 Flash AI to analyze your workspace files and instantly auto-generate complex, interactive architecture flowcharts directly onto your canvas!
-- **🔐 Secure Authentication**: Supports traditional credentials and GitHub OAuth for one-click onboarding.
-- **📂 File System Management**: Full multi-file support with active file synchronization across sessions.
+The key insight in StreamSync's architecture is the **shared CRDT model layer**. Both the code buffer (`Y.Text`) and the infinite canvas graph (`Y.Map`) live inside a single Yjs document.
+
+This architectural advantage enables the **Link Engine**:
+- Canvas nodes can intuitively reference actual files in the workspace.
+- Changes in the file tree automatically update related canvas nodes.
+- Canvas interactions can seamlessly generate or modify files.
+- Everything stays mathematically synchronized through the shared CRDT state, achieving perfect eventual consistency.
+
+---
+
+## 🏗️ Architecture & Data Flow
+
+StreamSync utilizes a powerful Client-Server model that synchronizes Yjs CRDTs via a custom WebSocket multiplexer.
+
+```mermaid
+graph TD
+    subgraph Client [Client-Side (React 19)]
+        M[Monaco Editor] <-->|y-monaco| Y[Yjs CRDT Document]
+        K[Konva Canvas] <-->|Y.Map| Y
+        E[Execution UI] --> M
+    end
+    
+    subgraph Network [Transport Layer]
+        WS[WebSocket Multiplexer] <-->|Binary Updates| Y
+    end
+    
+    subgraph Server [Backend (Node.js / Express)]
+        WS <--> SM[Session / Room Manager]
+        SM <-->|Auth & State| P[Prisma ORM]
+        SM --> CE[Hybrid Execution Engine]
+        SM --> AI[Gemini API Route]
+    end
+    
+    subgraph Infrastructure [Data & Compute]
+        P <--> DB[(PostgreSQL)]
+        CE -->|Local Process| G[g++ / Python / Node]
+        CE -->|External API| J[Judge0 Fallback]
+    end
+    
+    classDef primary fill:#2563eb,stroke:#1d4ed8,stroke-width:2px,color:#fff;
+    classDef secondary fill:#059669,stroke:#047857,stroke-width:2px,color:#fff;
+    classDef database fill:#ea580c,stroke:#c2410c,stroke-width:2px,color:#fff;
+    
+    class Y,SM primary;
+    class CE,AI secondary;
+    class DB database;
+```
+
+### Critical Concurrency Fixes Solved
+
+1. **The Server JoinLock Race Condition:** To prevent clients from broadcasting updates before they are fully authorized, the server places a strict `JoinLock` during the database permissions check, enforcing sequential message processing and preventing dropped initialization packets.
+2. **CRDT Offset Drift Mitigation:** Different operating systems use different newline characters (CRLF vs LF), which fundamentally breaks mathematical CRDT offsets over time. StreamSync injects a forceful `model.setEOL(0)` into Monaco, enforcing Unix line endings globally and maintaining perfect sync accuracy.
+
+---
+
+## ✨ Features & Capabilities
+
+### 👨‍💻 Multiplayer Code Editor
+Write code together in real-time with zero friction.
+- Built on top of **Monaco Editor**.
+- Uses **Yjs** for true conflict-free resolution and live cursors.
+
+### 🏃‍♂️ Intelligent Code Execution Engine
+Instantly run code directly from your browser with a robust **hybrid execution pipeline**:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Client
+    participant Server
+    participant LocalEngine
+    participant Judge0
+
+    User->>Client: Clicks "Run Code"
+    Client->>Server: POST /api/execute (Language, Code)
+    Server->>Server: Validate Payload & Language
+    alt If External Judge0 Configured
+        Server->>Judge0: Forward Request
+        Judge0-->>Server: Return Execution Output
+    else No Judge0 / Fallback
+        Server->>LocalEngine: Spawn child_process (g++, python, node)
+        LocalEngine-->>Server: stdout / stderr
+    end
+    Server-->>Client: Return Results
+    Client-->>User: Display Output in Terminal Panel
+```
+
+### 🎨 Collaborative Infinite Canvas & 🤖 AI Integration
+- **Infinite Canvas:** Powered by `Konva.js`. Synchronized perfectly for all connected peers.
+- **AI Flowchart Generator:** Leverage the built-in **Gemini 2.5 Flash AI** to instantly analyze your workspace files and auto-generate complex architecture flowcharts directly onto your canvas.
+
+### 🧩 Extensions Marketplace & 🔍 Global Workspace Search
+- **Extensions Panel:** A built-in sidebar that simulates a marketplace, allowing users to discover and theoretically integrate new capabilities.
+- **Global Search:** Regex-powered search across all workspace files with **Real-Time Line Reveal** (clicking a result scrolls the Monaco editor and flashes the exact line of code).
+
+### 💎 Premium Design System
+- Flexible CSS-variable-based design system with stunning premium themes like **Obsidian Gold** and **Nord Slate**.
+
+---
+
+## 📂 Project Structure
+
+```text
+📦 StreamSync
+ ┣ 📂 client                  # Frontend App (Vite + React 19)
+ ┃ ┣ 📂 src
+ ┃ ┃ ┣ 📂 components          # React UI Components (Workspace, Sidebar, Editor)
+ ┃ ┃ ┣ 📂 services            # Yjs & WebSocket connection managers
+ ┃ ┃ ┣ 📂 store               # Zustand global state
+ ┃ ┃ ┗ 📜 App.tsx             # Root Application
+ ┃ ┗ 📜 package.json
+ ┣ 📂 server                  # Backend API (Node.js + Express)
+ ┃ ┣ 📂 src
+ ┃ ┃ ┣ 📂 routes              # API Routes (Execute, AI, Auth, Rooms)
+ ┃ ┃ ┣ 📂 websocket           # Yjs SocketHandler & RoomManager
+ ┃ ┃ ┗ 📜 index.ts            # Server Entry Point
+ ┃ ┣ 📂 prisma
+ ┃ ┃ ┗ 📜 schema.prisma       # PostgreSQL Database Schema
+ ┃ ┗ 📜 package.json
+ ┗ 📜 README.md
+```
+
+---
 
 ## 🛠️ Technology Stack
 
-**Frontend**
-- React 18 & TypeScript
-- Tailwind CSS (v4) & Radix UI
-- Monaco Editor (Code Editing)
-- React Konva (Canvas)
-- Zustand (State Management)
-- Yjs (CRDTs for Real-time Sync)
-
-**Backend**
-- Node.js & Express
-- WebSockets (ws protocol)
-- Prisma (ORM)
-- PostgreSQL (Hosted on Neon)
-- Google Generative AI (Gemini 2.5)
+| Layer | Technologies Used |
+| :--- | :--- |
+| **Frontend** | React 19, TypeScript, Tailwind CSS, Monaco Editor, Konva, Yjs, Zustand |
+| **Backend** | Node.js, Express, WebSockets (`ws`), Prisma, bcryptjs, JWT |
+| **Storage & DB** | PostgreSQL (via Prisma) |
+| **Integrations** | Google Gemini 2.5 API, Judge0 API (Optional), GitHub OAuth |
+| **Execution** | Node `child_process`, `g++`, `python3` |
 
 ---
 
 ## 🚀 Getting Started
 
-Follow these instructions to get a local copy of StreamSync up and running.
-
 ### Prerequisites
-- Node.js (v18+)
-- npm or pnpm
-- A PostgreSQL Database (e.g., Neon, Supabase)
-- RapidAPI Key (for Judge0 code execution)
-- Gemini API Key (from Google AI Studio)
+- **Node.js** (v18+)
+- **PostgreSQL Database** (e.g., Neon, Supabase, or local)
+- **Local Compilers (Optional):** `python3` and `g++` (MinGW/GCC) installed in your PATH for local C/C++ execution.
 
 ### Installation
 
@@ -70,60 +176,40 @@ Follow these instructions to get a local copy of StreamSync up and running.
    cd StreamSync
    ```
 
-2. **Setup the Backend**
-   ```bash
-   cd server
-   npm install
-   ```
+2. **Setup Environment Variables**
    Create a `.env` file in the `server/` directory:
    ```env
    DATABASE_URL="your_postgresql_connection_string"
    JWT_SECRET="your_secure_jwt_secret"
-   RAPIDAPI_KEY="your_rapidapi_key"
-   RAPIDAPI_HOST="judge0-ce.p.rapidapi.com"
+   GEMINI_API_KEY="your_gemini_api_key"
    GITHUB_CLIENT_ID="your_github_oauth_client_id"
    GITHUB_CLIENT_SECRET="your_github_oauth_client_secret"
-   GEMINI_API_KEY="your_gemini_api_key"
+   
+   # Optional: For external execution API
+   RAPIDAPI_KEY="your_rapidapi_key"
+   RAPIDAPI_HOST="judge0-ce.p.rapidapi.com"
    ```
-   Push the database schema and start the server:
+
+3. **Install & Run (Unified Command)**
+   From the **root** directory (`/StreamSync`), install dependencies and run both servers concurrently:
    ```bash
-   npx prisma db push
+   npm run install:all
+   npx prisma db push --schema=server/prisma/schema.prisma
    npm run dev
    ```
 
-3. **Setup the Frontend**
-   Open a new terminal window:
-   ```bash
-   cd client
-   npm install
-   ```
-   Create a `.env` file in the `client/` directory:
-   ```env
-   VITE_API_URL="http://localhost:3001"
-   ```
-   Start the frontend development server:
-   ```bash
-   npm run dev
-   ```
-
-4. **Open StreamSync**
-   Navigate to `http://localhost:5173` in your browser.
+4. Navigate to `http://localhost:5173` in your browser.
 
 ---
 
 ## ☁️ Deployment
 
-StreamSync is designed for cloud-native deployment:
-
-- **Frontend**: Optimized for [Vercel](https://vercel.com). Just connect the repository, set the `VITE_API_URL` environment variable, and deploy!
-- **Backend**: Easily deployed to [Render](https://render.com) or Heroku as a Node.js Web Service. Make sure to bind the WebSockets correctly and provide all `.env` variables in your provider's dashboard.
+- **Frontend**: Optimized for [Vercel](https://vercel.com) or Netlify. Set `VITE_API_URL` to point to your backend.
+- **Backend**: Deploy to [Render](https://render.com) or Heroku as a Node.js Web Service. Ensure the deployment environment has Python and GCC installed if utilizing the local execution engine.
 
 ---
 
 ## 🤝 Contributing
-
-Contributions make the open-source community an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
@@ -132,5 +218,5 @@ Contributions make the open-source community an amazing place to learn, inspire,
 
 ---
 <div align="center">
-  <i>Built with ❤️ for developers.</i>
+  <i>Built with ❤️ for collaborative developers.</i>
 </div>
