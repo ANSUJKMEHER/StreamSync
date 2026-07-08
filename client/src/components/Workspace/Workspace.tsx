@@ -9,7 +9,7 @@ import { roomService, type Room } from '../../services/roomService';
 import FileExplorer from '../Sidebar/FileExplorer';
 import ActivityBar from '../Sidebar/ActivityBar';
 import FileTabs from '../Tabs/FileTabs';
-import { MdPlayArrow, MdKeyboardArrowDown, MdPersonAdd, MdLink, MdLogout, MdOutlineWbSunny } from 'react-icons/md';
+import { MdPlayArrow, MdKeyboardArrowDown, MdPersonAdd, MdLogout, MdOutlineWbSunny } from 'react-icons/md';
 import MonacoEditor from '../Editor/MonacoEditor';
 import CanvasPanel from '../Canvas/CanvasPanel';
 import BottomPanel from '../Panel/BottomPanel';
@@ -480,16 +480,6 @@ export default function Workspace() {
             <MdPersonAdd size={15} />
             Invite
           </button>
-
-          {roomData && roomData.ownerId === user?.id && (
-            <button 
-              className="hover:bg-white/5 text-on-surface-variant hover:text-white px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-1.5 transition-all text-body-xs font-semibold"
-              onClick={() => setIsInviteModalOpen(true)}
-            >
-              <MdLink size={15} />
-              Share
-            </button>
-          )}
 
           <div className="w-[1px] h-5 bg-white/10 hidden md:block" />
 
