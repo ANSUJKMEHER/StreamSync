@@ -5,30 +5,21 @@ import './ActivityBar.css';
 interface ActivityBarProps {
   activeView: 'explorer' | 'search' | 'github' | 'extensions' | 'ai';
   setActiveView: (view: 'explorer' | 'search' | 'github' | 'extensions' | 'ai') => void;
-  isRightSidebarOpen: boolean;
-  setIsRightSidebarOpen: (open: boolean) => void;
-  rightSidebarView: 'chat' | 'members';
-  setRightSidebarView: (view: 'chat' | 'members') => void;
+  isChatOpen: boolean;
+  setIsChatOpen: (open: boolean) => void;
+  isMembersOpen: boolean;
+  setIsMembersOpen: (open: boolean) => void;
 }
 
 export default function ActivityBar({
   activeView,
   setActiveView,
-  isRightSidebarOpen,
-  setIsRightSidebarOpen,
-  rightSidebarView,
-  setRightSidebarView
+  isChatOpen,
+  setIsChatOpen,
+  isMembersOpen,
+  setIsMembersOpen
 }: ActivityBarProps) {
   
-  const handleRightSidebarToggle = (view: 'chat' | 'members') => {
-    if (isRightSidebarOpen && rightSidebarView === view) {
-      setIsRightSidebarOpen(false);
-    } else {
-      setRightSidebarView(view);
-      setIsRightSidebarOpen(true);
-    }
-  };
-
   return (
     <aside className="w-16 flex-shrink-0 bg-surface-container-lowest border-r border-outline-variant/20 flex flex-col items-center py-4 gap-container-gap z-40 relative shadow-[1px_0_10px_rgba(0,0,0,0.5)]">
       {/* Top Actions */}
@@ -84,8 +75,8 @@ export default function ActivityBar({
 
         {/* Right Sidebar Toggles */}
         <button 
-          className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${isRightSidebarOpen && rightSidebarView === 'chat' ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
-          onClick={() => handleRightSidebarToggle('chat')}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${isChatOpen ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
+          onClick={() => setIsChatOpen(!isChatOpen)}
           title="Room Chat"
         >
           <MdChatBubbleOutline className="text-2xl" />
@@ -93,8 +84,8 @@ export default function ActivityBar({
         </button>
 
         <button 
-          className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${isRightSidebarOpen && rightSidebarView === 'members' ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
-          onClick={() => handleRightSidebarToggle('members')}
+          className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${isMembersOpen ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
+          onClick={() => setIsMembersOpen(!isMembersOpen)}
           title="Workspace Members"
         >
           <MdPeople className="text-2xl" />

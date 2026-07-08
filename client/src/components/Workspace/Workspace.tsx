@@ -55,8 +55,8 @@ export default function Workspace() {
   const [activeCallUsers, setActiveCallUsers] = useState<Map<string, string>>(new Map());
   
   // Right Sidebar & Room Chat States
-  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
-  const [rightSidebarView, setRightSidebarView] = useState<'chat' | 'members'>('chat');
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isMembersOpen, setIsMembersOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   
   // Invite Modal
@@ -515,10 +515,10 @@ export default function Workspace() {
         <ActivityBar 
           activeView={activeActivityView} 
           setActiveView={setActiveActivityView}
-          isRightSidebarOpen={isRightSidebarOpen}
-          setIsRightSidebarOpen={setIsRightSidebarOpen}
-          rightSidebarView={rightSidebarView}
-          setRightSidebarView={setRightSidebarView}
+          isChatOpen={isChatOpen}
+          setIsChatOpen={setIsChatOpen}
+          isMembersOpen={isMembersOpen}
+          setIsMembersOpen={setIsMembersOpen}
         />
         
         {isSidebarOpen && (
@@ -531,11 +531,12 @@ export default function Workspace() {
            {renderMainArea()}
         </main>
 
-        {isRightSidebarOpen && (
+        {(isChatOpen || isMembersOpen) && (
           <RightSidebar 
-            view={rightSidebarView}
-            setView={setRightSidebarView}
-            onClose={() => setIsRightSidebarOpen(false)}
+            isChatOpen={isChatOpen}
+            setIsChatOpen={setIsChatOpen}
+            isMembersOpen={isMembersOpen}
+            setIsMembersOpen={setIsMembersOpen}
             messages={chatMessages}
             onSendMessage={handleSendChatMessage}
           />
