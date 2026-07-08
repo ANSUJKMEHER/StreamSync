@@ -18,6 +18,7 @@ import GlobalLoader from '../Layout/GlobalLoader';
 import InviteModal from './InviteModal';
 import GitHubPanel from '../Sidebar/GitHubPanel';
 import AICopilotPanel from '../Sidebar/AICopilotPanel';
+import ExtensionsPanel from '../Sidebar/ExtensionsPanel';
 import VoiceChat from './VoiceChat';
 import RightSidebar from '../Sidebar/RightSidebar';
 import type { ChatMessage } from '../Sidebar/RightSidebar';
@@ -313,6 +314,7 @@ export default function Workspace() {
     if (activeActivityView === 'explorer') return <FileExplorer />;
     if (activeActivityView === 'github') return <GitHubPanel roomData={roomData} />;
     if (activeActivityView === 'ai') return <AICopilotPanel />;
+    if (activeActivityView === 'extensions') return <ExtensionsPanel />;
     return (
       <div style={{ padding: '16px', color: 'var(--text-muted)' }}>
         {activeActivityView.charAt(0).toUpperCase() + activeActivityView.slice(1)} coming soon...
