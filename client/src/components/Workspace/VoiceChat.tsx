@@ -23,6 +23,9 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
   const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
   const remoteVideoRefs = useRef<{ [key: string]: HTMLVideoElement | null }>({});
   
+  // Keep a mutable reference to the local stream to avoid closure capture issues in cleanup
+  const localStreamRef = useRef<MediaStream | null>(null);
+  
   // Local state tracking active call participants (userId -> username)
   const [callParticipants, setCallParticipants] = useState<Map<string, string>>(new Map());
 
@@ -39,6 +42,7 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
         // Mute audio initially
         stream.getAudioTracks().forEach(track => track.enabled = false);
         
+        localStreamRef.current = stream;
         setLocalStream(stream);
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
@@ -47,7 +51,9 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
       .catch(err => console.error("Failed to get local media:", err));
 
     return () => {
-      localStream?.getTracks().forEach(t => t.stop());
+      localStreamRef.current?.getTracks().forEach(t => {
+        t.stop();
+      });
       peersRef.current.forEach(({ pc }) => pc.close());
     };
   }, []);
