@@ -41,24 +41,24 @@ StreamSync utilizes a powerful Client-Server model that synchronizes Yjs CRDTs v
 
 ```mermaid
 graph TD
-    subgraph Client [Client-Side (React 19)]
+    subgraph Client
         M[Monaco Editor] <-->|y-monaco| Y[Yjs CRDT Document]
         K[Konva Canvas] <-->|Y.Map| Y
         E[Execution UI] --> M
     end
     
-    subgraph Network [Transport Layer]
+    subgraph Network
         WS[WebSocket Multiplexer] <-->|Binary Updates| Y
     end
     
-    subgraph Server [Backend (Node.js / Express)]
+    subgraph Server
         WS <--> SM[Session / Room Manager]
         SM <-->|Auth & State| P[Prisma ORM]
         SM --> CE[Hybrid Execution Engine]
         SM --> AI[Gemini API Route]
     end
     
-    subgraph Infrastructure [Data & Compute]
+    subgraph Infrastructure
         P <--> DB[(PostgreSQL)]
         CE -->|Local Process| G[g++ / Python / Node]
         CE -->|External API| J[Judge0 Fallback]
