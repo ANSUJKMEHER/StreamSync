@@ -19,6 +19,8 @@ import InviteModal from './InviteModal';
 import GitHubPanel from '../Sidebar/GitHubPanel';
 import AICopilotPanel from '../Sidebar/AICopilotPanel';
 import VoiceChat from './VoiceChat';
+import RightSidebar from '../Sidebar/RightSidebar';
+import type { ChatMessage } from '../Sidebar/RightSidebar';
 import '../../App.css';
 
 type ViewMode = 'editor' | 'canvas' | 'split';
@@ -51,6 +53,11 @@ export default function Workspace() {
   // Call State
   const [isInCall, setIsInCall] = useState(false);
   const [activeCallUsers, setActiveCallUsers] = useState<Map<string, string>>(new Map());
+  
+  // Right Sidebar & Room Chat States
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
+  const [rightSidebarView, setRightSidebarView] = useState<'chat' | 'members'>('chat');
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   
   // Invite Modal
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -131,6 +138,18 @@ export default function Workspace() {
             return next;
           });
         }
+      } else if (action === 'chat-message') {
+        const { text } = payload;
+        setChatMessages(prev => [
+          ...prev,
+          {
+            id: msg.id || Math.random().toString(),
+            senderId: userId || '',
+            senderName: username || 'User',
+            text: text || '',
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }
+        ]);
       }
     };
 
@@ -213,6 +232,30 @@ export default function Workspace() {
     } finally {
       setIsExecuting(false);
     }
+  };
+
+  const handleSendChatMessage = (text: string) => {
+    if (!roomId || !user) return;
+    
+    wsService.send({
+      type: 'room-message',
+      roomId,
+      payload: {
+        action: 'chat-message',
+        text
+      }
+    });
+
+    setChatMessages(prev => [
+      ...prev,
+      {
+        id: Math.random().toString(),
+        senderId: user.id,
+        senderName: user.username,
+        text,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }
+    ]);
   };
 
   
@@ -469,7 +512,14 @@ export default function Workspace() {
 
       {/* Main Content Area (Below Header) */}
       <div className="flex flex-1 pt-14 h-full w-full overflow-hidden relative">
-        <ActivityBar activeView={activeActivityView} setActiveView={setActiveActivityView} />
+        <ActivityBar 
+          activeView={activeActivityView} 
+          setActiveView={setActiveActivityView}
+          isRightSidebarOpen={isRightSidebarOpen}
+          setIsRightSidebarOpen={setIsRightSidebarOpen}
+          rightSidebarView={rightSidebarView}
+          setRightSidebarView={setRightSidebarView}
+        />
         
         {isSidebarOpen && (
           <aside className="w-[260px] flex-shrink-0 bg-surface-container-low/80 backdrop-blur-md border-r border-outline-variant/20 flex flex-col h-full z-30">
@@ -480,6 +530,16 @@ export default function Workspace() {
         <main className="flex-1 flex w-full h-full relative z-20 overflow-hidden bg-surface-dim">
            {renderMainArea()}
         </main>
+
+        {isRightSidebarOpen && (
+          <RightSidebar 
+            view={rightSidebarView}
+            setView={setRightSidebarView}
+            onClose={() => setIsRightSidebarOpen(false)}
+            messages={chatMessages}
+            onSendMessage={handleSendChatMessage}
+          />
+        )}
       </div>
 
       {/* Modals */}
