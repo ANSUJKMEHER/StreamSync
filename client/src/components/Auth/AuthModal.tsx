@@ -42,13 +42,13 @@ function AuthModal() {
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-background/80 backdrop-blur-md p-4">
-      <div className="w-full max-w-md bg-surface-container-low border border-outline-variant/30 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-300">
+      <div className="w-full max-w-md bg-surface border border-outline-variant/35 rounded-3xl shadow-[0_12px_40px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-300">
         
         {/* Header */}
         <div className="flex flex-col items-center pt-10 pb-6 px-8 text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-primary/10 blur-3xl rounded-full scale-150 -translate-y-1/2"></div>
+          <div className="absolute inset-0 bg-primary/5 blur-3xl rounded-full scale-150 -translate-y-1/2"></div>
           
-          <div className="relative h-16 w-16 mb-4 rounded-2xl bg-gradient-to-br from-primary to-accent text-white flex items-center justify-center font-bold text-3xl shadow-[0_4px_24px_rgba(208,188,255,0.4)]">
+          <div className="relative h-16 w-16 mb-4 rounded-2xl bg-gradient-to-br from-primary/30 to-primary/80 border border-primary/20 text-white flex items-center justify-center font-bold text-3xl shadow-[0_4px_24px_rgba(223,171,108,0.15)]">
             S
           </div>
           <h1 className="relative font-headline-md font-bold text-on-surface text-2xl tracking-tight mb-2">
@@ -61,12 +61,12 @@ function AuthModal() {
 
         <div className="px-8 pb-8 flex flex-col gap-6">
           {/* Tabs */}
-          <div className="flex p-1 bg-surface-container-highest rounded-xl">
+          <div className="flex p-1 bg-surface-container rounded-xl border border-outline-variant/20">
             <button
               type="button"
-              className={`flex-1 py-2.5 text-sm font-label-md rounded-lg transition-all ${
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
                 mode === 'login'
-                  ? 'bg-surface text-primary shadow-sm'
+                  ? 'bg-surface-container-high text-primary border border-outline-variant/35 shadow-sm'
                   : 'text-on-surface-variant hover:text-on-surface'
               }`}
               onClick={() => switchMode('login')}
@@ -75,9 +75,9 @@ function AuthModal() {
             </button>
             <button
               type="button"
-              className={`flex-1 py-2.5 text-sm font-label-md rounded-lg transition-all ${
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
                 mode === 'register'
-                  ? 'bg-surface text-primary shadow-sm'
+                  ? 'bg-surface-container-high text-primary border border-outline-variant/35 shadow-sm'
                   : 'text-on-surface-variant hover:text-on-surface'
               }`}
               onClick={() => switchMode('register')}
@@ -89,10 +89,10 @@ function AuthModal() {
           {/* Form */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <label className="text-on-surface-variant font-label-md text-xs uppercase tracking-wider pl-1">
+              <label className="text-on-surface-variant/80 font-semibold text-[10px] uppercase tracking-wider pl-1">
                 Username
               </label>
-              <div className="relative mt-2">
+              <div className="relative mt-1">
                 <MdPerson className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 text-xl" />
                 <input
                   ref={inputRef}
@@ -103,16 +103,16 @@ function AuthModal() {
                   disabled={isLoading}
                   minLength={2}
                   maxLength={30}
-                  className="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 pl-11 pr-4 text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:border-primary transition-colors font-code"
+                  className="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl py-3 pl-11 pr-4 text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all font-code"
                 />
               </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-on-surface-variant font-label-md text-xs uppercase tracking-wider pl-1">
+              <label className="text-on-surface-variant/80 font-semibold text-[10px] uppercase tracking-wider pl-1">
                 Password
               </label>
-              <div className="relative mt-2">
+              <div className="relative mt-1">
                 <MdLock className="absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant/50 text-xl" />
                 <input
                   type="password"
@@ -121,22 +121,22 @@ function AuthModal() {
                   onChange={(e) => setPassword(e.target.value)}
                   disabled={isLoading}
                   minLength={4}
-                  className="w-full bg-surface-container border border-outline-variant/30 rounded-xl py-3 pl-11 pr-4 text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:border-primary transition-colors font-code"
+                  className="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl py-3 pl-11 pr-4 text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all font-code"
                 />
               </div>
             </div>
 
             {error && (
-              <div className="mb-6 p-4 rounded-xl bg-error/10 border border-error/20 flex items-center gap-3 text-error">
+              <div className="mb-2 p-3.5 rounded-xl bg-error/10 border border-error/20 flex items-center gap-3 text-error">
                 <MdError size={18} className="shrink-0" />
-                <span className="text-body-sm font-medium">{error}</span>
+                <span className="text-[12px] font-medium">{error}</span>
               </div>
             )}
 
             <button
               type="submit"
               disabled={isLoading || !username.trim() || !password.trim()}
-              className="w-full relative bg-primary hover:bg-primary/90 disabled:opacity-50 disabled:hover:bg-primary text-on-primary font-label-lg font-bold rounded-xl py-4 transition-all shadow-[0_4px_16px_rgba(208,188,255,0.2)] hover:shadow-[0_4px_20px_rgba(208,188,255,0.3)] disabled:shadow-none overflow-hidden"
+              className="w-full relative bg-primary hover:bg-primary/95 disabled:opacity-50 disabled:hover:bg-primary text-background font-bold text-xs rounded-xl py-3.5 transition-all shadow-[0_4px_16px_rgba(223,171,108,0.15)] hover:shadow-[0_4px_20px_rgba(223,171,108,0.25)] disabled:shadow-none overflow-hidden mt-2"
             >
               {isLoading ? (
                 <div className="flex items-center justify-center gap-2">

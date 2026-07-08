@@ -19,6 +19,15 @@ function App() {
     setSessionChecked(true);
   }, [restoreSession]);
 
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('streamsync_theme') || 'obsidian';
+    if (savedTheme === 'nord') {
+      document.documentElement.setAttribute('data-theme', 'nord');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+  }, []);
+
   // Show global loader while checking session
   if (!sessionChecked) {
     return <GlobalLoader />;

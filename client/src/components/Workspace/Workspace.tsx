@@ -62,6 +62,20 @@ export default function Workspace() {
   // Invite Modal
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
+  // Dynamic Theme state
+  const [theme, setTheme] = useState<'obsidian' | 'nord'>(() => {
+    return (localStorage.getItem('streamsync_theme') as 'obsidian' | 'nord') || 'obsidian';
+  });
+
+  useEffect(() => {
+    if (theme === 'nord') {
+      document.documentElement.setAttribute('data-theme', 'nord');
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+    localStorage.setItem('streamsync_theme', theme);
+  }, [theme]);
+
   const activeFile = files.find((f) => f.id === activeFileId);
 
   // Load room details
@@ -424,12 +438,12 @@ export default function Workspace() {
   };
 
   return (
-    <div className="bg-background text-on-surface h-screen w-screen overflow-hidden flex flex-col font-body-md text-body-md select-none">
+    <div className="flex flex-col h-screen w-screen overflow-hidden bg-background text-on-surface select-none">
       {/* Voice Chat Component */}
       {!isInitialLoad && roomId && isInCall && <VoiceChat roomId={roomId} onLeaveCall={() => setIsInCall(false)} />}
 
       {/* Top Navigation Bar */}
-      <header className="bg-[#0f111a]/70 backdrop-blur-xl border-b border-white/5 flex justify-between items-center px-6 h-14 w-full flex-shrink-0 z-50 fixed top-0 left-0 right-0 shadow-md">
+      <header className="bg-surface/85 backdrop-blur-xl border-b border-outline-variant/20 flex justify-between items-center px-6 h-14 w-full flex-shrink-0 z-50 fixed top-0 left-0 right-0 shadow-md">
         {/* Left: Logo & Project Dropdown */}
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-80" onClick={() => navigate('/')}>
@@ -510,9 +524,10 @@ export default function Workspace() {
 
           <button 
             className="text-on-surface-variant hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/5"
-            title="Theme Toggle"
+            onClick={() => setTheme(prev => prev === 'obsidian' ? 'nord' : 'obsidian')}
+            title={`Switch to ${theme === 'obsidian' ? 'Nord Slate' : 'Obsidian Gold'}`}
           >
-            <MdOutlineWbSunny size={18} />
+            <MdOutlineWbSunny size={18} className={theme === 'nord' ? 'text-primary rotate-45 transition-transform duration-300' : 'transition-transform duration-300'} />
           </button>
           
           {user && (
@@ -524,7 +539,7 @@ export default function Workspace() {
       </header>
 
       {/* Main Content Area (Below Header) */}
-      <div className="flex flex-1 pt-14 h-full w-full overflow-hidden relative bg-[#0f111a]">
+      <div className="flex flex-1 pt-14 h-full w-full overflow-hidden relative bg-background">
         <ActivityBar 
           activeView={activeActivityView} 
           setActiveView={setActiveActivityView}
@@ -541,10 +556,10 @@ export default function Workspace() {
         )}
 
         {/* Center Panel including Sub-Header View Navigation */}
-        <div className="flex-1 flex flex-col h-full overflow-hidden relative z-20 bg-surface-dim">
+        <div className="flex-1 flex flex-col h-full overflow-hidden relative z-20 bg-background">
           {/* Sub-Header View switcher navigation */}
-          <div className="h-12 bg-white/[0.01] border-b border-white/5 flex items-center justify-center shrink-0 z-30 shadow-sm">
-            <div className="flex items-center gap-1.5 bg-white/[0.02] p-1 rounded-xl border border-white/5">
+          <div className="h-12 bg-surface/50 border-b border-outline-variant/15 flex items-center justify-center shrink-0 z-30 shadow-sm">
+            <div className="flex items-center gap-1.5 bg-surface-container-low p-1 rounded-xl border border-outline-variant/25">
               <button
                 className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-200 ${
                   viewMode === 'editor' && !isChatOpen && !isMembersOpen

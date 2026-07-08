@@ -8,7 +8,52 @@ html, body, #root {
   height: 100vh;
   width: 100vw;
   overflow: hidden;
-  background-color: #0f111a;
+  background-color: var(--color-background);
+}
+
+:root {
+  /* Obsidian Gold Theme (Default) */
+  --color-primary: #dfab6c;
+  --color-primary-container: rgba(223, 171, 108, 0.1);
+  --color-primary-dark: #b88d55;
+  --color-background: #090a0f;
+  --color-surface: #10121a;
+  --color-surface-container-lowest: #06070a;
+  --color-surface-container-low: #0c0e14;
+  --color-surface-container: #12151f;
+  --color-surface-container-high: #1a1e2b;
+  --color-surface-container-highest: #23283a;
+  --color-on-background: #e3e4e8;
+  --color-on-surface: #e3e4e8;
+  --color-on-surface-variant: #a9abb6;
+  --color-outline: #383b4d;
+  --color-outline-variant: #222430;
+}
+
+[data-theme="nord"] {
+  /* Nord Slate Theme */
+  --color-primary: #88c0d0;
+  --color-primary-container: rgba(136, 192, 208, 0.1);
+  --color-primary-dark: #5e81ac;
+  --color-background: #14171d;
+  --color-surface: #1b1e25;
+  --color-surface-container-lowest: #0e1014;
+  --color-surface-container-low: #15181e;
+  --color-surface-container: #1e222a;
+  --color-surface-container-high: #272c36;
+  --color-surface-container-highest: #323845;
+  --color-on-background: #d8dee9;
+  --color-on-surface: #d8dee9;
+  --color-on-surface-variant: #abb2bf;
+  --color-outline: #4c566a;
+  --color-outline-variant: #2e3440;
+}
+
+/* Smooth transition for theme colors */
+body, header, aside, main, div, button, input, textarea {
+  transition: background-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+              border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), 
+              box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Custom scrollbar for deep dark theme */

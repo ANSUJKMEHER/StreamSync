@@ -155,11 +155,11 @@ export default function Dashboard() {
 
 
   return (
-    <div className="min-h-screen bg-background text-on-surface font-sans">
+    <div className="min-h-screen bg-background text-on-surface font-sans transition-colors duration-300">
       {/* Header */}
-      <header className="h-16 border-b border-outline-variant/30 flex items-center justify-between px-6 bg-surface">
+      <header className="h-16 border-b border-outline-variant/25 flex items-center justify-between px-6 bg-surface shadow-sm">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-md bg-gradient-to-br from-primary to-accent text-white flex items-center justify-center font-bold text-lg shadow-[0_2px_8px_rgba(208,188,255,0.4)]">
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary/30 to-primary/80 border border-primary/20 text-white flex items-center justify-center font-bold text-lg shadow-[0_2px_8px_rgba(223,171,108,0.15)]">
             S
           </div>
           <span className="font-headline-md font-bold text-primary tracking-tight text-xl">StreamSync</span>
@@ -175,10 +175,10 @@ export default function Dashboard() {
       <main className="max-w-7xl mx-auto px-6 py-12">
         {/* Welcome Text */}
         <div className="mb-12">
-          <h1 className="text-4xl font-bold text-on-surface mb-2">
+          <h1 className="text-4xl font-bold text-on-surface mb-2 tracking-tight">
             Welcome back, {useAuthStore.getState().user?.username?.split(' ')[0] || 'Developer'}
           </h1>
-          <p className="text-on-surface-variant text-body-lg">Here's an overview of your recent projects and repositories.</p>
+          <p className="text-on-surface-variant font-medium">Here's an overview of your recent projects and repositories.</p>
         </div>
 
         {/* Two Columns */}
@@ -187,21 +187,21 @@ export default function Dashboard() {
            <div className="flex-1 flex flex-col gap-8 min-w-[320px]">
              {/* Create Workspace */}
              <section>
-               <h2 className="text-title-lg font-semibold text-on-surface mb-4">Create New Workspace</h2>
-               <div className="bg-surface-container-low border border-outline-variant/30 rounded-2xl p-6">
+               <h2 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Create New Workspace</h2>
+               <div className="bg-surface border border-outline-variant/30 rounded-2xl p-6 shadow-sm">
                  <form onSubmit={handleCreateRoom} className="flex flex-col gap-4">
                    <div className="relative">
-                     <span className="absolute left-4 top-2 text-on-surface-variant text-xs font-code uppercase tracking-wider">Workspace Name</span>
+                     <span className="absolute left-4 top-2.5 text-on-surface-variant/80 text-[10px] font-semibold uppercase tracking-wider">Workspace Name</span>
                      <input
                        type="text"
                        placeholder="e.g. System Architecture"
                        value={newRoomName}
                        onChange={(e) => setNewRoomName(e.target.value)}
                        required
-                       className="w-full bg-surface-container-lowest border border-outline-variant/30 rounded-xl py-3 px-4 pt-8 text-on-surface placeholder-on-surface-variant/30 focus:outline-none focus:border-primary transition-colors font-code"
+                       className="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl py-3 px-4 pt-8 text-on-surface placeholder-on-surface-variant/20 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all font-code text-sm"
                      />
                    </div>
-                   <button type="submit" className="w-full bg-primary hover:bg-primary/90 text-on-primary font-label-lg rounded-xl py-3 transition-colors shadow-[0_4px_12px_rgba(208,188,255,0.2)]">
+                   <button type="submit" className="w-full bg-primary hover:bg-primary/95 text-background font-bold text-xs rounded-xl py-3.5 transition-all shadow-[0_4px_16px_rgba(223,171,108,0.15)] hover:shadow-[0_4px_20px_rgba(223,171,108,0.25)]">
                      Create Workspace
                    </button>
                  </form>
@@ -210,43 +210,43 @@ export default function Dashboard() {
 
              {/* Your Workspaces */}
              <section>
-               <h2 className="text-title-lg font-semibold text-on-surface mb-4">Your Workspaces</h2>
-               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+               <h2 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Your Workspaces</h2>
+               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
                   {loading ? (
-                    <div className="text-on-surface-variant p-4 animate-pulse">Loading workspaces...</div>
+                    <div className="text-on-surface-variant p-4 animate-pulse font-code text-xs">Loading workspaces...</div>
                   ) : rooms.length === 0 ? (
-                    <div className="text-on-surface-variant p-4">You don't have any workspaces yet.</div>
+                    <div className="text-on-surface-variant p-4 font-code text-xs">You don't have any workspaces yet.</div>
                   ) : (
                     rooms.map((room) => (
-                      <div key={room.id} onClick={() => navigateToRoom(room.id)} className="bg-surface-container-lowest border border-outline-variant/30 rounded-2xl p-5 hover:border-primary/50 transition-colors cursor-pointer group flex flex-col gap-4">
-                        <div className="flex justify-between items-start">
-                          <h3 className="font-code-lg text-lg text-primary">{room.name}</h3>
-                          <button onClick={(e) => handleDeleteRoom(room.id, e)} className="text-on-surface-variant hover:text-error transition-colors p-1">
-                            <MdClose size={20} />
+                      <div key={room.id} onClick={() => navigateToRoom(room.id)} className="bg-surface border border-outline-variant/30 rounded-2xl p-5 hover:border-primary/40 hover:scale-[1.01] hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all cursor-pointer group flex flex-col justify-between gap-4 h-[160px]">
+                        <div className="flex justify-between items-start gap-2">
+                          <h3 className="font-semibold text-base text-white group-hover:text-primary transition-colors truncate max-w-[80%]">{room.name}</h3>
+                          <button onClick={(e) => handleDeleteRoom(room.id, e)} className="text-on-surface-variant/70 hover:text-error transition-colors p-1 bg-surface-container rounded-lg border border-outline-variant/10">
+                            <MdClose size={15} />
                           </button>
                         </div>
-                        <div className="text-on-surface-variant text-body-sm font-code">
-                          {room._count?.files || 0} Files
-                        </div>
-                        <div className="flex items-center gap-2">
-                           <button 
-                             onClick={(e) => handleTogglePublic(room, e)}
-                             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold hover:opacity-80 transition-opacity ${room.isPublic ? 'bg-success/10 text-success' : 'bg-surface-variant text-on-surface-variant'}`}
-                           >
-                             {room.isPublic ? <MdPublic size={14} /> : <MdLock size={14} />}
-                             {room.isPublic ? 'Public' : 'Private'}
-                           </button>
-                           {room.isPublic && (
-                             <button
-                               onClick={(e) => handleToggleAccess(room, e)}
-                               className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-surface-variant text-on-surface-variant hover:bg-surface-container-high transition-colors"
-                             >
-                               {room.publicAccess === 'VIEW' ? 'Read-Only' : 'Anyone can Edit'}
-                             </button>
-                           )}
-                        </div>
-                        <div className="text-on-surface-variant/70 text-xs font-code mt-2">
-                          Created {new Date(room.createdAt).toLocaleDateString()}
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-1.5">
+                            <button 
+                              onClick={(e) => handleTogglePublic(room, e)}
+                              className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold hover:opacity-85 transition-opacity uppercase tracking-wider ${room.isPublic ? 'bg-success/15 text-success border border-success/20' : 'bg-surface-container-high text-on-surface-variant border border-outline-variant/30'}`}
+                            >
+                              {room.isPublic ? <MdPublic size={12} /> : <MdLock size={12} />}
+                              {room.isPublic ? 'Public' : 'Private'}
+                            </button>
+                            {room.isPublic && (
+                              <button
+                                onClick={(e) => handleToggleAccess(room, e)}
+                                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-surface-container-high text-on-surface-variant border border-outline-variant/30 hover:bg-surface-container-highest transition-colors uppercase tracking-wider"
+                              >
+                                {room.publicAccess === 'VIEW' ? 'Read-Only' : 'Collaborative'}
+                              </button>
+                            )}
+                          </div>
+                          <div className="flex justify-between items-center text-[11px] text-on-surface-variant/70 font-code mt-1 border-t border-outline-variant/10 pt-2">
+                            <span>{room._count?.files || 0} Files</span>
+                            <span>{new Date(room.createdAt).toLocaleDateString()}</span>
+                          </div>
                         </div>
                       </div>
                     ))
@@ -256,24 +256,24 @@ export default function Dashboard() {
            </div>
 
            {/* Right Column */}
-           <div className="lg:w-[600px] flex-shrink-0 flex flex-col gap-8">
+           <div className="lg:w-[500px] flex-shrink-0 flex flex-col gap-8">
              <section>
-               <h2 className="text-title-lg font-semibold text-on-surface mb-4">Import Git Repository</h2>
-               <div className="bg-surface-container-low border border-outline-variant/30 rounded-2xl overflow-hidden flex flex-col h-[700px]">
+               <h2 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Import Git Repository</h2>
+               <div className="bg-surface border border-outline-variant/30 rounded-2xl overflow-hidden flex flex-col h-[650px] shadow-sm">
                  
                  {/* Top Controls */}
-                 <div className="p-4 border-b border-outline-variant/20 flex gap-4 bg-surface-container-lowest">
-                   <div className="flex items-center gap-2 bg-surface-variant rounded-lg px-3 py-2 text-on-surface">
-                     <MdAccountCircle size={18} />
-                     <span className="font-label-md">{repos.length > 0 ? repos[0].full_name.split('/')[0] : 'GitHub'}</span>
-                     <MdKeyboardArrowDown size={18} />
+                 <div className="p-4 border-b border-outline-variant/20 flex gap-3 bg-surface-container-low">
+                   <div className="flex items-center gap-2 bg-surface-container border border-outline-variant/20 rounded-xl px-3.5 py-1.5 text-on-surface cursor-pointer hover:bg-surface-container-high transition-colors">
+                     <MdAccountCircle size={18} className="text-primary" />
+                     <span className="text-xs font-semibold">{repos.length > 0 ? repos[0].full_name.split('/')[0] : 'GitHub'}</span>
+                     <MdKeyboardArrowDown size={14} className="text-on-surface-variant" />
                    </div>
-                   <div className="flex-1 flex items-center gap-2 bg-surface-container rounded-lg px-3 py-2 border border-outline-variant/30 focus-within:border-primary transition-colors">
-                     <MdSearch size={18} className="text-on-surface-variant" />
+                   <div className="flex-1 flex items-center gap-2 bg-surface-container border border-outline-variant/10 rounded-xl px-3 py-1.5 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/10 transition-all">
+                     <MdSearch size={16} className="text-on-surface-variant" />
                      <input 
                        type="text" 
                        placeholder="Search..." 
-                       className="bg-transparent border-none outline-none text-on-surface w-full placeholder-on-surface-variant/50 font-code text-sm"
+                       className="bg-transparent border-none outline-none text-on-surface w-full placeholder-on-surface-variant/30 font-code text-xs"
                        value={searchQuery}
                        onChange={(e) => setSearchQuery(e.target.value)}
                      />
@@ -281,40 +281,40 @@ export default function Dashboard() {
                  </div>
 
                  {/* Repo List */}
-                 <div className="flex-1 overflow-y-auto no-scrollbar">
+                 <div className="flex-1 overflow-y-auto no-scrollbar bg-surface-container-lowest">
                     {reposLoading ? (
-                      <div className="p-8 text-center text-on-surface-variant animate-pulse font-code text-sm">Loading repositories...</div>
+                      <div className="p-8 text-center text-on-surface-variant animate-pulse font-code text-xs">Loading repositories...</div>
                     ) : githubError ? (
                       <div className="p-8 text-center flex flex-col items-center gap-4">
-                        <span className="text-error font-code text-sm">{githubError}</span>
-                        <button onClick={() => window.open(`${import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://streamsync-cxox.onrender.com')}/api/v1/oauth/github`, 'GitHub OAuth', 'width=600,height=700')} className="bg-surface-variant hover:bg-surface-container-highest text-on-surface px-4 py-2 rounded-lg transition-colors font-label-md">
+                        <span className="text-error font-code text-xs bg-error/10 border border-error/20 p-3 rounded-xl">{githubError}</span>
+                        <button onClick={() => window.open(`${import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://streamsync-cxox.onrender.com')}/api/v1/oauth/github`, 'GitHub OAuth', 'width=600,height=700')} className="bg-primary hover:bg-primary/95 text-background px-4 py-2 rounded-xl transition-colors font-bold text-xs shadow-md">
                           Connect GitHub
                         </button>
                       </div>
                     ) : repos.length === 0 ? (
-                      <div className="p-8 text-center text-on-surface-variant font-code text-sm">
+                      <div className="p-8 text-center text-on-surface-variant font-code text-xs">
                         No repositories found. Ensure you are connected to GitHub.
                       </div>
                     ) : (
-                      <div className="flex flex-col">
+                      <div className="flex flex-col divide-y divide-outline-variant/10">
                         {filteredRepos.map(repo => (
-                          <div key={repo.id} className="flex items-center justify-between p-4 border-b border-outline-variant/10 hover:bg-surface-container-lowest transition-colors">
+                          <div key={repo.id} className="flex items-center justify-between p-4 hover:bg-surface-container-low transition-colors">
                             <div className="flex items-center gap-3">
-                              <MdFolderZip size={20} className="text-on-surface-variant" />
+                              <MdFolderZip size={20} className="text-primary/60" />
                               <div className="flex flex-col">
                                 <div className="flex items-center gap-2">
-                                  <span className="font-code text-on-surface text-sm">{repo.name}</span>
-                                  {repo.private && <MdLock size={14} className="text-on-surface-variant" />}
+                                  <span className="font-code text-on-surface text-xs font-semibold">{repo.name}</span>
+                                  {repo.private && <MdLock size={12} className="text-on-surface-variant/80" />}
                                 </div>
-                                <span className="text-xs text-on-surface-variant font-code mt-1">
-                                  {Math.round((Date.now() - new Date(repo.updated_at).getTime()) / (1000 * 60 * 60 * 24))}d ago
+                                <span className="text-[10px] text-on-surface-variant/60 font-code mt-0.5">
+                                  Updated {Math.round((Date.now() - new Date(repo.updated_at).getTime()) / (1000 * 60 * 60 * 24))}d ago
                                 </span>
                               </div>
                             </div>
                             <button 
                               onClick={() => handleImportGithub(repo.full_name)}
                               disabled={isImporting}
-                              className="bg-surface-variant hover:bg-surface-container-highest text-on-surface font-label-md px-4 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+                              className="bg-surface hover:bg-surface-container-high border border-outline-variant/20 hover:border-primary/30 text-on-surface font-semibold text-xs px-3.5 py-1.5 rounded-xl transition-all disabled:opacity-50"
                             >
                               Import
                             </button>
@@ -325,23 +325,23 @@ export default function Dashboard() {
                  </div>
 
                  {/* URL Import */}
-                 <div className="p-6 border-t border-outline-variant/20 bg-surface-container-lowest">
-                   <div className="relative text-center mb-6">
-                     <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-outline-variant/30"></div></div>
-                     <span className="relative bg-surface-container-lowest px-4 text-xs text-on-surface-variant font-code uppercase tracking-wider">or import via URL</span>
+                 <div className="p-5 border-t border-outline-variant/25 bg-surface-container-low">
+                   <div className="relative text-center mb-5">
+                     <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-outline-variant/10"></div></div>
+                     <span className="relative bg-surface-container-low px-3.5 text-[10px] text-on-surface-variant/80 font-bold uppercase tracking-wider">or import via URL</span>
                    </div>
-                   <div className="flex gap-4">
+                   <div className="flex gap-2">
                      <input
                        type="text"
-                       placeholder="Repository URL (e.g. https://github.com/facebook/react)"
+                       placeholder="Repository URL (e.g. https://github.com/owner/repo)"
                        value={importRepo}
                        onChange={(e) => setImportRepo(e.target.value)}
-                       className="flex-1 bg-surface-container border border-outline-variant/30 rounded-lg px-4 py-2.5 text-on-surface placeholder-on-surface-variant/50 focus:outline-none focus:border-primary transition-colors font-code text-sm"
+                       className="flex-1 bg-surface-container-lowest border border-outline-variant/30 rounded-xl px-4 py-2.5 text-on-surface placeholder-on-surface-variant/25 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all font-code text-xs"
                      />
                      <button 
                        disabled={isImporting || !importRepo.trim()} 
                        onClick={() => handleImportGithub(importRepo)}
-                       className="bg-surface-variant hover:bg-surface-container-highest text-on-surface font-label-md px-6 py-2.5 rounded-lg transition-colors disabled:opacity-50"
+                       className="bg-primary hover:bg-primary/95 text-background font-bold text-xs px-5 py-2.5 rounded-xl transition-all shadow-[0_4px_16px_rgba(223,171,108,0.15)] disabled:opacity-50 disabled:shadow-none"
                      >
                        Import URL
                      </button>
