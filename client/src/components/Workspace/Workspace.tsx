@@ -9,7 +9,7 @@ import { roomService, type Room } from '../../services/roomService';
 import FileExplorer from '../Sidebar/FileExplorer';
 import ActivityBar from '../Sidebar/ActivityBar';
 import FileTabs from '../Tabs/FileTabs';
-import { MdShare, MdPlayArrow, MdTerminal, MdCall } from 'react-icons/md';
+import { MdPlayArrow, MdKeyboardArrowDown, MdPersonAdd, MdLink, MdLogout, MdOutlineWbSunny } from 'react-icons/md';
 import MonacoEditor from '../Editor/MonacoEditor';
 import CanvasPanel from '../Canvas/CanvasPanel';
 import BottomPanel from '../Panel/BottomPanel';
@@ -29,7 +29,7 @@ type ActivityView = 'explorer' | 'search' | 'github' | 'extensions' | 'ai';
 export default function Workspace() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
-  const { files, activeFileId, openFileIds, fetchFiles, isLoading, isSidebarOpen } = useFileStore();
+  const { files, activeFileId, openFileIds, fetchFiles, isLoading, isSidebarOpen, toggleSidebar } = useFileStore();
   const { user, token } = useAuthStore();
   const { setActiveRoom, roomUsers } = useRoomStore();
   
@@ -52,7 +52,7 @@ export default function Workspace() {
   
   // Call State
   const [isInCall, setIsInCall] = useState(false);
-  const [activeCallUsers, setActiveCallUsers] = useState<Map<string, string>>(new Map());
+  const [, setActiveCallUsers] = useState<Map<string, string>>(new Map());
   
   // Right Sidebar & Room Chat States
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -401,117 +401,112 @@ export default function Workspace() {
       {!isInitialLoad && roomId && isInCall && <VoiceChat roomId={roomId} onLeaveCall={() => setIsInCall(false)} />}
 
       {/* Top Navigation Bar */}
-      <header className="bg-surface/60 backdrop-blur-md shadow-sm border-b border-outline-variant/30 flex justify-between items-center px-gutter h-14 w-full flex-shrink-0 z-50 fixed top-0 left-0 right-0">
-        {/* Left: Logo & Nav */}
+      <header className="bg-[#0f111a]/70 backdrop-blur-xl border-b border-white/5 flex justify-between items-center px-6 h-14 w-full flex-shrink-0 z-50 fixed top-0 left-0 right-0 shadow-md">
+        {/* Left: Logo & Project Dropdown */}
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-80" onClick={() => navigate('/')}>
-            <div className="h-8 w-8 rounded-md bg-gradient-to-br from-primary to-accent text-white flex items-center justify-center font-bold text-lg shadow-[0_2px_8px_rgba(208,188,255,0.4)]">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-inverse-primary text-white flex items-center justify-center font-bold text-lg shadow-[0_2px_12px_rgba(208,188,255,0.35)]">
               S
             </div>
-            <span className="font-headline-md text-headline-md font-bold text-primary tracking-tight">StreamSync</span>
+            <span className="font-headline-md text-headline-md font-bold text-white tracking-tight">StreamSync</span>
           </div>
-          
-          <nav className="hidden md:flex items-center bg-surface-variant/30 p-1 rounded-lg border border-outline-variant/20">
-            <button
-              className={`px-4 py-1.5 rounded-md font-label-md transition-all duration-200 ${viewMode === 'editor' ? 'bg-surface shadow-sm text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'}`}
-              onClick={() => setViewMode('editor')}
-              title="Code Editor"
-            >
-              Code
-            </button>
-            <button
-              className={`px-4 py-1.5 rounded-md font-label-md transition-all duration-200 ${viewMode === 'canvas' ? 'bg-surface shadow-sm text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'}`}
-              onClick={() => setViewMode('canvas')}
-              title="Canvas"
-            >
-              Canvas
-            </button>
-            <button
-              className={`px-4 py-1.5 rounded-md font-label-md transition-all duration-200 ${viewMode === 'split' ? 'bg-surface shadow-sm text-primary font-bold' : 'text-on-surface-variant hover:text-on-surface'}`}
-              onClick={() => setViewMode('split')}
-              title="Split View"
-            >
-              Split
-            </button>
-          </nav>
+
+          <div className="w-[1px] h-5 bg-white/10 hidden md:block" />
+
+          {/* Project dropdown picker */}
+          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] transition-colors cursor-pointer text-body-xs font-semibold text-on-surface-variant">
+            <span>Project: <strong className="text-white">{roomData?.name || 'E-Commerce App'}</strong></span>
+            <MdKeyboardArrowDown size={16} />
+          </div>
         </div>
 
-        {/* Right: Actions & Profile */}
-        <div className="flex items-center gap-3">
-          {roomData && roomData.ownerId === user?.id && (
-            <button 
-              className="hover:bg-surface-variant text-on-surface-variant hover:text-on-surface px-3 py-1.5 rounded-md flex items-center gap-2 transition-colors font-label-md"
-              onClick={() => setIsInviteModalOpen(true)}
-            >
-              <MdShare size={16} />
-              Share
-            </button>
-          )}
+        {/* Center: Live Connection status & Stacked avatar cluster */}
+        <div className="hidden md:flex items-center gap-4">
+          <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-success/10 border border-success/20 text-success text-[10px] font-bold tracking-wide uppercase shadow-sm animate-pulse">
+            <span className="w-1.5 h-1.5 bg-success rounded-full shadow-[0_0_8px_#4edea3]" />
+            Connected: {roomUsers.length} users
+          </div>
 
-          {!isInCall && (
-            <button 
-              className={`px-3 py-1.5 rounded-md flex items-center gap-2 transition-all font-label-md relative overflow-hidden ${
-                activeCallUsers.size > 0
-                  ? 'bg-success text-white hover:bg-success/90 animate-pulse font-bold'
-                  : 'hover:bg-success/20 text-success bg-success/10'
-              }`}
-              onClick={() => setIsInCall(true)}
-              title="Join Voice Call"
-            >
-              <MdCall size={16} />
-              {activeCallUsers.size > 0 ? `Join Call (${activeCallUsers.size} active)` : 'Join Call'}
-            </button>
-          )}
-
-          <div className="w-[1px] h-6 bg-outline-variant/30 hidden md:block" />
-
-          <button 
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-md bg-primary/10 text-primary hover:bg-primary/20 font-label-md transition-all active:scale-95 ${isExecuting || !activeFile ? 'opacity-50 cursor-not-allowed' : ''}`}
-            onClick={handleRunCode}
-            disabled={isExecuting || !activeFile}
-          >
-            <MdPlayArrow size={18} />
-            Run Code
-          </button>
-          
-          <button 
-            className="text-on-surface-variant hover:text-primary transition-colors p-1.5 rounded-md hover:bg-surface-variant/50"
-            onClick={() => setIsBottomPanelOpen(!isBottomPanelOpen)} 
-            title="Toggle Terminal"
-          >
-            <MdTerminal size={20} />
-          </button>
-
-          {/* Profile/Collaborators */}
-          <div className="flex items-center pl-2 ml-1 border-l border-outline-variant/30">
-            <div className="flex items-center -space-x-2 mr-3">
-              {activeFileId && roomUsers.filter(u => u.userId !== user?.id).map((u, i) => (
-                <div 
-                  key={u.userId}
-                  className="w-7 h-7 rounded-full border-2 border-surface flex items-center justify-center font-label-md text-[10px] bg-accent text-white shadow-sm hover:-translate-y-0.5 hover:scale-110 transition-transform"
-                  style={{ zIndex: 20 - i }}
-                  title={u.username}
-                >
-                  {u.username.charAt(0).toUpperCase()}
-                </div>
-              ))}
-            </div>
-            
-            {user ? (
-              <div className="z-30">
-                <UserDropdown />
+          {/* Stacked active users in call */}
+          <div className="flex items-center -space-x-2.5">
+            {roomUsers.slice(0, 3).map((u, i) => (
+              <div 
+                key={u.userId}
+                className="w-7 h-7 rounded-full border-2 border-[#0f111a] flex items-center justify-center font-bold text-[10px] bg-gradient-to-br from-primary to-accent text-white shadow-md hover:-translate-y-0.5 transition-transform cursor-pointer"
+                style={{ zIndex: 30 - i }}
+                title={u.username}
+              >
+                {u.username.charAt(0).toUpperCase()}
               </div>
-            ) : (
-              <div className="w-8 h-8 rounded-full border-2 border-surface bg-surface-variant text-on-surface-variant flex items-center justify-center font-label-md text-[12px] z-30">
-                G
+            ))}
+            {roomUsers.length > 3 && (
+              <div className="w-7 h-7 rounded-full border-2 border-[#0f111a] flex items-center justify-center font-bold text-[9px] bg-surface-container-highest text-on-surface shadow-md z-10">
+                +{roomUsers.length - 3}
               </div>
             )}
           </div>
         </div>
+
+        {/* Right: Actions & Profile */}
+        <div className="flex items-center gap-3">
+          <button 
+            className="hover:bg-white/5 text-on-surface-variant hover:text-white px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-1.5 transition-all text-body-xs font-semibold"
+            onClick={() => setIsInviteModalOpen(true)}
+          >
+            <MdPersonAdd size={15} />
+            Invite
+          </button>
+
+          {roomData && roomData.ownerId === user?.id && (
+            <button 
+              className="hover:bg-white/5 text-on-surface-variant hover:text-white px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-1.5 transition-all text-body-xs font-semibold"
+              onClick={() => setIsInviteModalOpen(true)}
+            >
+              <MdLink size={15} />
+              Share
+            </button>
+          )}
+
+          <div className="w-[1px] h-5 bg-white/10 hidden md:block" />
+
+          {/* Run Code pill button */}
+          <button 
+            className={`flex items-center gap-1 px-4 py-1.5 rounded-full bg-gradient-to-br from-primary-container to-inverse-primary text-white hover:shadow-[0_0_15px_rgba(138,114,193,0.35)] hover:scale-[1.02] active:scale-[0.98] text-body-xs font-bold transition-all ${isExecuting || !activeFile ? 'opacity-50 cursor-not-allowed shadow-none scale-100' : ''}`}
+            onClick={handleRunCode}
+            disabled={isExecuting || !activeFile}
+          >
+            <MdPlayArrow size={16} />
+            <span>Run</span>
+            <MdKeyboardArrowDown size={14} className="border-l border-white/20 pl-0.5 ml-0.5" />
+          </button>
+
+          {/* Leave Room outlined pill button */}
+          <button 
+            className="border border-white/10 hover:border-error/40 text-on-surface-variant hover:text-error hover:bg-error/5 px-4 py-1.5 rounded-full transition-all text-body-xs font-semibold flex items-center gap-1"
+            onClick={() => navigate('/')}
+            title="Leave Room"
+          >
+            <MdLogout size={14} />
+            <span>Leave Room</span>
+          </button>
+
+          <button 
+            className="text-on-surface-variant hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/5"
+            title="Theme Toggle"
+          >
+            <MdOutlineWbSunny size={18} />
+          </button>
+          
+          {user && (
+            <div className="z-30 border-l border-white/15 pl-2 ml-1">
+              <UserDropdown />
+            </div>
+          )}
+        </div>
       </header>
 
       {/* Main Content Area (Below Header) */}
-      <div className="flex flex-1 pt-14 h-full w-full overflow-hidden relative">
+      <div className="flex flex-1 pt-14 h-full w-full overflow-hidden relative bg-[#0f111a]">
         <ActivityBar 
           activeView={activeActivityView} 
           setActiveView={setActiveActivityView}
@@ -526,10 +521,90 @@ export default function Workspace() {
             {renderSidebar()}
           </aside>
         )}
-        
-        <main className="flex-1 flex w-full h-full relative z-20 overflow-hidden bg-surface-dim">
-           {renderMainArea()}
-        </main>
+
+        {/* Center Panel including Sub-Header View Navigation */}
+        <div className="flex-1 flex flex-col h-full overflow-hidden relative z-20 bg-surface-dim">
+          {/* Sub-Header View switcher navigation */}
+          <div className="h-12 bg-white/[0.01] border-b border-white/5 flex items-center justify-center shrink-0 z-30 shadow-sm">
+            <div className="flex items-center gap-1.5 bg-white/[0.02] p-1 rounded-xl border border-white/5">
+              <button
+                className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-200 ${
+                  viewMode === 'editor' && !isChatOpen && !isMembersOpen
+                    ? 'bg-primary/20 text-primary border border-primary/20'
+                    : 'text-on-surface-variant hover:text-on-surface border border-transparent'
+                }`}
+                onClick={() => {
+                  setViewMode('editor');
+                  if (!isSidebarOpen) toggleSidebar();
+                  setIsChatOpen(false);
+                  setIsMembersOpen(false);
+                }}
+              >
+                Code
+              </button>
+              <button
+                className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-200 ${
+                  viewMode === 'canvas'
+                    ? 'bg-primary/20 text-primary border border-primary/20'
+                    : 'text-on-surface-variant hover:text-on-surface border border-transparent'
+                }`}
+                onClick={() => {
+                  setViewMode('canvas');
+                  if (isSidebarOpen) toggleSidebar();
+                  setIsChatOpen(false);
+                  setIsMembersOpen(false);
+                }}
+              >
+                Whiteboard
+              </button>
+              <button
+                className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-200 ${
+                  isChatOpen && !isMembersOpen
+                    ? 'bg-primary/20 text-primary border border-primary/20'
+                    : 'text-on-surface-variant hover:text-on-surface border border-transparent'
+                }`}
+                onClick={() => {
+                  setIsChatOpen(true);
+                  setIsMembersOpen(false);
+                }}
+              >
+                Chat
+              </button>
+              <button
+                className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-200 ${
+                  activeActivityView === 'explorer' && isSidebarOpen
+                    ? 'bg-primary/20 text-primary border border-primary/20'
+                    : 'text-on-surface-variant hover:text-on-surface border border-transparent'
+                }`}
+                onClick={() => {
+                  setActiveActivityView('explorer');
+                  if (!isSidebarOpen) toggleSidebar();
+                  setIsChatOpen(false);
+                  setIsMembersOpen(false);
+                }}
+              >
+                Files
+              </button>
+              <button
+                className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-200 ${
+                  isMembersOpen && !isChatOpen
+                    ? 'bg-primary/20 text-primary border border-primary/20'
+                    : 'text-on-surface-variant hover:text-on-surface border border-transparent'
+                }`}
+                onClick={() => {
+                  setIsMembersOpen(true);
+                  setIsChatOpen(false);
+                }}
+              >
+                Activity
+              </button>
+            </div>
+          </div>
+          
+          <main className="flex-1 flex w-full h-full relative overflow-hidden bg-surface-dim">
+             {renderMainArea()}
+          </main>
+        </div>
 
         {(isChatOpen || isMembersOpen) && (
           <RightSidebar 
