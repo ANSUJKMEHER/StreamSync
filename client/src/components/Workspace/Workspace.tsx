@@ -140,6 +140,7 @@ export default function Workspace() {
         }
       } else if (action === 'chat-message') {
         const { text } = payload;
+        console.log('[Workspace] Received chat message:', { userId, username, text });
         setChatMessages(prev => [
           ...prev,
           {
@@ -182,14 +183,33 @@ export default function Workspace() {
       return next;
     });
 
+    wsService.send({
+      type: 'room-message',
+      roomId,
+      payload: {
+        action: 'call-joined',
+        userId: user.id,
+        username: user.username
+      }
+    });
+
     return () => {
+      wsService.send({
+        type: 'room-message',
+        roomId,
+        payload: {
+          action: 'call-left',
+          userId: user.id,
+          username: user.username
+        }
+      });
       setActiveCallUsers(prev => {
         const next = new Map(prev);
         next.delete(user.id);
         return next;
       });
     };
-  }, [isInCall, user]);
+  }, [roomId, isInCall, user]);
 
   // Join room based on Workspace ID (roomId), NOT active file
   useEffect(() => {
@@ -235,8 +255,12 @@ export default function Workspace() {
   };
 
   const handleSendChatMessage = (text: string) => {
-    if (!roomId || !user) return;
+    if (!roomId || !user) {
+      console.warn('[Workspace] Cannot send message: missing roomId or user profile');
+      return;
+    }
     
+    console.log('[Workspace] Sending chat message:', text);
     wsService.send({
       type: 'room-message',
       roomId,
