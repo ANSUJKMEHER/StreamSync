@@ -47,6 +47,37 @@ async function localFallbackExecute(code: string, language: string): Promise<{ s
         }
       });
     });
+  } else if (lang === 'c' || lang === 'cpp') {
+    const isWin = process.platform === 'win32';
+    const sourceFile = join(tempDir, `${fileId}.cpp`);
+    const binaryFile = join(tempDir, isWin ? `${fileId}.exe` : fileId);
+    
+    writeFileSync(sourceFile, code);
+    
+    return new Promise((resolve) => {
+      exec(`g++ -O3 "${sourceFile}" -o "${binaryFile}"`, { timeout: 10000 }, (compileError, compileStdout, compileStderr) => {
+        if (compileError) {
+          try { unlinkSync(sourceFile); } catch {}
+          resolve({
+            stdout: '',
+            stderr: compileStderr || compileError.message,
+            code: 1
+          });
+          return;
+        }
+        
+        const execCmd = isWin ? `"${binaryFile}"` : `./"${binaryFile}"`;
+        exec(execCmd, { timeout: 5000 }, (runError, runStdout, runStderr) => {
+          try { unlinkSync(sourceFile); } catch {}
+          try { unlinkSync(binaryFile); } catch {}
+          resolve({
+            stdout: runStdout,
+            stderr: runStderr || (runError ? runError.message : ''),
+            code: runError ? 1 : 0
+          });
+        });
+      });
+    });
   }
 
   throw new Error(`Local execution is not supported for language: ${language}. Please configure a valid RAPIDAPI_KEY on the server.`);
