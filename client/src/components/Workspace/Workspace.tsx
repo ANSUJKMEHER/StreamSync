@@ -19,6 +19,7 @@ import InviteModal from './InviteModal';
 import GitHubPanel from '../Sidebar/GitHubPanel';
 import AICopilotPanel from '../Sidebar/AICopilotPanel';
 import ExtensionsPanel from '../Sidebar/ExtensionsPanel';
+import SearchPanel from '../Sidebar/SearchPanel';
 import VoiceChat from './VoiceChat';
 import RightSidebar from '../Sidebar/RightSidebar';
 import type { ChatMessage } from '../Sidebar/RightSidebar';
@@ -315,9 +316,11 @@ export default function Workspace() {
     if (activeActivityView === 'github') return <GitHubPanel roomData={roomData} />;
     if (activeActivityView === 'ai') return <AICopilotPanel />;
     if (activeActivityView === 'extensions') return <ExtensionsPanel />;
+    if (activeActivityView === 'search') return <SearchPanel />;
+    const viewName = activeActivityView as string;
     return (
       <div style={{ padding: '16px', color: 'var(--text-muted)' }}>
-        {activeActivityView.charAt(0).toUpperCase() + activeActivityView.slice(1)} coming soon...
+        {viewName.charAt(0).toUpperCase() + viewName.slice(1)} coming soon...
       </div>
     );
   };

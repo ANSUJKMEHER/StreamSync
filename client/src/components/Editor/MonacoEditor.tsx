@@ -18,9 +18,22 @@ function MonacoEditor() {
     files,
     activeFileId,
     setCursorPosition,
+    targetLine,
   } = useFileStore();
 
   const activeFile = files.find((f) => f.id === activeFileId);
+
+  useEffect(() => {
+    if (!editorReady || !editorRef.current || !targetLine) return;
+    if (targetLine.fileId !== activeFileId) return;
+
+    const editor = editorRef.current;
+    setTimeout(() => {
+      editor.focus();
+      editor.setPosition({ lineNumber: targetLine.lineNumber, column: 1 });
+      editor.revealLineInCenter(targetLine.lineNumber);
+    }, 50);
+  }, [editorReady, targetLine, activeFileId]);
 
   const handleMount = useCallback(
     (editorInstance: monacoEditor.IStandaloneCodeEditor, monaco: typeof Monaco) => {

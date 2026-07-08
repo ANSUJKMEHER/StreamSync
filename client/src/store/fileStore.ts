@@ -25,9 +25,11 @@ interface FileStore {
   sidebarWidth: number;
 
   activeFolderPath: string | null;
+  targetLine: { fileId: string; lineNumber: number; timestamp: number } | null;
 
   // Actions
   fetchFiles: (roomId: string) => Promise<void>;
+  revealLine: (fileId: string, lineNumber: number) => void;
   openFile: (id: string) => void;
   closeFile: (id: string) => void;
   setActiveFile: (id: string) => void;
@@ -54,6 +56,7 @@ export const useFileStore = create<FileStore>((set, get) => ({
   isLoading: false,
   isSidebarOpen: true,
   sidebarWidth: 260,
+  targetLine: null,
 
   // Fetch all files from server for a specific room
   fetchFiles: async (roomId: string) => {
@@ -254,5 +257,10 @@ export const useFileStore = create<FileStore>((set, get) => ({
   // Sidebar
   toggleSidebar: () => set({ isSidebarOpen: !get().isSidebarOpen }),
   setSidebarWidth: (width: number) => set({ sidebarWidth: width }),
+
+  revealLine: (fileId: string, lineNumber: number) => {
+    get().openFile(fileId);
+    set({ targetLine: { fileId, lineNumber, timestamp: Date.now() } });
+  },
 }));
 
