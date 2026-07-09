@@ -8,7 +8,6 @@
   <br />
 
   # ⚡ StreamSync
-
   **A Real-Time, AI-Powered Collaborative Workspace for Modern Engineering Teams**
 
   StreamSync is a fully-featured, multiplayer workspace combining live code collaboration, remote/local code execution, and an infinite canvas powered by state-of-the-art AI. Break down silos and build together, in real-time.
