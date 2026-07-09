@@ -28,25 +28,29 @@ html, body, #root {
   --color-on-surface-variant: #a9abb6;
   --color-outline: #383b4d;
   --color-outline-variant: #222430;
+  --color-scrollbar-thumb: #32343e;
+  --color-dot-grid: #32343e;
 }
 
 [data-theme="nord"] {
-  /* Nord Slate Theme */
-  --color-primary: #88c0d0;
-  --color-primary-container: rgba(136, 192, 208, 0.1);
-  --color-primary-dark: #5e81ac;
-  --color-background: #14171d;
-  --color-surface: #1b1e25;
-  --color-surface-container-lowest: #0e1014;
-  --color-surface-container-low: #15181e;
-  --color-surface-container: #1e222a;
-  --color-surface-container-high: #272c36;
-  --color-surface-container-highest: #323845;
-  --color-on-background: #d8dee9;
-  --color-on-surface: #d8dee9;
-  --color-on-surface-variant: #abb2bf;
-  --color-outline: #4c566a;
-  --color-outline-variant: #2e3440;
+  /* Premium Minimalist Light Theme (Kind of White) */
+  --color-primary: #1e3a8a;
+  --color-primary-container: rgba(30, 58, 138, 0.08);
+  --color-primary-dark: #172554;
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-container-lowest: #f1f5f9;
+  --color-surface-container-low: #f8fafc;
+  --color-surface-container: #ffffff;
+  --color-surface-container-high: #f1f5f9;
+  --color-surface-container-highest: #e2e8f0;
+  --color-on-background: #0f172a;
+  --color-on-surface: #0f172a;
+  --color-on-surface-variant: #475569;
+  --color-outline: #cbd5e1;
+  --color-outline-variant: #e2e8f0;
+  --color-scrollbar-thumb: #cbd5e1;
+  --color-dot-grid: #cbd5e1;
 }
 
 /* Smooth transition for theme colors */
@@ -65,16 +69,16 @@ body, header, aside, main, div, button, input, textarea {
     background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-    background: #32343e; /* surface-variant */
+    background: var(--color-scrollbar-thumb);
     border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #494454; /* outline-variant */
+    background: var(--color-primary);
 }
 
 /* Dot grid pattern for canvas */
 .bg-dot-pattern {
-    background-image: radial-gradient(circle, #32343e 1px, transparent 1px);
+    background-image: radial-gradient(circle, var(--color-dot-grid) 1px, transparent 1px);
     background-size: 20px 20px;
 }
 

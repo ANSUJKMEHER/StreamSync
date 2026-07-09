@@ -14,6 +14,20 @@ function MonacoEditor() {
   const bindingRef = useRef<MonacoBinding | null>(null);
   const aiProviderDisposable = useRef<IDisposable | null>(null);
   const [editorReady, setEditorReady] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState(() => {
+    return localStorage.getItem('streamsync_theme') || 'obsidian';
+  });
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      const isNord = document.documentElement.getAttribute('data-theme') === 'nord';
+      setCurrentTheme(isNord ? 'nord' : 'obsidian');
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    
+    return () => observer.disconnect();
+  }, []);
+
   const {
     files,
     activeFileId,
@@ -313,7 +327,7 @@ function MonacoEditor() {
         path={activeFile.id}
         height="100%"
         language={activeFile.language}
-        theme="vs-dark"
+        theme={currentTheme === 'nord' ? 'vs' : 'vs-dark'}
         defaultValue=""
         onMount={handleMount}
         loading={
