@@ -33,24 +33,24 @@ html, body, #root {
 }
 
 [data-theme="nord"] {
-  /* Premium Minimalist Light Theme (Kind of White) */
-  --color-primary: #1e3a8a;
-  --color-primary-container: rgba(30, 58, 138, 0.08);
-  --color-primary-dark: #172554;
-  --color-background: #f8fafc;
+  /* Premium Minimalist Warm Off-White / Rosy Theme ("Kind of White & Reddish") */
+  --color-primary: #be123c;
+  --color-primary-container: rgba(190, 18, 60, 0.06);
+  --color-primary-dark: #9f1239;
+  --color-background: #faf7f6;
   --color-surface: #ffffff;
-  --color-surface-container-lowest: #f1f5f9;
-  --color-surface-container-low: #f8fafc;
+  --color-surface-container-lowest: #f5ebe8;
+  --color-surface-container-low: #faf7f6;
   --color-surface-container: #ffffff;
-  --color-surface-container-high: #f1f5f9;
-  --color-surface-container-highest: #e2e8f0;
-  --color-on-background: #0f172a;
-  --color-on-surface: #0f172a;
-  --color-on-surface-variant: #475569;
-  --color-outline: #cbd5e1;
-  --color-outline-variant: #e2e8f0;
-  --color-scrollbar-thumb: #cbd5e1;
-  --color-dot-grid: #cbd5e1;
+  --color-surface-container-high: #f5ebe8;
+  --color-surface-container-highest: #ebdedb;
+  --color-on-background: #1c0e0b;
+  --color-on-surface: #1c0e0b;
+  --color-on-surface-variant: #6b5551;
+  --color-outline: #d9c5c1;
+  --color-outline-variant: #f2e7e4;
+  --color-scrollbar-thumb: #d9c5c1;
+  --color-dot-grid: #ebdedb;
 }
 
 /* Smooth transition for theme colors */

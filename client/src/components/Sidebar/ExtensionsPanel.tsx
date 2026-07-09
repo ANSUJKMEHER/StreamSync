@@ -85,7 +85,7 @@ export default function ExtensionsPanel() {
       {/* Title */}
       <div className="p-4 border-b border-outline-variant/15 flex justify-between items-center shrink-0">
         <h2 className="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">Extensions Marketplace</h2>
-        <MdSettings className="text-on-surface-variant hover:text-white cursor-pointer transition-colors" size={16} />
+        <MdSettings className="text-on-surface-variant hover:text-on-surface cursor-pointer transition-colors" size={16} />
       </div>
 
       {/* Search Input */}
@@ -116,7 +116,7 @@ export default function ExtensionsPanel() {
                   </div>
                   <div className="flex-grow flex flex-col min-w-0">
                     <div className="flex justify-between items-center gap-1">
-                      <span className="font-semibold text-xs text-white truncate max-w-[85%]">{ext.name}</span>
+                      <span className="font-semibold text-xs text-on-surface truncate max-w-[85%]">{ext.name}</span>
                       <MdCheckCircle className="text-success shrink-0" size={13} title="Installed & Active" />
                     </div>
                     <span className="text-[9px] text-on-surface-variant/65 font-medium mt-0.5">{ext.publisher} • {ext.version}</span>
@@ -140,7 +140,7 @@ export default function ExtensionsPanel() {
                   </div>
                   <div className="flex-grow flex flex-col min-w-0">
                     <div className="flex justify-between items-center gap-1">
-                      <span className="font-semibold text-xs text-white truncate max-w-[70%]">{ext.name}</span>
+                      <span className="font-semibold text-xs text-on-surface truncate max-w-[70%]">{ext.name}</span>
                       <button 
                         onClick={() => handleInstall(ext.id)}
                         className="bg-primary hover:bg-primary/95 text-background text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm shrink-0 active:scale-95 transition-all"

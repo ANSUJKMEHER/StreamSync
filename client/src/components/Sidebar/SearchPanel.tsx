@@ -87,7 +87,7 @@ export default function SearchPanel() {
         {results.map(({ file, matches }) => (
           <div key={file.id} className="flex flex-col gap-1">
             {/* File Header */}
-            <div className="text-xs font-semibold text-white truncate px-1 py-0.5 border-b border-outline-variant/10">
+            <div className="text-xs font-semibold text-on-surface truncate px-1 py-0.5 border-b border-outline-variant/10">
               {file.name}
             </div>
             {/* Matches */}

@@ -465,14 +465,14 @@ export default function Workspace() {
             <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-inverse-primary text-white flex items-center justify-center font-bold text-lg shadow-[0_2px_12px_rgba(208,188,255,0.35)]">
               S
             </div>
-            <span className="font-headline-md text-headline-md font-bold text-white tracking-tight">StreamSync</span>
+            <span className="font-headline-md text-headline-md font-bold text-on-surface tracking-tight">StreamSync</span>
           </div>
 
           <div className="w-[1px] h-5 bg-white/10 hidden md:block" />
 
           {/* Project dropdown picker */}
           <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] transition-colors cursor-pointer text-body-xs font-semibold text-on-surface-variant">
-            <span>Project: <strong className="text-white">{roomData?.name || 'E-Commerce App'}</strong></span>
+            <span>Project: <strong className="text-on-surface">{roomData?.name || 'E-Commerce App'}</strong></span>
             <MdKeyboardArrowDown size={16} />
           </div>
         </div>
@@ -507,14 +507,14 @@ export default function Workspace() {
         {/* Right: Actions & Profile */}
         <div className="flex items-center gap-3">
           <button 
-            className="hover:bg-white/5 text-on-surface-variant hover:text-white px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-1.5 transition-all text-body-xs font-semibold"
+            className="hover:bg-surface-variant/30 text-on-surface-variant hover:text-on-surface px-3 py-1.5 rounded-full border border-outline/50 flex items-center gap-1.5 transition-all text-body-xs font-semibold"
             onClick={() => setIsInviteModalOpen(true)}
           >
             <MdPersonAdd size={15} />
             Invite
           </button>
 
-          <div className="w-[1px] h-5 bg-white/10 hidden md:block" />
+          <div className="w-[1px] h-5 bg-outline/30 hidden md:block" />
 
           {/* Run Code pill button */}
           <button 
@@ -529,7 +529,7 @@ export default function Workspace() {
 
           {/* Leave Room outlined pill button */}
           <button 
-            className="border border-white/10 hover:border-error/40 text-on-surface-variant hover:text-error hover:bg-error/5 px-4 py-1.5 rounded-full transition-all text-body-xs font-semibold flex items-center gap-1"
+            className="border border-outline/50 hover:border-error/40 text-on-surface-variant hover:text-error hover:bg-error/5 px-4 py-1.5 rounded-full transition-all text-body-xs font-semibold flex items-center gap-1"
             onClick={() => navigate('/')}
             title="Leave Room"
           >
@@ -538,7 +538,7 @@ export default function Workspace() {
           </button>
 
           <button 
-            className="text-on-surface-variant hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/5"
+            className="text-on-surface-variant hover:text-on-surface transition-colors p-1.5 rounded-full hover:bg-surface-variant/30"
             onClick={() => setTheme(prev => prev === 'obsidian' ? 'nord' : 'obsidian')}
             title={`Switch to ${theme === 'obsidian' ? 'Nord Slate' : 'Obsidian Gold'}`}
             aria-label={`Switch to ${theme === 'obsidian' ? 'Nord Slate' : 'Obsidian Gold'}`}
@@ -547,7 +547,7 @@ export default function Workspace() {
           </button>
           
           {user && (
-            <div className="z-30 border-l border-white/15 pl-2 ml-1">
+            <div className="z-30 border-l border-outline/30 pl-2 ml-1">
               <UserDropdown />
             </div>
           )}
