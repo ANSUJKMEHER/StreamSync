@@ -28,6 +28,7 @@ export default function ActivityBar({
           className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${activeView === 'explorer' ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
           onClick={() => setActiveView('explorer')}
           title="Explorer"
+          aria-label="Explorer"
         >
           <VscFiles className="text-2xl" />
           <div className="absolute left-14 bg-surface-container-highest text-on-surface px-2 py-1 rounded text-label-md font-label-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Explorer</div>
@@ -37,6 +38,7 @@ export default function ActivityBar({
           className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${activeView === 'search' ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
           onClick={() => setActiveView('search')}
           title="Search"
+          aria-label="Search"
         >
           <VscSearch className="text-2xl" />
           <div className="absolute left-14 bg-surface-container-highest text-on-surface px-2 py-1 rounded text-label-md font-label-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Search</div>
@@ -46,6 +48,7 @@ export default function ActivityBar({
           className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${activeView === 'github' ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
           onClick={() => setActiveView('github')}
           title="Source Control"
+          aria-label="Source Control"
         >
           <VscSourceControl className="text-2xl" />
           <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></span>
@@ -56,6 +59,7 @@ export default function ActivityBar({
           className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${activeView === 'extensions' ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
           onClick={() => setActiveView('extensions')}
           title="Extensions"
+          aria-label="Extensions"
         >
           <VscExtensions className="text-2xl" />
           <div className="absolute left-14 bg-surface-container-highest text-on-surface px-2 py-1 rounded text-label-md font-label-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Extensions</div>
@@ -65,6 +69,7 @@ export default function ActivityBar({
           className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${activeView === 'ai' ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
           onClick={() => setActiveView('ai')}
           title="AI Copilot"
+          aria-label="AI Copilot"
         >
           <VscSparkle className="text-2xl" />
           <div className="absolute left-14 bg-surface-container-highest text-on-surface px-2 py-1 rounded text-label-md font-label-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">AI Copilot</div>
@@ -78,6 +83,7 @@ export default function ActivityBar({
           className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${isChatOpen ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
           onClick={() => setIsChatOpen(!isChatOpen)}
           title="Room Chat"
+          aria-label="Room Chat"
         >
           <MdChatBubbleOutline className="text-2xl" />
           <div className="absolute left-14 bg-surface-container-highest text-on-surface px-2 py-1 rounded text-label-md font-label-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Room Chat</div>
@@ -87,6 +93,7 @@ export default function ActivityBar({
           className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${isMembersOpen ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
           onClick={() => setIsMembersOpen(!isMembersOpen)}
           title="Workspace Members"
+          aria-label="Workspace Members"
         >
           <MdPeople className="text-2xl" />
           <div className="absolute left-14 bg-surface-container-highest text-on-surface px-2 py-1 rounded text-label-md font-label-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Members</div>
@@ -94,7 +101,7 @@ export default function ActivityBar({
       </div>
 
       <div className="mt-auto flex flex-col gap-2 w-full items-center">
-        <button className="w-10 h-10 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all flex items-center justify-center relative group" title="Settings">
+        <button className="w-10 h-10 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all flex items-center justify-center relative group" title="Settings" aria-label="Settings">
           <VscSettingsGear className="text-2xl" />
           <div className="absolute left-14 bg-surface-container-highest text-on-surface px-2 py-1 rounded text-label-md font-label-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Settings</div>
         </button>

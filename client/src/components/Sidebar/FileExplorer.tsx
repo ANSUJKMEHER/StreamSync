@@ -140,8 +140,8 @@ const FileTreeNodeUI = ({
         {/* Inline Actions */}
         {node.file && (
           <div className="hidden group-hover:flex items-center gap-1 ml-auto shrink-0 mr-2">
-            <button className="text-[14px] hover:text-primary p-0.5" onClick={(e) => onFileAction('rename', node.file!.id, node.file!.name, e)}><MdEdit size={14} /></button>
-            <button className="text-[14px] hover:text-error p-0.5" onClick={(e) => onFileAction('delete', node.file!.id, node.file!.name, e)}><MdClose size={14} /></button>
+            <button className="text-[14px] hover:text-primary p-0.5" onClick={(e) => onFileAction('rename', node.file!.id, node.file!.name, e)} title="Rename File" aria-label="Rename File"><MdEdit size={14} /></button>
+            <button className="text-[14px] hover:text-error p-0.5" onClick={(e) => onFileAction('delete', node.file!.id, node.file!.name, e)} title="Delete File" aria-label="Delete File"><MdClose size={14} /></button>
           </div>
         )}
       </div>
@@ -279,9 +279,9 @@ export default function FileExplorer() {
       <div className="px-4 py-3 flex items-center justify-between border-b border-outline-variant/10" onClick={(e) => e.stopPropagation()}>
         <span className="font-label-md text-label-md font-bold tracking-wider text-on-surface-variant uppercase">Project</span>
         <div className="flex items-center gap-1 text-on-surface-variant">
-          <button className="hover:text-on-surface hover:bg-surface-variant p-1.5 rounded-md transition-colors" onClick={() => setIsCreating('file')} title="New File"><MdNoteAdd size={16} /></button>
-          <button className="hover:text-on-surface hover:bg-surface-variant p-1.5 rounded-md transition-colors" onClick={() => setIsCreating('folder')} title="New Folder"><MdCreateNewFolder size={16} /></button>
-          <button className="hover:text-on-surface hover:bg-surface-variant p-1.5 rounded-md transition-colors" onClick={() => setExpandedFolders(new Set())} title="Collapse All"><MdUnfoldLess size={16} /></button>
+          <button className="hover:text-on-surface hover:bg-surface-variant p-1.5 rounded-md transition-colors" onClick={() => setIsCreating('file')} title="New File" aria-label="New File"><MdNoteAdd size={16} /></button>
+          <button className="hover:text-on-surface hover:bg-surface-variant p-1.5 rounded-md transition-colors" onClick={() => setIsCreating('folder')} title="New Folder" aria-label="New Folder"><MdCreateNewFolder size={16} /></button>
+          <button className="hover:text-on-surface hover:bg-surface-variant p-1.5 rounded-md transition-colors" onClick={() => setExpandedFolders(new Set())} title="Collapse All" aria-label="Collapse All"><MdUnfoldLess size={16} /></button>
         </div>
       </div>
 

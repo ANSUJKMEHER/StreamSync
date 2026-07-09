@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useFileStore } from '../../store/fileStore';
 import { useAuthStore } from '../../store/authStore';
@@ -10,20 +10,22 @@ import FileExplorer from '../Sidebar/FileExplorer';
 import ActivityBar from '../Sidebar/ActivityBar';
 import FileTabs from '../Tabs/FileTabs';
 import { MdPlayArrow, MdKeyboardArrowDown, MdPersonAdd, MdLogout, MdOutlineWbSunny } from 'react-icons/md';
-import MonacoEditor from '../Editor/MonacoEditor';
-import CanvasPanel from '../Canvas/CanvasPanel';
-import BottomPanel from '../Panel/BottomPanel';
 import UserDropdown from '../Auth/UserDropdown';
 import GlobalLoader from '../Layout/GlobalLoader';
-import InviteModal from './InviteModal';
-import GitHubPanel from '../Sidebar/GitHubPanel';
-import AICopilotPanel from '../Sidebar/AICopilotPanel';
-import ExtensionsPanel from '../Sidebar/ExtensionsPanel';
-import SearchPanel from '../Sidebar/SearchPanel';
-import VoiceChat from './VoiceChat';
-import RightSidebar from '../Sidebar/RightSidebar';
 import type { ChatMessage } from '../Sidebar/RightSidebar';
 import '../../App.css';
+
+// Lazy loaded heavy components
+const MonacoEditor = lazy(() => import('../Editor/MonacoEditor'));
+const CanvasPanel = lazy(() => import('../Canvas/CanvasPanel'));
+const BottomPanel = lazy(() => import('../Panel/BottomPanel'));
+const InviteModal = lazy(() => import('./InviteModal'));
+const GitHubPanel = lazy(() => import('../Sidebar/GitHubPanel'));
+const AICopilotPanel = lazy(() => import('../Sidebar/AICopilotPanel'));
+const ExtensionsPanel = lazy(() => import('../Sidebar/ExtensionsPanel'));
+const SearchPanel = lazy(() => import('../Sidebar/SearchPanel'));
+const VoiceChat = lazy(() => import('./VoiceChat'));
+const RightSidebar = lazy(() => import('../Sidebar/RightSidebar'));
 
 type ViewMode = 'editor' | 'canvas' | 'split';
 type ActivityView = 'explorer' | 'search' | 'github' | 'extensions' | 'ai';
@@ -312,16 +314,14 @@ export default function Workspace() {
   
   const renderSidebar = () => {
     if (!isSidebarOpen) return null;
-    if (activeActivityView === 'explorer') return <FileExplorer />;
-    if (activeActivityView === 'github') return <GitHubPanel roomData={roomData} />;
-    if (activeActivityView === 'ai') return <AICopilotPanel />;
-    if (activeActivityView === 'extensions') return <ExtensionsPanel />;
-    if (activeActivityView === 'search') return <SearchPanel />;
-    const viewName = activeActivityView as string;
     return (
-      <div style={{ padding: '16px', color: 'var(--text-muted)' }}>
-        {viewName.charAt(0).toUpperCase() + viewName.slice(1)} coming soon...
-      </div>
+      <Suspense fallback={<div className="p-4 text-xs text-on-surface-variant animate-pulse font-bold">Loading Panel...</div>}>
+        {activeActivityView === 'explorer' && <FileExplorer />}
+        {activeActivityView === 'github' && <GitHubPanel roomData={roomData} />}
+        {activeActivityView === 'ai' && <AICopilotPanel />}
+        {activeActivityView === 'extensions' && <ExtensionsPanel />}
+        {activeActivityView === 'search' && <SearchPanel />}
+      </Suspense>
     );
   };
 
@@ -329,14 +329,18 @@ export default function Workspace() {
     <div className="flex flex-col h-full w-full overflow-hidden">
       <FileTabs />
       <div className="flex-1 relative">
-        <MonacoEditor />
+        <Suspense fallback={<div className="h-full w-full bg-surface-dim animate-pulse flex items-center justify-center text-xs text-on-surface-variant font-bold">Loading Code Editor...</div>}>
+          <MonacoEditor />
+        </Suspense>
       </div>
     </div>
   );
 
   const renderCanvasArea = () => (
     <div className="h-full w-full relative">
-      <CanvasPanel />
+      <Suspense fallback={<div className="h-full w-full bg-surface-dim animate-pulse flex items-center justify-center text-xs text-on-surface-variant font-bold">Loading Architecture Board...</div>}>
+        <CanvasPanel />
+      </Suspense>
     </div>
   );
 
@@ -430,11 +434,13 @@ export default function Workspace() {
               <div className="w-8 h-[2px] bg-outline-variant/30 group-hover:bg-primary rounded-full" />
             </div>
             <div style={{ height: `${bottomPanelHeight}px`, flexShrink: 0, overflow: 'hidden' }} className="relative z-30">
-               <BottomPanel 
-                  executionOutput={executionOutput} 
-                  isExecuting={isExecuting} 
-                  onClose={() => setIsBottomPanelOpen(false)} 
-               />
+              <Suspense fallback={<div className="h-full w-full bg-surface-container flex items-center justify-center text-xs text-on-surface-variant font-bold">Loading Terminal Output...</div>}>
+                <BottomPanel 
+                    executionOutput={executionOutput} 
+                    isExecuting={isExecuting} 
+                    onClose={() => setIsBottomPanelOpen(false)} 
+                />
+              </Suspense>
             </div>
           </>
         )}
@@ -445,7 +451,11 @@ export default function Workspace() {
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden bg-background text-on-surface select-none">
       {/* Voice Chat Component */}
-      {!isInitialLoad && roomId && isInCall && <VoiceChat roomId={roomId} onLeaveCall={() => setIsInCall(false)} />}
+      {!isInitialLoad && roomId && isInCall && (
+        <Suspense fallback={null}>
+          <VoiceChat roomId={roomId} onLeaveCall={() => setIsInCall(false)} />
+        </Suspense>
+      )}
 
       {/* Top Navigation Bar */}
       <header className="bg-surface/85 backdrop-blur-xl border-b border-outline-variant/20 flex justify-between items-center px-6 h-14 w-full flex-shrink-0 z-50 fixed top-0 left-0 right-0 shadow-md">
@@ -531,6 +541,7 @@ export default function Workspace() {
             className="text-on-surface-variant hover:text-white transition-colors p-1.5 rounded-full hover:bg-white/5"
             onClick={() => setTheme(prev => prev === 'obsidian' ? 'nord' : 'obsidian')}
             title={`Switch to ${theme === 'obsidian' ? 'Nord Slate' : 'Obsidian Gold'}`}
+            aria-label={`Switch to ${theme === 'obsidian' ? 'Nord Slate' : 'Obsidian Gold'}`}
           >
             <MdOutlineWbSunny size={18} className={theme === 'nord' ? 'text-primary rotate-45 transition-transform duration-300' : 'transition-transform duration-300'} />
           </button>
@@ -645,20 +656,24 @@ export default function Workspace() {
         </div>
 
         {(isChatOpen || isMembersOpen) && (
-          <RightSidebar 
-            isChatOpen={isChatOpen}
-            setIsChatOpen={setIsChatOpen}
-            isMembersOpen={isMembersOpen}
-            setIsMembersOpen={setIsMembersOpen}
-            messages={chatMessages}
-            onSendMessage={handleSendChatMessage}
-          />
+          <Suspense fallback={<div className="w-[300px] flex-shrink-0 bg-surface-container border-l border-outline-variant/20 h-full animate-pulse" />}>
+            <RightSidebar 
+              isChatOpen={isChatOpen}
+              setIsChatOpen={setIsChatOpen}
+              isMembersOpen={isMembersOpen}
+              setIsMembersOpen={setIsMembersOpen}
+              messages={chatMessages}
+              onSendMessage={handleSendChatMessage}
+            />
+          </Suspense>
         )}
       </div>
 
       {/* Modals */}
       {isInviteModalOpen && roomData && (
-        <InviteModal roomId={roomData.id} onClose={() => setIsInviteModalOpen(false)} />
+        <Suspense fallback={null}>
+          <InviteModal roomId={roomData.id} onClose={() => setIsInviteModalOpen(false)} />
+        </Suspense>
       )}
     </div>
   );
