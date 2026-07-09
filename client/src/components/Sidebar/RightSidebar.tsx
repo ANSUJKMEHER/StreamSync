@@ -58,16 +58,16 @@ export default function RightSidebar({
   const bothOpen = isChatOpen && isMembersOpen;
 
   return (
-    <aside className="w-[320px] flex-shrink-0 bg-[#0f111a]/70 backdrop-blur-xl border-l border-white/5 flex flex-col h-full z-30 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)] relative transition-all duration-300 animate-slide-in">
+    <aside className="w-[320px] flex-shrink-0 bg-surface-container/70 backdrop-blur-xl border-l border-outline/30 flex flex-col h-full z-30 shadow-[0_8px_32px_0_rgba(0,0,0,0.15)] relative transition-all duration-300 animate-slide-in">
       {/* 1. Members Section */}
       {isMembersOpen && (
-        <div className={`flex flex-col overflow-hidden min-h-0 ${bothOpen ? 'h-1/2 border-b border-white/5' : 'h-full'}`}>
-          <div className="flex justify-between items-center px-4 h-12 bg-white/[0.02] border-b border-white/5 shrink-0">
+        <div className={`flex flex-col overflow-hidden min-h-0 ${bothOpen ? 'h-1/2 border-b border-outline/30' : 'h-full'}`}>
+          <div className="flex justify-between items-center px-4 h-12 bg-surface-container-low/50 border-b border-outline/20 shrink-0">
             <span className="font-bold text-label-lg text-primary tracking-wide text-glow">
               MEMBERS ({roomUsers.length})
             </span>
             <button
-              className="text-on-surface-variant hover:text-on-surface p-1 rounded-lg hover:bg-white/5 transition-colors"
+              className="text-on-surface-variant hover:text-on-surface p-1 rounded-lg hover:bg-surface-variant/30 transition-colors"
               onClick={() => setIsMembersOpen(false)}
               title="Close Members List"
             >
@@ -81,9 +81,9 @@ export default function RightSidebar({
               return (
                 <div
                   key={u.userId}
-                  className="flex items-center gap-3 p-2.5 rounded-2xl bg-white/[0.02] border border-white/[0.04] hover:bg-white/[0.06] hover:border-primary/20 transition-all duration-300 shadow-sm"
+                  className="flex items-center gap-3 p-2.5 rounded-2xl bg-surface-container-low/50 border border-outline/20 hover:bg-surface-variant/20 hover:border-primary/30 transition-all duration-300 shadow-sm"
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-inverse-primary border border-white/10 text-white flex items-center justify-center font-bold text-xs shadow-md shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-inverse-primary border border-outline/30 text-white flex items-center justify-center font-bold text-xs shadow-md shrink-0">
                     {u.username.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -112,12 +112,12 @@ export default function RightSidebar({
       {/* 2. Chat Section */}
       {isChatOpen && (
         <div className={`flex flex-col overflow-hidden min-h-0 ${bothOpen ? 'h-1/2' : 'h-full'}`}>
-          <div className="flex justify-between items-center px-4 h-12 bg-white/[0.02] border-b border-white/5 shrink-0">
+          <div className="flex justify-between items-center px-4 h-12 bg-surface-container-low/50 border-b border-outline/20 shrink-0">
             <span className="font-bold text-label-lg text-primary tracking-wide text-glow">
               ROOM CHAT
             </span>
             <button
-              className="text-on-surface-variant hover:text-on-surface p-1 rounded-lg hover:bg-white/5 transition-colors"
+              className="text-on-surface-variant hover:text-on-surface p-1 rounded-lg hover:bg-surface-variant/30 transition-colors"
               onClick={() => setIsChatOpen(false)}
               title="Close Room Chat"
             >
@@ -125,12 +125,12 @@ export default function RightSidebar({
             </button>
           </div>
 
-          <div className="flex-1 flex flex-col min-h-0 bg-white/[0.01]">
+          <div className="flex-1 flex flex-col min-h-0 bg-surface-container-lowest/10">
             {/* Scrollable messages thread */}
             <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 custom-scrollbar">
               {messages.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center p-3">
-                  <div className="w-9 h-9 rounded-full bg-white/[0.04] border border-white/5 flex items-center justify-center text-on-surface-variant text-md mb-2 shadow-inner font-bold">
+                  <div className="w-9 h-9 rounded-full bg-surface-container-high/60 border border-outline/20 flex items-center justify-center text-on-surface-variant text-md mb-2 shadow-inner font-bold">
                     💬
                   </div>
                   <h3 className="font-title-sm font-semibold text-on-surface mb-0.5 text-body-sm">Call Chat</h3>
@@ -156,8 +156,8 @@ export default function RightSidebar({
                       <div
                         className={`px-3 py-1.5 rounded-2xl shadow-md text-body-xs break-words leading-relaxed ${
                           isMe
-                            ? 'bg-gradient-to-br from-primary-container to-inverse-primary border border-white/10 text-white rounded-tr-none shadow-[0_4px_16px_rgba(160,120,255,0.2)]'
-                            : 'bg-white/[0.03] border border-white/5 text-on-surface rounded-tl-none'
+                            ? 'bg-gradient-to-br from-primary-container to-inverse-primary border border-outline/30 text-white rounded-tr-none shadow-[0_4px_16px_rgba(160,120,255,0.2)]'
+                            : 'bg-surface-container border border-outline/20 text-on-surface rounded-tl-none'
                         }`}
                       >
                         {msg.text}
@@ -175,7 +175,7 @@ export default function RightSidebar({
             {/* Input Form */}
             <form
               onSubmit={handleSend}
-              className="p-2.5 border-t border-white/5 bg-[#0f111a]/60 backdrop-blur-md flex items-end gap-1.5 shrink-0"
+              className="p-2.5 border-t border-outline/20 bg-surface-container/60 backdrop-blur-md flex items-end gap-1.5 shrink-0"
             >
               <textarea
                 value={inputText}
@@ -183,7 +183,7 @@ export default function RightSidebar({
                 onKeyDown={handleKeyDown}
                 placeholder="Send a message..."
                 rows={1}
-                className="flex-1 bg-white/[0.02] hover:bg-white/[0.04] focus:bg-white/[0.04] border border-white/5 focus:border-primary/40 text-body-xs text-on-surface placeholder-on-surface-variant/30 rounded-xl px-2.5 py-1.5 outline-none resize-none max-h-20 custom-scrollbar transition-all duration-200"
+                className="flex-1 bg-surface-container-lowest/50 hover:bg-surface-variant/20 focus:bg-surface-variant/30 border border-outline/30 focus:border-primary/40 text-body-xs text-on-surface placeholder-on-surface-variant/30 rounded-xl px-2.5 py-1.5 outline-none resize-none max-h-20 custom-scrollbar transition-all duration-200"
               />
               <button
                 type="submit"
@@ -191,7 +191,7 @@ export default function RightSidebar({
                 className={`p-1.5 rounded-xl flex items-center justify-center transition-all shrink-0 ${
                   inputText.trim()
                     ? 'bg-gradient-to-br from-primary to-inverse-primary text-white shadow-md hover:scale-105 active:scale-95 hover:shadow-[0_0_12px_rgba(208,188,255,0.3)]'
-                    : 'bg-white/[0.02] border border-white/5 text-on-surface-variant/30 cursor-not-allowed'
+                    : 'bg-surface-container-low/50 border border-outline/20 text-on-surface-variant/30 cursor-not-allowed'
                 }`}
               >
                 <MdSend size={15} />
