@@ -9,7 +9,7 @@ import { roomService, type Room } from '../../services/roomService';
 import FileExplorer from '../Sidebar/FileExplorer';
 import ActivityBar from '../Sidebar/ActivityBar';
 import FileTabs from '../Tabs/FileTabs';
-import { MdPlayArrow, MdKeyboardArrowDown, MdPersonAdd, MdLogout, MdOutlineWbSunny } from 'react-icons/md';
+import { MdPlayArrow, MdKeyboardArrowDown, MdPersonAdd, MdLogout, MdOutlineWbSunny, MdPhone, MdPhoneEnabled } from 'react-icons/md';
 import UserDropdown from '../Auth/UserDropdown';
 import GlobalLoader from '../Layout/GlobalLoader';
 import type { ChatMessage } from '../Sidebar/RightSidebar';
@@ -512,6 +512,23 @@ export default function Workspace() {
           >
             <MdPersonAdd size={15} />
             Invite
+          </button>
+
+          <div className="w-[1px] h-5 bg-outline/30 hidden md:block" />
+
+          {/* Voice Call button */}
+          <button
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all text-body-xs font-semibold ${
+              isInCall
+                ? 'bg-success/15 border-success/40 text-success hover:bg-success/25'
+                : 'hover:bg-surface-variant/30 text-on-surface-variant hover:text-on-surface border-outline/50'
+            }`}
+            onClick={() => setIsInCall(prev => !prev)}
+            title={isInCall ? 'Leave Voice Call' : 'Join Voice Call'}
+            aria-label={isInCall ? 'Leave Voice Call' : 'Join Voice Call'}
+          >
+            {isInCall ? <MdPhoneEnabled size={15} className="animate-pulse" /> : <MdPhone size={15} />}
+            {isInCall ? 'In Call' : 'Call'}
           </button>
 
           <div className="w-[1px] h-5 bg-outline/30 hidden md:block" />
