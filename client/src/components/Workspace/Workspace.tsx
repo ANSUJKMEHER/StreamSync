@@ -9,7 +9,7 @@ import { roomService, type Room } from '../../services/roomService';
 import FileExplorer from '../Sidebar/FileExplorer';
 import ActivityBar from '../Sidebar/ActivityBar';
 import FileTabs from '../Tabs/FileTabs';
-import { MdPlayArrow, MdKeyboardArrowDown, MdPersonAdd, MdLogout, MdOutlineWbSunny, MdPhone, MdPhoneEnabled } from 'react-icons/md';
+import { MdPlayArrow, MdKeyboardArrowDown, MdPersonAdd, MdLogout, MdOutlineWbSunny, MdPhone, MdPhoneEnabled, MdPhoneCallback, MdClose } from 'react-icons/md';
 import UserDropdown from '../Auth/UserDropdown';
 import GlobalLoader from '../Layout/GlobalLoader';
 import type { ChatMessage } from '../Sidebar/RightSidebar';
@@ -57,6 +57,7 @@ export default function Workspace() {
   // Call State
   const [isInCall, setIsInCall] = useState(false);
   const [, setActiveCallUsers] = useState<Map<string, string>>(new Map());
+  const [incomingCall, setIncomingCall] = useState<{ userId: string; username: string } | null>(null);
   
   // Right Sidebar & Room Chat States
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -147,6 +148,10 @@ export default function Workspace() {
             next.set(userId, username || 'User');
             return next;
           });
+          // Show join notification to users who are NOT already in the call
+          if (!isInCall && userId !== user?.id) {
+            setIncomingCall({ userId, username: username || 'Someone' });
+          }
         }
       } else if (action === 'call-left') {
         if (userId) {
@@ -155,6 +160,8 @@ export default function Workspace() {
             next.delete(userId);
             return next;
           });
+          // Dismiss incoming call notification if the initiator left
+          setIncomingCall(prev => prev?.userId === userId ? null : prev);
         }
       } else if (action === 'chat-message') {
         const { text } = payload;
@@ -455,6 +462,48 @@ export default function Workspace() {
         <Suspense fallback={null}>
           <VoiceChat roomId={roomId} onLeaveCall={() => setIsInCall(false)} />
         </Suspense>
+      )}
+
+      {/* Incoming Call Toast — shown to users NOT yet in the call */}
+      {incomingCall && !isInCall && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] animate-slide-in">
+          <div className="flex items-center gap-4 px-5 py-3.5 rounded-2xl shadow-2xl border border-success/30 bg-surface/95 backdrop-blur-xl">
+            {/* Pulsing avatar ring */}
+            <div className="relative shrink-0">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-success/30 to-primary/30 flex items-center justify-center">
+                <MdPhoneCallback size={20} className="text-success animate-pulse" />
+              </div>
+              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-success border-2 border-surface animate-ping" />
+              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-success border-2 border-surface" />
+            </div>
+
+            {/* Text */}
+            <div className="flex flex-col min-w-0">
+              <span className="text-body-sm font-bold text-on-surface">
+                {incomingCall.username} started a call
+              </span>
+              <span className="text-[11px] text-on-surface-variant">Voice call is active in this room</span>
+            </div>
+
+            {/* Join button */}
+            <button
+              onClick={() => { setIsInCall(true); setIncomingCall(null); }}
+              className="px-4 py-1.5 rounded-full bg-success text-white text-body-xs font-bold hover:bg-success/90 active:scale-95 transition-all shadow-md shadow-success/30 flex items-center gap-1.5 shrink-0"
+            >
+              <MdPhone size={14} />
+              Join Call
+            </button>
+
+            {/* Dismiss */}
+            <button
+              onClick={() => setIncomingCall(null)}
+              className="p-1.5 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors shrink-0"
+              title="Dismiss"
+            >
+              <MdClose size={16} />
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Top Navigation Bar */}
