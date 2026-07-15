@@ -19,7 +19,8 @@
   [![Gemini](https://img.shields.io/badge/AI-Gemini%202.5-purple.svg?style=flat&logo=google)](https://deepmind.google/technologies/gemini/)
 
 </div>
-
+ 
+ 
 <hr />
 
 ## 🌟 The Core Innovation: Shared CRDT & Link Engine
