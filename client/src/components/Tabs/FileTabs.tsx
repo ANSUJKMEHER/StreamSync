@@ -85,11 +85,20 @@ function FileTabs() {
               >
                 {icon}
               </span>
-              <span className="text-xs font-mono font-medium truncate">{file.name}</span>
+              <div className="flex items-center gap-1 min-w-0">
+                <span className="text-xs font-mono font-medium truncate">
+                  {file.name.split('/').pop()}
+                </span>
+                {file.name.includes('/') && (
+                  <span className="text-[9px] text-on-surface-variant/40 font-mono hidden md:inline truncate">
+                    {file.name.split('/').slice(0, -1).pop()}
+                  </span>
+                )}
+              </div>
 
               {/* Kokonut-style glowing modification pip */}
               {isModified && (
-                <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0 ml-1 shadow-[0_0_8px_rgba(223,171,108,0.5)] animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-primary flex-shrink-0 ml-1 shadow-[0_0_8px_rgba(245,158,11,0.5)] animate-pulse" />
               )}
 
               <motion.button

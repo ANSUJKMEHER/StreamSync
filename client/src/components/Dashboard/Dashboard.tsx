@@ -173,7 +173,10 @@ export default function Dashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-background text-on-surface font-sans transition-colors duration-300">
+    <div className="h-screen w-full overflow-y-auto bg-background text-on-surface font-sans transition-colors duration-300 relative">
+      {/* Ambient Top Glow */}
+      <div className="pointer-events-none fixed top-0 left-1/2 -translate-x-1/2 w-[900px] h-[350px] bg-primary/[0.06] blur-[140px] rounded-full -z-0" />
+
       {/* Top Header */}
       <header className="h-16 border-b border-outline-variant/25 flex items-center justify-between px-6 bg-surface/80 backdrop-blur-xl sticky top-0 z-40">
         <div className="flex items-center gap-3">
@@ -362,7 +365,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Repo List with smooth transitions */}
-                <div className="flex-1 overflow-y-auto no-scrollbar bg-surface-container-lowest divide-y divide-outline-variant/10">
+                <div className="flex-1 overflow-y-auto bg-surface-container-lowest divide-y divide-outline-variant/10">
                   {reposLoading ? (
                     <div className="p-8 text-center text-on-surface-variant animate-pulse font-mono text-xs">
                       Loading repositories...

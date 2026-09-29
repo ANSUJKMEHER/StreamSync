@@ -536,35 +536,110 @@ export default function Workspace() {
           </div>
         </div>
 
-        {/* Center: Live Connection status & Stacked avatar cluster */}
-        <div className="hidden md:flex items-center gap-4">
-          <Badge variant="success" dot={true} className="text-[10px] py-1 px-3">
-            Connected: {roomUsers.length} {roomUsers.length === 1 ? 'user' : 'users'}
-          </Badge>
-
-          {/* Stacked active users in call */}
-          <div className="flex items-center -space-x-2">
-            {roomUsers.slice(0, 4).map((u, i) => (
-              <motion.div 
-                key={u.userId}
-                whileHover={{ y: -2, zIndex: 50 }}
-                className="w-7 h-7 rounded-full border-2 border-surface flex items-center justify-center font-bold text-[10px] bg-gradient-to-br from-primary to-primary-dark text-background shadow-md cursor-pointer select-none"
-                style={{ zIndex: 30 - i }}
-                title={u.username}
-              >
-                {u.username.charAt(0).toUpperCase()}
-              </motion.div>
-            ))}
-            {roomUsers.length > 4 && (
-              <div className="w-7 h-7 rounded-full border-2 border-surface flex items-center justify-center font-bold text-[9px] bg-surface-container-high text-on-surface-variant shadow-md z-10">
-                +{roomUsers.length - 4}
-              </div>
-            )}
-          </div>
+        {/* Center: View Switcher (Integrated into Header) */}
+        <div className="hidden md:flex items-center gap-1 bg-surface-container-low p-1 rounded-xl border border-outline-variant/30 select-none shadow-inner">
+          {[
+            {
+              id: 'editor',
+              label: 'Code',
+              isActive: viewMode === 'editor' && !isChatOpen && !isMembersOpen,
+              onClick: () => {
+                setViewMode('editor');
+                if (!isSidebarOpen) toggleSidebar();
+                setIsChatOpen(false);
+                setIsMembersOpen(false);
+              }
+            },
+            {
+              id: 'canvas',
+              label: 'Whiteboard',
+              isActive: viewMode === 'canvas',
+              onClick: () => {
+                setViewMode('canvas');
+                if (isSidebarOpen) toggleSidebar();
+                setIsChatOpen(false);
+                setIsMembersOpen(false);
+              }
+            },
+            {
+              id: 'chat',
+              label: 'Chat',
+              isActive: isChatOpen && !isMembersOpen,
+              onClick: () => {
+                setIsChatOpen(true);
+                setIsMembersOpen(false);
+              }
+            },
+            {
+              id: 'files',
+              label: 'Files',
+              isActive: activeActivityView === 'explorer' && isSidebarOpen,
+              onClick: () => {
+                setActiveActivityView('explorer');
+                if (!isSidebarOpen) toggleSidebar();
+                setIsChatOpen(false);
+                setIsMembersOpen(false);
+              }
+            },
+            {
+              id: 'activity',
+              label: 'Activity',
+              isActive: isMembersOpen && !isChatOpen,
+              onClick: () => {
+                setIsMembersOpen(true);
+                setIsChatOpen(false);
+              }
+            }
+          ].map((item) => (
+            <button
+              key={item.id}
+              className={`relative px-3.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer select-none ${
+                item.isActive
+                  ? 'text-primary font-bold'
+                  : 'text-on-surface-variant hover:text-on-surface'
+              }`}
+              onClick={item.onClick}
+            >
+              {item.isActive && (
+                <motion.div
+                  layoutId="workspace-view-pill"
+                  className="absolute inset-0 bg-primary/15 border border-primary/25 rounded-lg shadow-sm -z-10"
+                  transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                />
+              )}
+              {item.label}
+            </button>
+          ))}
         </div>
 
-        {/* Right: Actions & Profile */}
+        {/* Right: Actions, Users & Profile */}
         <div className="flex items-center gap-2.5">
+          {/* Live Connection status & Stacked avatar cluster */}
+          <div className="hidden xl:flex items-center gap-3 mr-1">
+            <Badge variant="success" dot={true} className="text-[10px] py-0.5 px-2.5">
+              {roomUsers.length} online
+            </Badge>
+
+            {/* Stacked active users in call */}
+            <div className="flex items-center -space-x-2">
+              {roomUsers.slice(0, 3).map((u, i) => (
+                <motion.div 
+                  key={u.userId}
+                  whileHover={{ y: -2, zIndex: 50 }}
+                  className="w-6 h-6 rounded-full border-2 border-surface flex items-center justify-center font-bold text-[9px] bg-gradient-to-br from-primary to-primary-dark text-background shadow-md cursor-pointer select-none"
+                  style={{ zIndex: 30 - i }}
+                  title={u.username}
+                >
+                  {u.username.charAt(0).toUpperCase()}
+                </motion.div>
+              ))}
+              {roomUsers.length > 3 && (
+                <div className="w-6 h-6 rounded-full border-2 border-surface flex items-center justify-center font-bold text-[8px] bg-surface-container-high text-on-surface-variant shadow-md z-10">
+                  +{roomUsers.length - 3}
+                </div>
+              )}
+            </div>
+          </div>
           <motion.button 
             whileTap={{ scale: 0.95 }}
             className="hover:bg-surface-container text-on-surface-variant hover:text-on-surface px-3 py-1.5 rounded-xl border border-outline-variant/30 flex items-center gap-1.5 transition-all text-xs font-semibold cursor-pointer"
@@ -653,85 +728,8 @@ export default function Workspace() {
           </aside>
         )}
 
-        {/* Center Panel including Sub-Header View Navigation */}
+        {/* Center Panel */}
         <div className="flex-1 flex flex-col h-full overflow-hidden relative z-20 bg-background">
-          {/* Sub-Header View switcher navigation */}
-          <div className="h-11 bg-surface/50 border-b border-outline-variant/15 flex items-center justify-center shrink-0 z-30 select-none">
-            <div className="flex items-center gap-1 bg-surface-container-low p-1 rounded-xl border border-outline-variant/25">
-              {[
-                {
-                  id: 'editor',
-                  label: 'Code',
-                  isActive: viewMode === 'editor' && !isChatOpen && !isMembersOpen,
-                  onClick: () => {
-                    setViewMode('editor');
-                    if (!isSidebarOpen) toggleSidebar();
-                    setIsChatOpen(false);
-                    setIsMembersOpen(false);
-                  }
-                },
-                {
-                  id: 'canvas',
-                  label: 'Whiteboard',
-                  isActive: viewMode === 'canvas',
-                  onClick: () => {
-                    setViewMode('canvas');
-                    if (isSidebarOpen) toggleSidebar();
-                    setIsChatOpen(false);
-                    setIsMembersOpen(false);
-                  }
-                },
-                {
-                  id: 'chat',
-                  label: 'Chat',
-                  isActive: isChatOpen && !isMembersOpen,
-                  onClick: () => {
-                    setIsChatOpen(true);
-                    setIsMembersOpen(false);
-                  }
-                },
-                {
-                  id: 'files',
-                  label: 'Files',
-                  isActive: activeActivityView === 'explorer' && isSidebarOpen,
-                  onClick: () => {
-                    setActiveActivityView('explorer');
-                    if (!isSidebarOpen) toggleSidebar();
-                    setIsChatOpen(false);
-                    setIsMembersOpen(false);
-                  }
-                },
-                {
-                  id: 'activity',
-                  label: 'Activity',
-                  isActive: isMembersOpen && !isChatOpen,
-                  onClick: () => {
-                    setIsMembersOpen(true);
-                    setIsChatOpen(false);
-                  }
-                }
-              ].map((item) => (
-                <button
-                  key={item.id}
-                  className={`relative px-3.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer select-none ${
-                    item.isActive
-                      ? 'text-primary'
-                      : 'text-on-surface-variant hover:text-on-surface'
-                  }`}
-                  onClick={item.onClick}
-                >
-                  {item.isActive && (
-                    <motion.div
-                      layoutId="workspace-view-pill"
-                      className="absolute inset-0 bg-primary/15 border border-primary/25 rounded-lg shadow-sm -z-10"
-                      transition={{ type: 'spring', stiffness: 450, damping: 32 }}
-                    />
-                  )}
-                  {item.label}
-                </button>
-              ))}
-            </div>
-          </div>
           
           <main className="flex-1 flex w-full h-full relative overflow-hidden bg-surface-dim">
              {renderMainArea()}
