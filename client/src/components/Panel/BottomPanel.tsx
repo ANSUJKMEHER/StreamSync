@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'motion/react';
 import { Terminal } from '@xterm/xterm';
 import { FitAddon } from '@xterm/addon-fit';
 import { MdDelete, MdKeyboardArrowDown, MdRefresh } from 'react-icons/md';
@@ -29,7 +28,7 @@ export default function BottomPanel({ executionOutput, isExecuting, onClose }: B
   const generatePreviewContent = () => {
     const htmlFile = files.find(f => f.name.endsWith('.html'));
     const cssFiles = files.filter(f => f.name.endsWith('.css'));
-    const jsFiles = files.filter(f => f.name.endsWith('.js') || f.name.endsWith('.ts'));
+    const jsFiles = files.filter(f => f.name.endsWith('.js') || f.name.endsWith('.ts')); // simplified
 
     if (!htmlFile) {
       return `
@@ -45,6 +44,7 @@ export default function BottomPanel({ executionOutput, isExecuting, onClose }: B
 
     let htmlContent = htmlFile.content;
     
+    // Inject styles and scripts into head or body
     if (htmlContent.includes('</head>')) {
       htmlContent = htmlContent.replace('</head>', `${combinedStyles}\n</head>`);
     } else {
@@ -65,9 +65,9 @@ export default function BottomPanel({ executionOutput, isExecuting, onClose }: B
 
     const term = new Terminal({
       theme: {
-        background: '#10121a',
-        foreground: '#e3e4e8',
-        cursor: '#dfab6c',
+        background: '#11131c', // bg-surface-dim
+        foreground: '#e1e1ef', // on-surface
+        cursor: '#d0bcff', // primary
       },
       fontFamily: '"JetBrains Mono", Consolas, monospace',
       fontSize: 13,
@@ -124,48 +124,30 @@ export default function BottomPanel({ executionOutput, isExecuting, onClose }: B
   }, [activeTab]);
 
   return (
-    <div className="h-full bg-surface-container border-t border-outline-variant/30 flex flex-col flex-shrink-0 relative z-30 select-none">
-      {/* Header bar with sliding Motion tabs */}
-      <div className="flex items-center px-3 h-8 border-b border-outline-variant/20 gap-3">
-        {(['TERMINAL', 'OUTPUT', 'PREVIEW', 'PROBLEMS'] as Tab[]).map((tab) => {
-          const isActive = activeTab === tab;
-          return (
-            <button
-              key={tab}
-              className={`relative font-mono text-[11px] font-semibold tracking-wider h-full px-2 transition-colors cursor-pointer flex items-center gap-1.5 ${
-                isActive ? 'text-primary' : 'text-on-surface-variant hover:text-on-surface'
-              }`}
-              onClick={() => setActiveTab(tab)}
-            >
-              {isActive && (
-                <motion.div
-                  layoutId="bottom-panel-active-tab"
-                  className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary z-10"
-                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                />
-              )}
-              <span>{tab}</span>
-              {tab === 'OUTPUT' && isExecuting && (
-                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
-              )}
-            </button>
-          );
-        })}
+    <div className="h-full bg-surface-container border-t border-outline-variant/30 flex flex-col flex-shrink-0 relative z-30">
+      <div className="flex items-center px-4 h-8 border-b border-outline-variant/20 gap-4">
+        {(['TERMINAL', 'OUTPUT', 'PREVIEW', 'PROBLEMS'] as Tab[]).map(tab => (
+          <button
+            key={tab}
+            className={`font-label-md text-label-md uppercase tracking-wider h-full transition-colors ${activeTab === tab ? 'text-primary border-b-2 border-primary' : 'text-on-surface-variant hover:text-on-surface'}`}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab}
+          </button>
+        ))}
         
-        <div className="ml-auto flex items-center gap-1">
+        <div className="ml-auto flex items-center gap-2">
           {activeTab === 'PREVIEW' && (
-            <motion.button 
-              whileTap={{ scale: 0.9 }}
-              className="hover:text-primary transition-colors p-1 rounded-md hover:bg-surface-variant text-on-surface-variant cursor-pointer"
+            <button 
+              className="hover:text-primary transition-colors p-1 rounded hover:bg-surface-variant text-on-surface-variant"
               onClick={() => setPreviewKey(k => k + 1)}
               title="Refresh Preview"
             >
               <MdRefresh size={16} />
-            </motion.button>
+            </button>
           )}
-          <motion.button 
-            whileTap={{ scale: 0.9 }}
-            className="hover:text-error transition-colors p-1 rounded-md hover:bg-surface-variant text-on-surface-variant cursor-pointer"
+          <button 
+            className="hover:text-error transition-colors p-1 rounded hover:bg-surface-variant text-on-surface-variant"
             onClick={() => {
               if (xtermRef.current) {
                 xtermRef.current.clear();
@@ -175,20 +157,19 @@ export default function BottomPanel({ executionOutput, isExecuting, onClose }: B
             title="Clear Terminal"
           >
             <MdDelete size={16} />
-          </motion.button>
-          <div className="w-[1px] h-3.5 bg-outline-variant/30 mx-1" />
-          <motion.button 
-            whileTap={{ scale: 0.9 }}
-            className="hover:text-on-surface transition-colors p-1 rounded-md hover:bg-surface-variant text-on-surface-variant cursor-pointer"
+          </button>
+          <div className="w-[1px] h-4 bg-outline-variant/30" />
+          <button 
+            className="hover:text-on-surface transition-colors p-1 rounded hover:bg-surface-variant text-on-surface-variant"
             onClick={onClose}
             title="Close Panel"
           >
             <MdKeyboardArrowDown size={16} />
-          </motion.button>
+          </button>
         </div>
       </div>
       
-      <div className="flex-1 overflow-auto bg-surface-container-lowest font-mono text-xs">
+      <div className="flex-1 overflow-auto bg-surface-container-lowest font-code-md text-code-md">
         <div 
           className="h-full w-full p-2" 
           style={{ display: activeTab === 'TERMINAL' ? 'block' : 'none' }}
@@ -197,11 +178,11 @@ export default function BottomPanel({ executionOutput, isExecuting, onClose }: B
         </div>
         
         {activeTab === 'OUTPUT' && (
-          <div className="p-4 h-full text-on-surface whitespace-pre-wrap font-mono text-xs overflow-auto">
+          <div className="p-4 h-full text-on-surface whitespace-pre-wrap font-code-md text-code-md overflow-auto">
             {executionOutput ? (
                <div className="raw-output text-on-surface">{executionOutput.stdout || executionOutput.stderr}</div>
             ) : (
-               <div className="text-on-surface-variant/70">No output available. Run code to see execution stream here.</div>
+               <div className="text-on-surface-variant">No output available. Run code to see output here.</div>
             )}
           </div>
         )}
@@ -219,7 +200,7 @@ export default function BottomPanel({ executionOutput, isExecuting, onClose }: B
         )}
 
         {activeTab === 'PROBLEMS' && (
-          <div className="p-4 h-full text-on-surface-variant/70 font-mono text-xs">
+          <div className="p-4 h-full text-on-surface-variant font-code-md text-code-md">
             No problems have been detected in the workspace.
           </div>
         )}

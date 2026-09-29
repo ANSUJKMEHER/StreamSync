@@ -83,35 +83,11 @@ export default {
         "label-md": ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "500" }],
         "body-md": ["14px", { lineHeight: "20px", fontWeight: "400" }],
         "body-lg": ["16px", { lineHeight: "24px", fontWeight: "400" }]
-      },
-      keyframes: {
-        "border-beam": {
-          "100%": { "offset-distance": "100%" },
-        },
-        shimmer: {
-          from: { backgroundPosition: "0 0" },
-          to: { backgroundPosition: "-200% 0" },
-        },
-        marquee: {
-          from: { transform: "translateX(0%)" },
-          to: { transform: "translateX(-50%)" },
-        },
-        pulseGlow: {
-          "0%, 100%": { opacity: 0.6, transform: "scale(1)" },
-          "50%": { opacity: 1, transform: "scale(1.05)" }
-        }
-      },
-      animation: {
-        "border-beam": "border-beam calc(var(--duration)*1s) infinite linear",
-        shimmer: "shimmer 2.5s linear infinite",
-        marquee: "marquee var(--duration, 30s) linear infinite",
-        "pulse-glow": "pulseGlow 2s ease-in-out infinite"
       }
     }
   },
   plugins: [
     require('@tailwindcss/forms'),
-    require('@tailwindcss/container-queries'),
-    require('tailwindcss-animate')
+    require('@tailwindcss/container-queries')
   ]
 }

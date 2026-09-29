@@ -1,31 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
 import { useAuthStore } from '../../store/authStore';
 import { roomService, type Room } from '../../services/roomService';
 import { githubService, type GithubRepo } from '../../services/githubService';
-import {
-  MdClose,
-  MdPublic,
-  MdLock,
-  MdSearch,
-  MdFolderZip,
-  MdAdd,
-  MdLayers,
-  MdCalendarToday,
-  MdInsertDriveFile
-} from 'react-icons/md';
-import { FaGithub } from 'react-icons/fa';
+import { MdClose, MdPublic, MdLock, MdAccountCircle, MdKeyboardArrowDown, MdSearch, MdFolderZip } from 'react-icons/md';
 import UserDropdown from '../Auth/UserDropdown';
 import NotificationsHub from './NotificationsHub';
-import { SpotlightCard } from '../ui/spotlight-card';
-import { Badge } from '../ui/badge';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
 import './Dashboard.css';
 
 export default function Dashboard() {
-  const { token, user } = useAuthStore();
+  const { token } = useAuthStore();
   const navigate = useNavigate();
   const [rooms, setRooms] = useState<Room[]>([]);
   const [repos, setRepos] = useState<GithubRepo[]>([]);
@@ -33,10 +17,6 @@ export default function Dashboard() {
   const [reposLoading, setReposLoading] = useState(false);
   const [githubError, setGithubError] = useState<string | null>(null);
   const [newRoomName, setNewRoomName] = useState('');
-  const [importRepo, setImportRepo] = useState('');
-  const [isImporting, setIsImporting] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-
   const navigateToRoom = (roomId: string) => {
     navigate(`/room/${roomId}`);
   };
@@ -62,7 +42,7 @@ export default function Dashboard() {
       } finally {
         setLoading(false);
       }
-
+      
       try {
         setReposLoading(true);
         setGithubError(null);
@@ -81,16 +61,14 @@ export default function Dashboard() {
       if (event.data?.type === 'OAUTH_SUCCESS') {
         const { token, user } = event.data.payload;
         useAuthStore.getState().setAuth(user, token);
-        githubService
-          .getUserRepos(token)
-          .then((userRepos) => {
-            setRepos(userRepos);
-            setGithubError(null);
-          })
-          .catch((err) => {
-            console.error('Failed to reload github repos:', err);
-            setGithubError(err.message || 'Failed to connect to GitHub');
-          });
+        // Re-fetch repos with the new token
+        githubService.getUserRepos(token).then(userRepos => {
+          setRepos(userRepos);
+          setGithubError(null);
+        }).catch(err => {
+          console.error('Failed to reload github repos:', err);
+          setGithubError(err.message || 'Failed to connect to GitHub');
+        });
       }
     };
     window.addEventListener('message', handleMessage);
@@ -117,7 +95,7 @@ export default function Dashboard() {
     if (!token || !confirm('Are you sure you want to delete this workspace?')) return;
     try {
       await roomService.deleteRoom(id, token);
-      setRooms(rooms.filter((r) => r.id !== id));
+      setRooms(rooms.filter(r => r.id !== id));
     } catch (err) {
       console.error('Failed to delete room:', err);
     }
@@ -128,7 +106,7 @@ export default function Dashboard() {
     if (!token) return;
     try {
       const updated = await roomService.updateRoom(room.id, { isPublic: !room.isPublic }, token);
-      setRooms(rooms.map((r) => (r.id === updated.id ? updated : r)));
+      setRooms(rooms.map(r => r.id === updated.id ? updated : r));
     } catch (err) {
       console.error('Failed to update room:', err);
     }
@@ -140,15 +118,18 @@ export default function Dashboard() {
     const newAccess = room.publicAccess === 'VIEW' ? 'EDIT' : 'VIEW';
     try {
       const updated = await roomService.updateRoom(room.id, { publicAccess: newAccess }, token);
-      setRooms(rooms.map((r) => (r.id === updated.id ? updated : r)));
+      setRooms(rooms.map(r => r.id === updated.id ? updated : r));
     } catch (err) {
       console.error('Failed to update access:', err);
     }
   };
 
+  const [importRepo, setImportRepo] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
+
   const handleImportGithub = async (repoToImport: string) => {
     if (!token) return;
-
+    
     let cleanedRepo = repoToImport.trim();
     if (cleanedRepo.includes('github.com/')) {
       cleanedRepo = cleanedRepo.split('github.com/')[1];
@@ -168,309 +149,208 @@ export default function Dashboard() {
     }
   };
 
-  const filteredRepos = repos.filter((r) =>
-    r.full_name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const [searchQuery, setSearchQuery] = useState('');
+  const filteredRepos = repos.filter(r => r.full_name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+
 
   return (
-    <div className="h-screen w-full overflow-y-auto bg-background text-on-surface font-sans transition-colors duration-300 relative">
-      {/* Ambient Top Glow */}
-      <div className="pointer-events-none fixed top-0 left-1/2 -translate-x-1/2 w-[900px] h-[350px] bg-primary/[0.06] blur-[140px] rounded-full -z-0" />
-
-      {/* Top Header */}
-      <header className="h-16 border-b border-outline-variant/25 flex items-center justify-between px-6 bg-surface/80 backdrop-blur-xl sticky top-0 z-40">
+    <div className="h-screen w-full overflow-y-auto bg-background text-on-surface font-sans transition-colors duration-300">
+      {/* Header */}
+      <header className="h-16 border-b border-outline-variant/25 flex items-center justify-between px-6 bg-surface shadow-sm">
         <div className="flex items-center gap-3">
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary/30 to-primary/80 border border-primary/25 text-white flex items-center justify-center font-bold text-lg shadow-[0_2px_10px_rgba(223,171,108,0.2)] select-none"
-          >
+          <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary/30 to-primary/80 border border-primary/20 text-white flex items-center justify-center font-bold text-lg shadow-[0_2px_8px_rgba(223,171,108,0.15)]">
             S
-          </motion.div>
-          <span className="font-headline-md font-bold text-primary tracking-tight text-xl">
-            StreamSync
-          </span>
+          </div>
+          <span className="font-headline-md font-bold text-primary tracking-tight text-xl">StreamSync</span>
         </div>
-
-        <div className="flex items-center gap-3">
+        
+        <div className="flex items-center gap-4">
           <NotificationsHub />
           <UserDropdown />
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-10">
-        {/* Welcome Hero Banner */}
-        <div className="mb-10">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-on-surface mb-2 tracking-tight">
-            Welcome back, {user?.username?.split(' ')[0] || 'Developer'}
+      <main className="max-w-7xl mx-auto px-6 py-12">
+        {/* Welcome Text */}
+        <div className="mb-12">
+          <h1 className="text-4xl font-bold text-on-surface mb-2 tracking-tight">
+            Welcome back, {useAuthStore.getState().user?.username?.split(' ')[0] || 'Developer'}
           </h1>
-          <p className="text-on-surface-variant text-xs md:text-sm font-medium">
-            Manage your synchronized workspaces and connected GitHub repositories.
-          </p>
+          <p className="text-on-surface-variant font-medium">Here's an overview of your recent projects and repositories.</p>
         </div>
 
-        {/* Two Columns Bento Layout */}
+        {/* Two Columns */}
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Left Column: Workspaces */}
-          <div className="flex-1 flex flex-col gap-8 min-w-[320px]">
-            {/* Create Workspace Card */}
-            <section>
-              <h2 className="text-xs font-bold text-on-surface-variant/80 uppercase tracking-widest mb-3 flex items-center gap-2">
-                <MdLayers className="text-primary text-base" /> Create New Workspace
-              </h2>
-              <div className="bg-surface border border-outline-variant/30 rounded-2xl p-5 shadow-sm">
-                <form onSubmit={handleCreateRoom} className="flex flex-col gap-3.5">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-on-surface-variant/80 text-[10px] font-bold uppercase tracking-wider pl-1">
-                      Workspace Name
-                    </label>
-                    <Input
-                      type="text"
-                      placeholder="e.g. Distributed Consensus Engine"
-                      value={newRoomName}
-                      onChange={(e) => setNewRoomName(e.target.value)}
-                      required
-                      className="font-mono text-xs"
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    size="md"
-                    className="w-full flex items-center justify-center gap-1.5"
-                  >
-                    <MdAdd size={18} />
-                    <span>Create Workspace</span>
-                  </Button>
-                </form>
-              </div>
-            </section>
+           {/* Left Column */}
+           <div className="flex-1 flex flex-col gap-8 min-w-[320px]">
+             {/* Create Workspace */}
+             <section>
+               <h2 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Create New Workspace</h2>
+               <div className="bg-surface border border-outline-variant/30 rounded-2xl p-6 shadow-sm">
+                 <form onSubmit={handleCreateRoom} className="flex flex-col gap-4">
+                   <div className="relative">
+                     <span className="absolute left-4 top-2.5 text-on-surface-variant/80 text-[10px] font-semibold uppercase tracking-wider">Workspace Name</span>
+                     <input
+                       type="text"
+                       placeholder="e.g. System Architecture"
+                       value={newRoomName}
+                       onChange={(e) => setNewRoomName(e.target.value)}
+                       required
+                       className="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl py-3 px-4 pt-8 text-on-surface placeholder-on-surface-variant/20 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all font-code text-sm"
+                     />
+                   </div>
+                   <button type="submit" className="w-full bg-primary hover:bg-primary/95 text-background font-bold text-xs rounded-xl py-3.5 transition-all shadow-[0_4px_16px_rgba(223,171,108,0.15)] hover:shadow-[0_4px_20px_rgba(223,171,108,0.25)]">
+                     Create Workspace
+                   </button>
+                 </form>
+               </div>
+             </section>
 
-            {/* Your Workspaces Grid */}
-            <section>
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-xs font-bold text-on-surface-variant/80 uppercase tracking-widest flex items-center gap-2">
-                  <MdInsertDriveFile className="text-primary text-base" /> Your Workspaces
-                </h2>
-                <span className="text-[11px] font-mono text-on-surface-variant/70">
-                  {rooms.length} {rooms.length === 1 ? 'room' : 'rooms'}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {loading ? (
-                  <div className="col-span-full py-12 text-center text-on-surface-variant animate-pulse font-mono text-xs">
-                    Loading workspaces...
-                  </div>
-                ) : rooms.length === 0 ? (
-                  <div className="col-span-full py-12 px-6 rounded-2xl border border-dashed border-outline-variant/40 text-center text-on-surface-variant font-mono text-xs bg-surface-container-low/30">
-                    You don't have any workspaces yet. Create one above to get started!
-                  </div>
-                ) : (
-                  rooms.map((room) => (
-                    <SpotlightCard
-                      key={room.id}
-                      onClick={() => navigateToRoom(room.id)}
-                      className="cursor-pointer flex flex-col justify-between gap-4 h-[170px]"
-                    >
-                      <div className="flex justify-between items-start gap-2">
-                        <div className="flex flex-col min-w-0">
-                          <h3 className="font-bold text-sm text-on-surface group-hover:text-primary transition-colors truncate">
-                            {room.name}
-                          </h3>
-                          <span className="text-[10px] text-on-surface-variant/60 font-mono mt-0.5">
-                            ID: {room.id.slice(0, 8)}...
-                          </span>
-                        </div>
-                        <button
-                          onClick={(e) => handleDeleteRoom(room.id, e)}
-                          title="Delete Workspace"
-                          className="text-on-surface-variant/60 hover:text-error transition-colors p-1.5 bg-surface-container hover:bg-error/10 rounded-lg border border-outline-variant/15 cursor-pointer"
-                        >
-                          <MdClose size={14} />
-                        </button>
-                      </div>
-
-                      <div className="flex flex-col gap-2.5">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={(e) => handleTogglePublic(room, e)}
-                            className="cursor-pointer"
-                          >
-                            <Badge
-                              variant={room.isPublic ? 'success' : 'default'}
-                              dot={true}
-                              className="text-[9px] py-0.5 px-2 hover:opacity-85 transition-opacity"
-                            >
-                              {room.isPublic ? <MdPublic size={11} className="mr-0.5" /> : <MdLock size={11} className="mr-0.5" />}
-                              {room.isPublic ? 'Public' : 'Private'}
-                            </Badge>
+             {/* Your Workspaces */}
+             <section>
+               <h2 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Your Workspaces</h2>
+               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4">
+                  {loading ? (
+                    <div className="text-on-surface-variant p-4 animate-pulse font-code text-xs">Loading workspaces...</div>
+                  ) : rooms.length === 0 ? (
+                    <div className="text-on-surface-variant p-4 font-code text-xs">You don't have any workspaces yet.</div>
+                  ) : (
+                    rooms.map((room) => (
+                      <div key={room.id} onClick={() => navigateToRoom(room.id)} className="bg-surface border border-outline-variant/30 rounded-2xl p-5 hover:border-primary/40 hover:scale-[1.01] hover:shadow-[0_8px_30px_rgba(0,0,0,0.3)] transition-all cursor-pointer group flex flex-col justify-between gap-4 h-[160px]">
+                        <div className="flex justify-between items-start gap-2">
+                          <h3 className="font-semibold text-base text-white group-hover:text-primary transition-colors truncate max-w-[80%]">{room.name}</h3>
+                          <button onClick={(e) => handleDeleteRoom(room.id, e)} className="text-on-surface-variant/70 hover:text-error transition-colors p-1 bg-surface-container rounded-lg border border-outline-variant/10">
+                            <MdClose size={15} />
                           </button>
-
-                          {room.isPublic && (
-                            <button
-                              onClick={(e) => handleToggleAccess(room, e)}
-                              className="cursor-pointer"
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-1.5">
+                            <button 
+                              onClick={(e) => handleTogglePublic(room, e)}
+                              className={`flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold hover:opacity-85 transition-opacity uppercase tracking-wider ${room.isPublic ? 'bg-success/15 text-success border border-success/20' : 'bg-surface-container-high text-on-surface-variant border border-outline-variant/30'}`}
                             >
-                              <Badge
-                                variant="outline"
-                                className="text-[9px] py-0.5 px-2 hover:bg-surface-container transition-colors"
+                              {room.isPublic ? <MdPublic size={12} /> : <MdLock size={12} />}
+                              {room.isPublic ? 'Public' : 'Private'}
+                            </button>
+                            {room.isPublic && (
+                              <button
+                                onClick={(e) => handleToggleAccess(room, e)}
+                                className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-surface-container-high text-on-surface-variant border border-outline-variant/30 hover:bg-surface-container-highest transition-colors uppercase tracking-wider"
                               >
                                 {room.publicAccess === 'VIEW' ? 'Read-Only' : 'Collaborative'}
-                              </Badge>
-                            </button>
-                          )}
-                        </div>
-
-                        <div className="flex justify-between items-center text-[10px] text-on-surface-variant/70 font-mono border-t border-outline-variant/15 pt-2">
-                          <span className="flex items-center gap-1">
-                            <MdInsertDriveFile size={12} /> {room._count?.files || 0} files
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MdCalendarToday size={11} /> {new Date(room.createdAt).toLocaleDateString()}
-                          </span>
+                              </button>
+                            )}
+                          </div>
+                          <div className="flex justify-between items-center text-[11px] text-on-surface-variant/70 font-code mt-1 border-t border-outline-variant/10 pt-2">
+                            <span>{room._count?.files || 0} Files</span>
+                            <span>{new Date(room.createdAt).toLocaleDateString()}</span>
+                          </div>
                         </div>
                       </div>
-                    </SpotlightCard>
-                  ))
-                )}
-              </div>
-            </section>
-          </div>
-
-          {/* Right Column: GitHub Repository Import */}
-          <div className="lg:w-[480px] flex-shrink-0 flex flex-col gap-8">
-            <section>
-              <h2 className="text-xs font-bold text-on-surface-variant/80 uppercase tracking-widest mb-3 flex items-center gap-2">
-                <FaGithub className="text-primary text-base" /> Import Git Repository
-              </h2>
-              <div className="bg-surface border border-outline-variant/30 rounded-2xl overflow-hidden flex flex-col h-[650px] shadow-sm">
-                {/* Search Bar */}
-                <div className="p-3.5 border-b border-outline-variant/20 bg-surface-container-low/70">
-                  <Input
-                    icon={<MdSearch size={16} />}
-                    type="text"
-                    placeholder="Search repositories..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="font-mono text-xs"
-                    rightElement={
-                      repos.length > 0 ? (
-                        <span className="text-[10px] font-mono text-on-surface-variant/60 bg-surface-container px-2 py-0.5 rounded-md border border-outline-variant/20">
-                          {filteredRepos.length}/{repos.length}
-                        </span>
-                      ) : undefined
-                    }
-                  />
-                </div>
-
-                {/* Repo List with smooth transitions */}
-                <div className="flex-1 overflow-y-auto bg-surface-container-lowest divide-y divide-outline-variant/10">
-                  {reposLoading ? (
-                    <div className="p-8 text-center text-on-surface-variant animate-pulse font-mono text-xs">
-                      Loading repositories...
-                    </div>
-                  ) : githubError ? (
-                    <div className="p-8 text-center flex flex-col items-center gap-3">
-                      <span className="text-error font-mono text-xs bg-error/10 border border-error/25 p-3 rounded-xl">
-                        {githubError}
-                      </span>
-                      <Button
-                        size="sm"
-                        variant="primary"
-                        onClick={() =>
-                          window.open(
-                            `${
-                              import.meta.env.VITE_API_URL ||
-                              (window.location.hostname === 'localhost'
-                                ? 'http://localhost:3001'
-                                : 'https://streamsync-cxox.onrender.com')
-                            }/api/v1/oauth/github`,
-                            'GitHub OAuth',
-                            'width=600,height=700'
-                          )
-                        }
-                      >
-                        Connect GitHub
-                      </Button>
-                    </div>
-                  ) : repos.length === 0 ? (
-                    <div className="p-8 text-center text-on-surface-variant font-mono text-xs">
-                      No repositories found. Ensure your GitHub account is connected.
-                    </div>
-                  ) : (
-                    filteredRepos.map((repo) => (
-                      <motion.div
-                        key={repo.id}
-                        whileHover={{ backgroundColor: 'rgba(255, 255, 255, 0.02)' }}
-                        className="flex items-center justify-between p-3.5 transition-colors"
-                      >
-                        <div className="flex items-center gap-3 min-w-0 pr-2">
-                          <div className="p-2 rounded-lg bg-surface-container border border-outline-variant/20 text-primary">
-                            <MdFolderZip size={18} />
-                          </div>
-                          <div className="flex flex-col min-w-0">
-                            <div className="flex items-center gap-1.5 truncate">
-                              <span className="font-mono text-on-surface text-xs font-semibold truncate">
-                                {repo.name}
-                              </span>
-                              {repo.private && (
-                                <MdLock size={12} className="text-on-surface-variant/80 shrink-0" />
-                              )}
-                            </div>
-                            <span className="text-[10px] text-on-surface-variant/60 font-mono mt-0.5">
-                              Updated {Math.round((Date.now() - new Date(repo.updated_at).getTime()) / (1000 * 60 * 60 * 24))}d ago
-                            </span>
-                          </div>
-                        </div>
-
-                        <Button
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => handleImportGithub(repo.full_name)}
-                          disabled={isImporting}
-                          className="shrink-0"
-                        >
-                          Import
-                        </Button>
-                      </motion.div>
                     ))
                   )}
-                </div>
+               </div>
+             </section>
+           </div>
 
-                {/* Import via URL Input Group */}
-                <div className="p-4 border-t border-outline-variant/20 bg-surface-container-low/70 flex flex-col gap-3">
-                  <div className="relative text-center">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-outline-variant/20"></div>
-                    </div>
-                    <span className="relative bg-surface-container-low px-3 text-[10px] text-on-surface-variant/80 font-bold uppercase tracking-wider">
-                      or import via URL
-                    </span>
-                  </div>
+           {/* Right Column */}
+           <div className="lg:w-[500px] flex-shrink-0 flex flex-col gap-8">
+             <section>
+               <h2 className="text-sm font-semibold text-on-surface-variant uppercase tracking-wider mb-3">Import Git Repository</h2>
+               <div className="bg-surface border border-outline-variant/30 rounded-2xl overflow-hidden flex flex-col h-[650px] shadow-sm">
+                 
+                 {/* Top Controls */}
+                 <div className="p-4 border-b border-outline-variant/20 flex gap-3 bg-surface-container-low">
+                   <div className="flex items-center gap-2 bg-surface-container border border-outline-variant/20 rounded-xl px-3.5 py-1.5 text-on-surface cursor-pointer hover:bg-surface-container-high transition-colors">
+                     <MdAccountCircle size={18} className="text-primary" />
+                     <span className="text-xs font-semibold">{repos.length > 0 ? repos[0].full_name.split('/')[0] : 'GitHub'}</span>
+                     <MdKeyboardArrowDown size={14} className="text-on-surface-variant" />
+                   </div>
+                   <div className="flex-1 flex items-center gap-2 bg-surface-container border border-outline-variant/10 rounded-xl px-3 py-1.5 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/10 transition-all">
+                     <MdSearch size={16} className="text-on-surface-variant" />
+                     <input 
+                       type="text" 
+                       placeholder="Search..." 
+                       className="bg-transparent border-none outline-none text-on-surface w-full placeholder-on-surface-variant/30 font-code text-xs"
+                       value={searchQuery}
+                       onChange={(e) => setSearchQuery(e.target.value)}
+                     />
+                   </div>
+                 </div>
 
-                  <div className="flex gap-2">
-                    <Input
-                      type="text"
-                      placeholder="https://github.com/owner/repo"
-                      value={importRepo}
-                      onChange={(e) => setImportRepo(e.target.value)}
-                      className="font-mono text-xs"
-                    />
-                    <Button
-                      variant="primary"
-                      size="md"
-                      disabled={isImporting || !importRepo.trim()}
-                      onClick={() => handleImportGithub(importRepo)}
-                      className="shrink-0"
-                    >
-                      Import
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </section>
-          </div>
+                 {/* Repo List */}
+                 <div className="flex-1 overflow-y-auto bg-surface-container-lowest">
+                    {reposLoading ? (
+                      <div className="p-8 text-center text-on-surface-variant animate-pulse font-code text-xs">Loading repositories...</div>
+                    ) : githubError ? (
+                      <div className="p-8 text-center flex flex-col items-center gap-4">
+                        <span className="text-error font-code text-xs bg-error/10 border border-error/20 p-3 rounded-xl">{githubError}</span>
+                        <button onClick={() => window.open(`${import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://streamsync-cxox.onrender.com')}/api/v1/oauth/github`, 'GitHub OAuth', 'width=600,height=700')} className="bg-primary hover:bg-primary/95 text-background px-4 py-2 rounded-xl transition-colors font-bold text-xs shadow-md">
+                          Connect GitHub
+                        </button>
+                      </div>
+                    ) : repos.length === 0 ? (
+                      <div className="p-8 text-center text-on-surface-variant font-code text-xs">
+                        No repositories found. Ensure you are connected to GitHub.
+                      </div>
+                    ) : (
+                      <div className="flex flex-col divide-y divide-outline-variant/10">
+                        {filteredRepos.map(repo => (
+                          <div key={repo.id} className="flex items-center justify-between p-4 hover:bg-surface-container-low transition-colors">
+                            <div className="flex items-center gap-3">
+                              <MdFolderZip size={20} className="text-primary/60" />
+                              <div className="flex flex-col">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-code text-on-surface text-xs font-semibold">{repo.name}</span>
+                                  {repo.private && <MdLock size={12} className="text-on-surface-variant/80" />}
+                                </div>
+                                <span className="text-[10px] text-on-surface-variant/60 font-code mt-0.5">
+                                  Updated {Math.round((Date.now() - new Date(repo.updated_at).getTime()) / (1000 * 60 * 60 * 24))}d ago
+                                </span>
+                              </div>
+                            </div>
+                            <button 
+                              onClick={() => handleImportGithub(repo.full_name)}
+                              disabled={isImporting}
+                              className="bg-surface hover:bg-surface-container-high border border-outline-variant/20 hover:border-primary/30 text-on-surface font-semibold text-xs px-3.5 py-1.5 rounded-xl transition-all disabled:opacity-50"
+                            >
+                              Import
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                 </div>
+
+                 {/* URL Import */}
+                 <div className="p-5 border-t border-outline-variant/25 bg-surface-container-low">
+                   <div className="relative text-center mb-5">
+                     <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-outline-variant/10"></div></div>
+                     <span className="relative bg-surface-container-low px-3.5 text-[10px] text-on-surface-variant/80 font-bold uppercase tracking-wider">or import via URL</span>
+                   </div>
+                   <div className="flex gap-2">
+                     <input
+                       type="text"
+                       placeholder="Repository URL (e.g. https://github.com/owner/repo)"
+                       value={importRepo}
+                       onChange={(e) => setImportRepo(e.target.value)}
+                       className="flex-1 bg-surface-container-lowest border border-outline-variant/30 rounded-xl px-4 py-2.5 text-on-surface placeholder-on-surface-variant/25 focus:outline-none focus:border-primary/50 focus:ring-2 focus:ring-primary/10 transition-all font-code text-xs"
+                     />
+                     <button 
+                       disabled={isImporting || !importRepo.trim()} 
+                       onClick={() => handleImportGithub(importRepo)}
+                       className="bg-primary hover:bg-primary/95 text-background font-bold text-xs px-5 py-2.5 rounded-xl transition-all shadow-[0_4px_16px_rgba(223,171,108,0.15)] disabled:opacity-50 disabled:shadow-none"
+                     >
+                       Import URL
+                     </button>
+                   </div>
+                 </div>
+
+               </div>
+             </section>
+           </div>
         </div>
       </main>
     </div>

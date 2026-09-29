@@ -1,5 +1,4 @@
-import { motion } from 'motion/react';
-import { VscFiles, VscSearch, VscSourceControl, VscExtensions, VscSparkle } from 'react-icons/vsc';
+import { VscFiles, VscSearch, VscSourceControl, VscExtensions, VscSettingsGear, VscSparkle } from 'react-icons/vsc';
 import { MdChatBubbleOutline, MdPeople } from 'react-icons/md';
 import './ActivityBar.css';
 
@@ -21,118 +20,91 @@ export default function ActivityBar({
   setIsMembersOpen
 }: ActivityBarProps) {
   
-  interface ActionItem {
-    id: 'explorer' | 'search' | 'github' | 'extensions' | 'ai';
-    label: string;
-    icon: React.ComponentType<{ className?: string }>;
-    highlight?: boolean;
-    badge?: boolean;
-  }
-
-  const mainActions: ActionItem[] = [
-    { id: 'explorer', label: 'Explorer', icon: VscFiles },
-    { id: 'search', label: 'Search', icon: VscSearch },
-    { id: 'github', label: 'Source Control', icon: VscSourceControl, badge: true },
-    { id: 'extensions', label: 'Extensions', icon: VscExtensions },
-    { id: 'ai', label: 'AI Copilot', icon: VscSparkle, highlight: true },
-  ];
-
   return (
-    <aside className="w-14 flex-shrink-0 bg-surface-container-lowest border-r border-outline-variant/20 flex flex-col items-center py-3 gap-2 z-40 relative select-none">
+    <aside className="w-16 flex-shrink-0 bg-surface-container-lowest border-r border-outline-variant/20 flex flex-col items-center py-4 gap-container-gap z-40 relative shadow-[1px_0_10px_rgba(0,0,0,0.5)]">
       {/* Top Actions */}
-      <div className="flex flex-col gap-1 w-full items-center">
-        {mainActions.map((action) => {
-          const Icon = action.icon;
-          const isActive = activeView === action.id;
+      <div className="flex flex-col gap-2 w-full items-center">
+        <button 
+          className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${activeView === 'explorer' ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
+          onClick={() => setActiveView('explorer')}
+          title="Explorer"
+          aria-label="Explorer"
+        >
+          <VscFiles className="text-2xl" />
+          <div className="absolute left-14 bg-surface-container-highest text-on-surface px-2 py-1 rounded text-label-md font-label-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Explorer</div>
+        </button>
+        
+        <button 
+          className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${activeView === 'search' ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
+          onClick={() => setActiveView('search')}
+          title="Search"
+          aria-label="Search"
+        >
+          <VscSearch className="text-2xl" />
+          <div className="absolute left-14 bg-surface-container-highest text-on-surface px-2 py-1 rounded text-label-md font-label-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Search</div>
+        </button>
+        
+        <button 
+          className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${activeView === 'github' ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
+          onClick={() => setActiveView('github')}
+          title="Source Control"
+          aria-label="Source Control"
+        >
+          <VscSourceControl className="text-2xl" />
+          <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full"></span>
+          <div className="absolute left-14 bg-surface-container-highest text-on-surface px-2 py-1 rounded text-label-md font-label-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Source Control</div>
+        </button>
 
-          return (
-            <motion.button 
-              key={action.id}
-              whileTap={{ scale: 0.92 }}
-              className={`w-10 h-10 rounded-xl flex items-center justify-center relative group transition-colors cursor-pointer ${
-                isActive 
-                  ? 'text-primary bg-primary/10' 
-                  : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
-              }`}
-              onClick={() => setActiveView(action.id)}
-              title={action.label}
-              aria-label={action.label}
-            >
-              {/* Motion.dev Sliding Vertical Left Bar */}
-              {isActive && (
-                <motion.div 
-                  layoutId="activity-active-indicator"
-                  className="absolute left-0 w-1 h-5 bg-primary rounded-r-full shadow-[0_0_8px_rgba(223,171,108,0.5)]"
-                  transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                />
-              )}
+        <button 
+          className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${activeView === 'extensions' ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
+          onClick={() => setActiveView('extensions')}
+          title="Extensions"
+          aria-label="Extensions"
+        >
+          <VscExtensions className="text-2xl" />
+          <div className="absolute left-14 bg-surface-container-highest text-on-surface px-2 py-1 rounded text-label-md font-label-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Extensions</div>
+        </button>
 
-              <Icon className={`text-xl ${action.highlight && isActive ? 'text-primary animate-pulse' : ''}`} />
-
-              {/* Kokonut-style Notification Badge */}
-              {action.badge && (
-                <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full shadow-[0_0_6px_rgba(223,171,108,0.6)]" />
-              )}
-
-              {/* Tooltip */}
-              <div className="absolute left-14 bg-surface border border-outline-variant/30 text-on-surface px-2.5 py-1 rounded-md text-[11px] font-mono opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
-                {action.label}
-              </div>
-            </motion.button>
-          );
-        })}
+        <button 
+          className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${activeView === 'ai' ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
+          onClick={() => setActiveView('ai')}
+          title="AI Copilot"
+          aria-label="AI Copilot"
+        >
+          <VscSparkle className="text-2xl" />
+          <div className="absolute left-14 bg-surface-container-highest text-on-surface px-2 py-1 rounded text-label-md font-label-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">AI Copilot</div>
+        </button>
 
         {/* Separator line */}
-        <div className="w-6 h-px bg-outline-variant/25 my-1.5" />
+        <div className="w-8 h-[1px] bg-outline-variant/30 my-1" />
 
         {/* Right Sidebar Toggles */}
-        <motion.button 
-          whileTap={{ scale: 0.92 }}
-          className={`w-10 h-10 rounded-xl flex items-center justify-center relative group transition-colors cursor-pointer ${
-            isChatOpen 
-              ? 'text-primary bg-primary/10' 
-              : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
-          }`}
+        <button 
+          className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${isChatOpen ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
           onClick={() => setIsChatOpen(!isChatOpen)}
           title="Room Chat"
           aria-label="Room Chat"
         >
-          {isChatOpen && (
-            <motion.div 
-              layoutId="activity-active-indicator-chat"
-              className="absolute left-0 w-1 h-5 bg-primary rounded-r-full shadow-[0_0_8px_rgba(223,171,108,0.5)]"
-              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-            />
-          )}
-          <MdChatBubbleOutline className="text-xl" />
-          <div className="absolute left-14 bg-surface border border-outline-variant/30 text-on-surface px-2.5 py-1 rounded-md text-[11px] font-mono opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
-            Room Chat
-          </div>
-        </motion.button>
+          <MdChatBubbleOutline className="text-2xl" />
+          <div className="absolute left-14 bg-surface-container-highest text-on-surface px-2 py-1 rounded text-label-md font-label-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Room Chat</div>
+        </button>
 
-        <motion.button 
-          whileTap={{ scale: 0.92 }}
-          className={`w-10 h-10 rounded-xl flex items-center justify-center relative group transition-colors cursor-pointer ${
-            isMembersOpen 
-              ? 'text-primary bg-primary/10' 
-              : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-container'
-          }`}
+        <button 
+          className={`w-10 h-10 rounded-lg flex items-center justify-center relative group transition-all ${isMembersOpen ? 'text-primary bg-primary/10 border-l-2 border-primary' : 'text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50'}`}
           onClick={() => setIsMembersOpen(!isMembersOpen)}
           title="Workspace Members"
           aria-label="Workspace Members"
         >
-          {isMembersOpen && (
-            <motion.div 
-              layoutId="activity-active-indicator-members"
-              className="absolute left-0 w-1 h-5 bg-primary rounded-r-full shadow-[0_0_8px_rgba(223,171,108,0.5)]"
-              transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-            />
-          )}
-          <MdPeople className="text-xl" />
-          <div className="absolute left-14 bg-surface border border-outline-variant/30 text-on-surface px-2.5 py-1 rounded-md text-[11px] font-mono opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg">
-            Members
-          </div>
-        </motion.button>
+          <MdPeople className="text-2xl" />
+          <div className="absolute left-14 bg-surface-container-highest text-on-surface px-2 py-1 rounded text-label-md font-label-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Members</div>
+        </button>
+      </div>
+
+      <div className="mt-auto flex flex-col gap-2 w-full items-center">
+        <button className="w-10 h-10 rounded-lg text-on-surface-variant hover:text-on-surface hover:bg-surface-variant/50 transition-all flex items-center justify-center relative group" title="Settings" aria-label="Settings">
+          <VscSettingsGear className="text-2xl" />
+          <div className="absolute left-14 bg-surface-container-highest text-on-surface px-2 py-1 rounded text-label-md font-label-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">Settings</div>
+        </button>
       </div>
     </aside>
   );
