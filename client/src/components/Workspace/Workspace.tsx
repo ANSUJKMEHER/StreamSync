@@ -1,5 +1,6 @@
 import { useEffect, useState, lazy, Suspense } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { useFileStore } from '../../store/fileStore';
 import { useAuthStore } from '../../store/authStore';
 import { useRoomStore } from '../../store/roomStore';
@@ -9,9 +10,10 @@ import { roomService, type Room } from '../../services/roomService';
 import FileExplorer from '../Sidebar/FileExplorer';
 import ActivityBar from '../Sidebar/ActivityBar';
 import FileTabs from '../Tabs/FileTabs';
-import { MdPlayArrow, MdKeyboardArrowDown, MdPersonAdd, MdLogout, MdOutlineWbSunny, MdPhone, MdPhoneEnabled, MdPhoneCallback, MdClose } from 'react-icons/md';
+import { MdPlayArrow, MdPersonAdd, MdLogout, MdOutlineWbSunny, MdPhone, MdPhoneEnabled, MdPhoneCallback, MdClose, MdSync } from 'react-icons/md';
 import UserDropdown from '../Auth/UserDropdown';
 import GlobalLoader from '../Layout/GlobalLoader';
+import { Badge } from '../ui/badge';
 import type { ChatMessage } from '../Sidebar/RightSidebar';
 import '../../App.css';
 
@@ -465,155 +467,169 @@ export default function Workspace() {
       )}
 
       {/* Incoming Call Toast — shown to users NOT yet in the call */}
-      {incomingCall && !isInCall && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] animate-slide-in">
-          <div className="flex items-center gap-4 px-5 py-3.5 rounded-2xl shadow-2xl border border-success/30 bg-surface/95 backdrop-blur-xl">
-            {/* Pulsing avatar ring */}
-            <div className="relative shrink-0">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-success/30 to-primary/30 flex items-center justify-center">
-                <MdPhoneCallback size={20} className="text-success animate-pulse" />
+      <AnimatePresence>
+        {incomingCall && !isInCall && (
+          <motion.div 
+            initial={{ opacity: 0, y: 40, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 40, scale: 0.92 }}
+            transition={{ type: 'spring', stiffness: 420, damping: 28 }}
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999]"
+          >
+            <div className="flex items-center gap-4 px-5 py-3.5 rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.6)] border border-emerald-500/30 bg-surface/95 backdrop-blur-2xl">
+              {/* Pulsing avatar ring */}
+              <div className="relative shrink-0">
+                <div className="w-10 h-10 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+                  <MdPhoneCallback size={20} className="text-emerald-400 animate-pulse" />
+                </div>
+                <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-surface animate-ping" />
+                <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-400 border-2 border-surface" />
               </div>
-              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-success border-2 border-surface animate-ping" />
-              <span className="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full bg-success border-2 border-surface" />
+
+              {/* Text */}
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-bold text-on-surface">
+                  {incomingCall.username} started a call
+                </span>
+                <span className="text-[11px] text-on-surface-variant font-medium">Voice call is active in this room</span>
+              </div>
+
+              {/* Join button */}
+              <motion.button
+                whileTap={{ scale: 0.95 }}
+                onClick={() => { setIsInCall(true); setIncomingCall(null); }}
+                className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-background text-xs font-bold transition-all shadow-md shadow-emerald-500/20 flex items-center gap-1.5 shrink-0 cursor-pointer"
+              >
+                <MdPhone size={14} />
+                Join Call
+              </motion.button>
+
+              {/* Dismiss */}
+              <button
+                onClick={() => setIncomingCall(null)}
+                className="p-1.5 rounded-xl text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors shrink-0 cursor-pointer"
+                title="Dismiss"
+              >
+                <MdClose size={16} />
+              </button>
             </div>
-
-            {/* Text */}
-            <div className="flex flex-col min-w-0">
-              <span className="text-body-sm font-bold text-on-surface">
-                {incomingCall.username} started a call
-              </span>
-              <span className="text-[11px] text-on-surface-variant">Voice call is active in this room</span>
-            </div>
-
-            {/* Join button */}
-            <button
-              onClick={() => { setIsInCall(true); setIncomingCall(null); }}
-              className="px-4 py-1.5 rounded-full bg-success text-white text-body-xs font-bold hover:bg-success/90 active:scale-95 transition-all shadow-md shadow-success/30 flex items-center gap-1.5 shrink-0"
-            >
-              <MdPhone size={14} />
-              Join Call
-            </button>
-
-            {/* Dismiss */}
-            <button
-              onClick={() => setIncomingCall(null)}
-              className="p-1.5 rounded-full text-on-surface-variant hover:text-on-surface hover:bg-surface-container transition-colors shrink-0"
-              title="Dismiss"
-            >
-              <MdClose size={16} />
-            </button>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Top Navigation Bar */}
-      <header className="bg-surface/85 backdrop-blur-xl border-b border-outline-variant/20 flex justify-between items-center px-6 h-14 w-full flex-shrink-0 z-50 fixed top-0 left-0 right-0 shadow-md">
+      <header className="bg-surface/85 backdrop-blur-xl border-b border-outline-variant/20 flex justify-between items-center px-6 h-14 w-full flex-shrink-0 z-50 fixed top-0 left-0 right-0 shadow-sm">
         {/* Left: Logo & Project Dropdown */}
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2 cursor-pointer transition-opacity hover:opacity-80" onClick={() => navigate('/')}>
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-inverse-primary text-white flex items-center justify-center font-bold text-lg shadow-[0_2px_12px_rgba(208,188,255,0.35)]">
+        <div className="flex items-center gap-5">
+          <div className="flex items-center gap-2.5 cursor-pointer transition-opacity hover:opacity-85" onClick={() => navigate('/')}>
+            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary/30 to-primary/80 border border-primary/25 text-white flex items-center justify-center font-bold text-lg shadow-[0_2px_10px_rgba(223,171,108,0.2)]">
               S
             </div>
-            <span className="font-headline-md text-headline-md font-bold text-on-surface tracking-tight">StreamSync</span>
+            <span className="font-headline-md font-bold text-primary tracking-tight text-xl">StreamSync</span>
           </div>
 
-          <div className="w-[1px] h-5 bg-white/10 hidden md:block" />
+          <div className="w-[1px] h-5 bg-outline-variant/20 hidden md:block" />
 
-          {/* Project dropdown picker */}
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/[0.03] border border-white/5 hover:bg-white/[0.06] transition-colors cursor-pointer text-body-xs font-semibold text-on-surface-variant">
-            <span>Project: <strong className="text-on-surface">{roomData?.name || 'E-Commerce App'}</strong></span>
-            <MdKeyboardArrowDown size={16} />
+          {/* Project pill */}
+          <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-surface-container-low border border-outline-variant/25 text-xs font-medium text-on-surface-variant">
+            <span>Project: <strong className="text-on-surface font-semibold">{roomData?.name || 'Workspace'}</strong></span>
           </div>
         </div>
 
         {/* Center: Live Connection status & Stacked avatar cluster */}
         <div className="hidden md:flex items-center gap-4">
-          <div className="flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-success/10 border border-success/20 text-success text-[10px] font-bold tracking-wide uppercase shadow-sm animate-pulse">
-            <span className="w-1.5 h-1.5 bg-success rounded-full shadow-[0_0_8px_#4edea3]" />
-            Connected: {roomUsers.length} users
-          </div>
+          <Badge variant="success" dot={true} className="text-[10px] py-1 px-3">
+            Connected: {roomUsers.length} {roomUsers.length === 1 ? 'user' : 'users'}
+          </Badge>
 
           {/* Stacked active users in call */}
-          <div className="flex items-center -space-x-2.5">
-            {roomUsers.slice(0, 3).map((u, i) => (
-              <div 
+          <div className="flex items-center -space-x-2">
+            {roomUsers.slice(0, 4).map((u, i) => (
+              <motion.div 
                 key={u.userId}
-                className="w-7 h-7 rounded-full border-2 border-[#0f111a] flex items-center justify-center font-bold text-[10px] bg-gradient-to-br from-primary to-accent text-white shadow-md hover:-translate-y-0.5 transition-transform cursor-pointer"
+                whileHover={{ y: -2, zIndex: 50 }}
+                className="w-7 h-7 rounded-full border-2 border-surface flex items-center justify-center font-bold text-[10px] bg-gradient-to-br from-primary to-primary-dark text-background shadow-md cursor-pointer select-none"
                 style={{ zIndex: 30 - i }}
                 title={u.username}
               >
                 {u.username.charAt(0).toUpperCase()}
-              </div>
+              </motion.div>
             ))}
-            {roomUsers.length > 3 && (
-              <div className="w-7 h-7 rounded-full border-2 border-[#0f111a] flex items-center justify-center font-bold text-[9px] bg-surface-container-highest text-on-surface shadow-md z-10">
-                +{roomUsers.length - 3}
+            {roomUsers.length > 4 && (
+              <div className="w-7 h-7 rounded-full border-2 border-surface flex items-center justify-center font-bold text-[9px] bg-surface-container-high text-on-surface-variant shadow-md z-10">
+                +{roomUsers.length - 4}
               </div>
             )}
           </div>
         </div>
 
         {/* Right: Actions & Profile */}
-        <div className="flex items-center gap-3">
-          <button 
-            className="hover:bg-surface-variant/30 text-on-surface-variant hover:text-on-surface px-3 py-1.5 rounded-full border border-outline/50 flex items-center gap-1.5 transition-all text-body-xs font-semibold"
+        <div className="flex items-center gap-2.5">
+          <motion.button 
+            whileTap={{ scale: 0.95 }}
+            className="hover:bg-surface-container text-on-surface-variant hover:text-on-surface px-3 py-1.5 rounded-xl border border-outline-variant/30 flex items-center gap-1.5 transition-all text-xs font-semibold cursor-pointer"
             onClick={() => setIsInviteModalOpen(true)}
           >
             <MdPersonAdd size={15} />
-            Invite
-          </button>
+            <span>Invite</span>
+          </motion.button>
 
-          <div className="w-[1px] h-5 bg-outline/30 hidden md:block" />
+          <div className="w-[1px] h-4 bg-outline-variant/25 hidden md:block" />
 
           {/* Voice Call button */}
-          <button
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all text-body-xs font-semibold ${
+          <motion.button
+            whileTap={{ scale: 0.95 }}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all text-xs font-semibold cursor-pointer ${
               isInCall
-                ? 'bg-success/15 border-success/40 text-success hover:bg-success/25'
-                : 'hover:bg-surface-variant/30 text-on-surface-variant hover:text-on-surface border-outline/50'
+                ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/25'
+                : 'hover:bg-surface-container text-on-surface-variant hover:text-on-surface border-outline-variant/30'
             }`}
             onClick={() => setIsInCall(prev => !prev)}
             title={isInCall ? 'Leave Voice Call' : 'Join Voice Call'}
             aria-label={isInCall ? 'Leave Voice Call' : 'Join Voice Call'}
           >
             {isInCall ? <MdPhoneEnabled size={15} className="animate-pulse" /> : <MdPhone size={15} />}
-            {isInCall ? 'In Call' : 'Call'}
-          </button>
+            <span>{isInCall ? 'In Call' : 'Call'}</span>
+          </motion.button>
 
-          <div className="w-[1px] h-5 bg-outline/30 hidden md:block" />
+          <div className="w-[1px] h-4 bg-outline-variant/25 hidden md:block" />
 
-          {/* Run Code pill button */}
-          <button 
-            className={`flex items-center gap-1 px-4 py-1.5 rounded-full bg-gradient-to-br from-primary-container to-inverse-primary text-white hover:shadow-[0_0_15px_rgba(138,114,193,0.35)] hover:scale-[1.02] active:scale-[0.98] text-body-xs font-bold transition-all ${isExecuting || !activeFile ? 'opacity-50 cursor-not-allowed shadow-none scale-100' : ''}`}
+          {/* Run Code button */}
+          <motion.button 
+            whileTap={{ scale: isExecuting || !activeFile ? 1 : 0.96 }}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-primary hover:bg-primary/95 text-background shadow-[0_2px_12px_rgba(223,171,108,0.2)] text-xs font-bold transition-all cursor-pointer ${
+              isExecuting || !activeFile ? 'opacity-50 cursor-not-allowed shadow-none' : ''
+            }`}
             onClick={handleRunCode}
             disabled={isExecuting || !activeFile}
           >
-            <MdPlayArrow size={16} />
+            {isExecuting ? <MdSync size={16} className="animate-spin" /> : <MdPlayArrow size={16} />}
             <span>Run</span>
-            <MdKeyboardArrowDown size={14} className="border-l border-white/20 pl-0.5 ml-0.5" />
-          </button>
+          </motion.button>
 
-          {/* Leave Room outlined pill button */}
-          <button 
-            className="border border-outline/50 hover:border-error/40 text-on-surface-variant hover:text-error hover:bg-error/5 px-4 py-1.5 rounded-full transition-all text-body-xs font-semibold flex items-center gap-1"
+          {/* Leave Room button */}
+          <motion.button 
+            whileTap={{ scale: 0.95 }}
+            className="border border-outline-variant/30 hover:border-error/40 text-on-surface-variant hover:text-error hover:bg-error/10 px-3 py-1.5 rounded-xl transition-all text-xs font-semibold flex items-center gap-1 cursor-pointer"
             onClick={() => navigate('/')}
             title="Leave Room"
           >
             <MdLogout size={14} />
-            <span>Leave Room</span>
-          </button>
+            <span className="hidden sm:inline">Leave</span>
+          </motion.button>
 
-          <button 
-            className="text-on-surface-variant hover:text-on-surface transition-colors p-1.5 rounded-full hover:bg-surface-variant/30"
+          <motion.button 
+            whileTap={{ scale: 0.92 }}
+            className="text-on-surface-variant hover:text-on-surface transition-colors p-2 rounded-xl hover:bg-surface-container cursor-pointer border border-transparent hover:border-outline-variant/25"
             onClick={() => setTheme(prev => prev === 'obsidian' ? 'nord' : 'obsidian')}
             title={`Switch to ${theme === 'obsidian' ? 'Nord Slate' : 'Obsidian Gold'}`}
             aria-label={`Switch to ${theme === 'obsidian' ? 'Nord Slate' : 'Obsidian Gold'}`}
           >
-            <MdOutlineWbSunny size={18} className={theme === 'nord' ? 'text-primary rotate-45 transition-transform duration-300' : 'transition-transform duration-300'} />
-          </button>
+            <MdOutlineWbSunny size={16} className={theme === 'nord' ? 'text-primary rotate-45 transition-transform duration-300' : 'transition-transform duration-300'} />
+          </motion.button>
           
           {user && (
-            <div className="z-30 border-l border-outline/30 pl-2 ml-1">
+            <div className="z-30 border-l border-outline-variant/25 pl-1.5">
               <UserDropdown />
             </div>
           )}
@@ -640,79 +656,80 @@ export default function Workspace() {
         {/* Center Panel including Sub-Header View Navigation */}
         <div className="flex-1 flex flex-col h-full overflow-hidden relative z-20 bg-background">
           {/* Sub-Header View switcher navigation */}
-          <div className="h-12 bg-surface/50 border-b border-outline-variant/15 flex items-center justify-center shrink-0 z-30 shadow-sm">
-            <div className="flex items-center gap-1.5 bg-surface-container-low p-1 rounded-xl border border-outline-variant/25">
-              <button
-                className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-200 ${
-                  viewMode === 'editor' && !isChatOpen && !isMembersOpen
-                    ? 'bg-primary/20 text-primary border border-primary/20'
-                    : 'text-on-surface-variant hover:text-on-surface border border-transparent'
-                }`}
-                onClick={() => {
-                  setViewMode('editor');
-                  if (!isSidebarOpen) toggleSidebar();
-                  setIsChatOpen(false);
-                  setIsMembersOpen(false);
-                }}
-              >
-                Code
-              </button>
-              <button
-                className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-200 ${
-                  viewMode === 'canvas'
-                    ? 'bg-primary/20 text-primary border border-primary/20'
-                    : 'text-on-surface-variant hover:text-on-surface border border-transparent'
-                }`}
-                onClick={() => {
-                  setViewMode('canvas');
-                  if (isSidebarOpen) toggleSidebar();
-                  setIsChatOpen(false);
-                  setIsMembersOpen(false);
-                }}
-              >
-                Whiteboard
-              </button>
-              <button
-                className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-200 ${
-                  isChatOpen && !isMembersOpen
-                    ? 'bg-primary/20 text-primary border border-primary/20'
-                    : 'text-on-surface-variant hover:text-on-surface border border-transparent'
-                }`}
-                onClick={() => {
-                  setIsChatOpen(true);
-                  setIsMembersOpen(false);
-                }}
-              >
-                Chat
-              </button>
-              <button
-                className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-200 ${
-                  activeActivityView === 'explorer' && isSidebarOpen
-                    ? 'bg-primary/20 text-primary border border-primary/20'
-                    : 'text-on-surface-variant hover:text-on-surface border border-transparent'
-                }`}
-                onClick={() => {
-                  setActiveActivityView('explorer');
-                  if (!isSidebarOpen) toggleSidebar();
-                  setIsChatOpen(false);
-                  setIsMembersOpen(false);
-                }}
-              >
-                Files
-              </button>
-              <button
-                className={`px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all duration-200 ${
-                  isMembersOpen && !isChatOpen
-                    ? 'bg-primary/20 text-primary border border-primary/20'
-                    : 'text-on-surface-variant hover:text-on-surface border border-transparent'
-                }`}
-                onClick={() => {
-                  setIsMembersOpen(true);
-                  setIsChatOpen(false);
-                }}
-              >
-                Activity
-              </button>
+          <div className="h-11 bg-surface/50 border-b border-outline-variant/15 flex items-center justify-center shrink-0 z-30 select-none">
+            <div className="flex items-center gap-1 bg-surface-container-low p-1 rounded-xl border border-outline-variant/25">
+              {[
+                {
+                  id: 'editor',
+                  label: 'Code',
+                  isActive: viewMode === 'editor' && !isChatOpen && !isMembersOpen,
+                  onClick: () => {
+                    setViewMode('editor');
+                    if (!isSidebarOpen) toggleSidebar();
+                    setIsChatOpen(false);
+                    setIsMembersOpen(false);
+                  }
+                },
+                {
+                  id: 'canvas',
+                  label: 'Whiteboard',
+                  isActive: viewMode === 'canvas',
+                  onClick: () => {
+                    setViewMode('canvas');
+                    if (isSidebarOpen) toggleSidebar();
+                    setIsChatOpen(false);
+                    setIsMembersOpen(false);
+                  }
+                },
+                {
+                  id: 'chat',
+                  label: 'Chat',
+                  isActive: isChatOpen && !isMembersOpen,
+                  onClick: () => {
+                    setIsChatOpen(true);
+                    setIsMembersOpen(false);
+                  }
+                },
+                {
+                  id: 'files',
+                  label: 'Files',
+                  isActive: activeActivityView === 'explorer' && isSidebarOpen,
+                  onClick: () => {
+                    setActiveActivityView('explorer');
+                    if (!isSidebarOpen) toggleSidebar();
+                    setIsChatOpen(false);
+                    setIsMembersOpen(false);
+                  }
+                },
+                {
+                  id: 'activity',
+                  label: 'Activity',
+                  isActive: isMembersOpen && !isChatOpen,
+                  onClick: () => {
+                    setIsMembersOpen(true);
+                    setIsChatOpen(false);
+                  }
+                }
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  className={`relative px-3.5 py-1 rounded-lg text-xs font-semibold transition-colors cursor-pointer select-none ${
+                    item.isActive
+                      ? 'text-primary'
+                      : 'text-on-surface-variant hover:text-on-surface'
+                  }`}
+                  onClick={item.onClick}
+                >
+                  {item.isActive && (
+                    <motion.div
+                      layoutId="workspace-view-pill"
+                      className="absolute inset-0 bg-primary/15 border border-primary/25 rounded-lg shadow-sm -z-10"
+                      transition={{ type: 'spring', stiffness: 450, damping: 32 }}
+                    />
+                  )}
+                  {item.label}
+                </button>
+              ))}
             </div>
           </div>
           
