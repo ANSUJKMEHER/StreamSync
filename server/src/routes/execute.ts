@@ -5,8 +5,17 @@ import { writeFileSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 
+function normalizeLanguage(language?: string): string {
+  const lang = (language || 'javascript').toLowerCase().trim();
+  if (lang === 'c++' || lang === 'cc' || lang === 'cxx') return 'cpp';
+  if (lang === 'py') return 'python';
+  if (lang === 'js') return 'javascript';
+  if (lang === 'ts') return 'typescript';
+  return lang;
+}
+
 async function localFallbackExecute(code: string, language: string): Promise<{ stdout: string; stderr: string; code: number }> {
-  const lang = language.toLowerCase();
+  const lang = normalizeLanguage(language);
   const tempDir = tmpdir();
   const fileId = `exec_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
   
@@ -58,6 +67,28 @@ async function localFallbackExecute(code: string, language: string): Promise<{ s
       exec(`g++ -O3 "${sourceFile}" -o "${binaryFile}"`, { timeout: 10000 }, (compileError, compileStdout, compileStderr) => {
         if (compileError) {
           try { unlinkSync(sourceFile); } catch {}
+          if (compileError.message.includes('not found') || compileError.message.includes('is not recognized')) {
+            exec(`clang++ -O3 "${sourceFile}" -o "${binaryFile}"`, { timeout: 10000 }, (cErr, cOut, cStderr) => {
+              if (cErr) {
+                resolve({
+                  stdout: '',
+                  stderr: 'C++ compiler (g++ / clang++) is not installed on this system.',
+                  code: 1
+                });
+                return;
+              }
+              const execCmd = isWin ? `"${binaryFile}"` : `./"${binaryFile}"`;
+              exec(execCmd, { timeout: 5000 }, (runError, runStdout, runStderr) => {
+                try { unlinkSync(binaryFile); } catch {}
+                resolve({
+                  stdout: runStdout,
+                  stderr: runStderr || (runError ? runError.message : ''),
+                  code: runError ? 1 : 0
+                });
+              });
+            });
+            return;
+          }
           resolve({
             stdout: '',
             stderr: compileStderr || compileError.message,
@@ -75,6 +106,19 @@ async function localFallbackExecute(code: string, language: string): Promise<{ s
             stderr: runStderr || (runError ? runError.message : ''),
             code: runError ? 1 : 0
           });
+        });
+      });
+    });
+  } else if (lang === 'java') {
+    const javaFile = join(tempDir, `Main_${Date.now()}.java`);
+    writeFileSync(javaFile, code);
+    return new Promise((resolve) => {
+      exec(`java "${javaFile}"`, { timeout: 10000 }, (error, stdout, stderr) => {
+        try { unlinkSync(javaFile); } catch {}
+        resolve({
+          stdout: stdout || '',
+          stderr: stderr || (error ? error.message : ''),
+          code: error ? 1 : 0
         });
       });
     });
@@ -125,6 +169,9 @@ const LANGUAGE_MAP: Record<string, number> = {
   'java': 62,       // Java 13.0.1
   'c': 50,          // C (GCC 9.2.0)
   'cpp': 54,        // C++ (GCC 9.2.0)
+  'c++': 54,        // C++ (GCC 9.2.0)
+  'cc': 54,         // C++ (GCC 9.2.0)
+  'cxx': 54,        // C++ (GCC 9.2.0)
   'rust': 73,       // Rust 1.40.0
   'go': 60,         // Go 1.13.5
 };
@@ -138,7 +185,7 @@ router.post('/', authenticateToken, executionRateLimiter, async (req: Request, r
       return;
     }
 
-    const lang = language ? language.toLowerCase() : 'javascript';
+    const lang = normalizeLanguage(language);
     const languageId = LANGUAGE_MAP[lang];
 
     if (!languageId) {

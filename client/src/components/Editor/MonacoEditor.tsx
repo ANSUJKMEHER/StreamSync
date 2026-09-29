@@ -7,6 +7,7 @@ import { MonacoBinding } from 'y-monaco';
 import { useFileStore } from '../../store/fileStore';
 import { yjsService } from '../../services/yjsService';
 import { aiService } from '../../services/aiService';
+import { getLanguageFromFilename } from '../../utils/fileUtils';
 import './MonacoEditor.css';
 
 function MonacoEditor() {
@@ -36,6 +37,7 @@ function MonacoEditor() {
   } = useFileStore();
 
   const activeFile = files.find((f) => f.id === activeFileId);
+  const resolvedLanguage = activeFile ? (getLanguageFromFilename(activeFile.name) || activeFile.language || 'plaintext') : 'plaintext';
 
   useEffect(() => {
     if (!editorReady || !editorRef.current || !targetLine) return;
@@ -247,7 +249,7 @@ function MonacoEditor() {
               prefix,
               suffix,
               filename: activeFile.name,
-              language: activeFile.language,
+              language: getLanguageFromFilename(activeFile.name) || activeFile.language,
             });
 
             if (!snippet) return { items: [] };
@@ -326,7 +328,7 @@ function MonacoEditor() {
       <Editor
         path={activeFile.id}
         height="100%"
-        language={activeFile.language}
+        language={resolvedLanguage}
         theme={currentTheme === 'nord' ? 'vs' : 'vs-dark'}
         defaultValue=""
         onMount={handleMount}

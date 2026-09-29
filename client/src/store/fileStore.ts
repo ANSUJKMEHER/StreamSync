@@ -172,10 +172,12 @@ export const useFileStore = create<FileStore>((set, get) => ({
   // Create new file
   createFile: async (roomId: string, name: string, content?: string) => {
     try {
+      const { getLanguageFromFilename } = await import('../utils/fileUtils');
+      const language = getLanguageFromFilename(name);
       const res = await fetch(`${API_BASE}/api/v1/files`, {
         method: 'POST',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ roomId, name, content: content || '' }),
+        body: JSON.stringify({ roomId, name, content: content || '', language }),
       });
       const json = await res.json();
       if (json.success) {
@@ -233,16 +235,18 @@ export const useFileStore = create<FileStore>((set, get) => ({
   // Rename file
   renameFile: async (id: string, newName: string) => {
     try {
+      const { getLanguageFromFilename } = await import('../utils/fileUtils');
+      const language = getLanguageFromFilename(newName);
       const res = await fetch(`${API_BASE}/api/v1/files/${id}`, {
         method: 'PUT',
         headers: getAuthHeaders(),
-        body: JSON.stringify({ name: newName }),
+        body: JSON.stringify({ name: newName, language }),
       });
       const json = await res.json();
       if (json.success) {
         set({
           files: get().files.map((f) =>
-            f.id === id ? { ...f, name: newName } : f
+            f.id === id ? { ...f, name: newName, language: json.data?.language || language } : f
           ),
         });
       }

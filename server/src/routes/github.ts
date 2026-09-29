@@ -170,6 +170,11 @@ router.post('/import', authenticateToken, async (req: Request, res: Response): P
           if (blob.path.endsWith('.ts') || blob.path.endsWith('.tsx')) lang = 'typescript';
           else if (blob.path.endsWith('.js') || blob.path.endsWith('.jsx')) lang = 'javascript';
           else if (blob.path.endsWith('.py')) lang = 'python';
+          else if (blob.path.endsWith('.cpp') || blob.path.endsWith('.c++') || blob.path.endsWith('.cc') || blob.path.endsWith('.cxx')) lang = 'cpp';
+          else if (blob.path.endsWith('.c')) lang = 'c';
+          else if (blob.path.endsWith('.java')) lang = 'java';
+          else if (blob.path.endsWith('.go')) lang = 'go';
+          else if (blob.path.endsWith('.rs')) lang = 'rust';
           else if (blob.path.endsWith('.json')) lang = 'json';
           else if (blob.path.endsWith('.css')) lang = 'css';
           else if (blob.path.endsWith('.html')) lang = 'html';

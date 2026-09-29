@@ -76,6 +76,19 @@ router.get('/file/:id', authenticateToken, async (req: Request, res: Response) =
   }
 });
 
+function detectLanguage(filename: string): string {
+  const parts = filename.split('.');
+  const ext = parts.length > 1 ? parts.pop()!.toLowerCase() : '';
+  const langMap: Record<string, string> = {
+    js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript',
+    py: 'python', go: 'go', rs: 'rust', html: 'html', css: 'css',
+    json: 'json', md: 'markdown', yaml: 'yaml', yml: 'yaml',
+    sh: 'shell', bash: 'shell', sql: 'sql',
+    c: 'c', cpp: 'cpp', 'c++': 'cpp', cc: 'cpp', cxx: 'cpp', java: 'java',
+  };
+  return langMap[ext] || 'plaintext';
+}
+
 // POST /api/v1/files — Create file
 // Authenticated: only room owner (or public EDIT rooms) can create files
 router.post('/', authenticateToken, async (req: Request, res: Response) => {
@@ -106,20 +119,12 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
       return;
     }
 
-    const ext = body.name.split('.').pop()?.toLowerCase() || '';
-    const langMap: Record<string, string> = {
-      js: 'javascript', jsx: 'javascript', ts: 'typescript', tsx: 'typescript',
-      py: 'python', go: 'go', rs: 'rust', html: 'html', css: 'css',
-      json: 'json', md: 'markdown', yaml: 'yaml', yml: 'yaml',
-      sh: 'shell', bash: 'shell', sql: 'sql',
-    };
-
     const newFile = await prisma.file.create({
       data: {
         name: body.name.trim(),
         roomId: body.roomId,
         content: body.content ?? '',
-        language: body.language ?? langMap[ext] ?? 'plaintext',
+        language: body.language || detectLanguage(body.name),
         parentId: body.parentId ?? null,
         isFolder: body.isFolder ?? false,
       },
@@ -164,12 +169,14 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
       return;
     }
 
+    const newLanguage = body.language || (body.name ? detectLanguage(body.name) : undefined);
+
     const updatedFile = await prisma.file.update({
       where: { id },
       data: {
         name: body.name !== undefined ? body.name.trim() : undefined,
         content: body.content !== undefined ? body.content : undefined,
-        language: body.language !== undefined ? body.language : undefined,
+        language: newLanguage !== undefined ? newLanguage : undefined,
       },
     });
 

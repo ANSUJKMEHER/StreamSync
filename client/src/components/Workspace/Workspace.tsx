@@ -13,6 +13,7 @@ import { MdPlayArrow, MdKeyboardArrowDown, MdPersonAdd, MdLogout, MdOutlineWbSun
 import UserDropdown from '../Auth/UserDropdown';
 import GlobalLoader from '../Layout/GlobalLoader';
 import type { ChatMessage } from '../Sidebar/RightSidebar';
+import { getLanguageFromFilename } from '../../utils/fileUtils';
 import '../../App.css';
 
 // Lazy loaded heavy components
@@ -274,7 +275,8 @@ export default function Workspace() {
 
     try {
       const { executionService } = await import('../../services/executionService');
-      const result = await executionService.executeCode(activeFile.content, activeFile.language, token);
+      const language = getLanguageFromFilename(activeFile.name) || activeFile.language || 'plaintext';
+      const result = await executionService.executeCode(activeFile.content, language, token);
       setExecutionOutput({ stdout: result.stdout, stderr: result.stderr });
     } catch (error: any) {
       setExecutionOutput({ stdout: '', stderr: error.message || 'Execution failed' });
