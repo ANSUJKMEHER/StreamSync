@@ -62,14 +62,35 @@ async function localFallbackExecute(code: string, language: string): Promise<{ s
     const binaryFile = join(tempDir, isWin ? `${fileId}.exe` : fileId);
     
     writeFileSync(sourceFile, code);
-    
+
+    const runCompiledBinary = (res: (val: { stdout: string; stderr: string; code: number }) => void) => {
+      const execCmd = `"${binaryFile}"`;
+      const execute = () => {
+        exec(execCmd, { timeout: 5000 }, (runError, runStdout, runStderr) => {
+          try { unlinkSync(sourceFile); } catch {}
+          try { unlinkSync(binaryFile); } catch {}
+          res({
+            stdout: runStdout || '',
+            stderr: runStderr || (runError ? runError.message : ''),
+            code: runError ? 1 : 0
+          });
+        });
+      };
+
+      if (!isWin) {
+        exec(`chmod +x "${binaryFile}"`, () => execute());
+      } else {
+        execute();
+      }
+    };
+
     return new Promise((resolve) => {
       exec(`g++ -O3 "${sourceFile}" -o "${binaryFile}"`, { timeout: 10000 }, (compileError, compileStdout, compileStderr) => {
         if (compileError) {
-          try { unlinkSync(sourceFile); } catch {}
           if (compileError.message.includes('not found') || compileError.message.includes('is not recognized')) {
             exec(`clang++ -O3 "${sourceFile}" -o "${binaryFile}"`, { timeout: 10000 }, (cErr, cOut, cStderr) => {
               if (cErr) {
+                try { unlinkSync(sourceFile); } catch {}
                 resolve({
                   stdout: '',
                   stderr: 'C++ compiler (g++ / clang++) is not installed on this system.',
@@ -77,18 +98,11 @@ async function localFallbackExecute(code: string, language: string): Promise<{ s
                 });
                 return;
               }
-              const execCmd = isWin ? `"${binaryFile}"` : `./"${binaryFile}"`;
-              exec(execCmd, { timeout: 5000 }, (runError, runStdout, runStderr) => {
-                try { unlinkSync(binaryFile); } catch {}
-                resolve({
-                  stdout: runStdout,
-                  stderr: runStderr || (runError ? runError.message : ''),
-                  code: runError ? 1 : 0
-                });
-              });
+              runCompiledBinary(resolve);
             });
             return;
           }
+          try { unlinkSync(sourceFile); } catch {}
           resolve({
             stdout: '',
             stderr: compileStderr || compileError.message,
@@ -97,16 +111,7 @@ async function localFallbackExecute(code: string, language: string): Promise<{ s
           return;
         }
         
-        const execCmd = isWin ? `"${binaryFile}"` : `./"${binaryFile}"`;
-        exec(execCmd, { timeout: 5000 }, (runError, runStdout, runStderr) => {
-          try { unlinkSync(sourceFile); } catch {}
-          try { unlinkSync(binaryFile); } catch {}
-          resolve({
-            stdout: runStdout,
-            stderr: runStderr || (runError ? runError.message : ''),
-            code: runError ? 1 : 0
-          });
-        });
+        runCompiledBinary(resolve);
       });
     });
   } else if (lang === 'java') {
