@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
-import { Stage, Layer, Rect, Circle, Arrow, Text, Transformer, Group, Path } from 'react-konva';
+import { Stage, Layer, Rect, Circle, Arrow, Text, Transformer, Group, Path, Line } from 'react-konva';
 import type Konva from 'konva';
 import type * as Y from 'yjs';
 import {
@@ -10,6 +10,7 @@ import {
   type CanvasArrow,
 } from '../../store/canvasStore';
 import { useFileStore } from '../../store/fileStore';
+import { getShapeBoundaryPoint } from '../../utils/flowchartLayout';
 import CanvasToolbar from './CanvasToolbar';
 import './CanvasPanel.css';
 
@@ -250,7 +251,7 @@ function CanvasPanel() {
         setSelectedId(null);
         setArrowStartId(null);
 
-        if (tool === 'rect' || tool === 'circle') {
+        if (tool === 'rect' || tool === 'circle' || tool === 'diamond') {
           const stage = stageRef.current;
           if (!stage) return;
           const pos = stage.getPointerPosition();
@@ -265,15 +266,18 @@ function CanvasPanel() {
           };
 
           const id = `shape-${Date.now()}`;
+          const colors = nextShapeColor();
+          const isDiamond = tool === 'diamond';
           const newShape: CanvasShape = {
             id,
             type: tool,
-            x: relativePos.x - 50,
-            y: relativePos.y - 30,
-            width: 120,
-            height: 70,
-            label: tool === 'rect' ? 'Box' : 'Node',
-            fill: nextShapeColor(),
+            x: Math.round(relativePos.x - (isDiamond ? 75 : 65)),
+            y: Math.round(relativePos.y - (isDiamond ? 40 : 28)),
+            width: isDiamond ? 150 : 130,
+            height: isDiamond ? 80 : 56,
+            label: isDiamond ? 'Condition?' : tool === 'circle' ? 'Start' : 'Process',
+            fill: colors.fill,
+            stroke: colors.stroke,
           };
           addShape(newShape);
           setSelectedId(id);
@@ -345,8 +349,20 @@ function CanvasPanel() {
       }
 
       updateShape(shapeId, { x, y });
+
+      // Reset static points on attached arrows so they dynamically re-anchor to new boundaries
+      const currentArrows = useCanvasStore.getState().arrows;
+      const updatedArrows = currentArrows.map((a) => {
+        if (a.fromId === shapeId || a.toId === shapeId) {
+          return { ...a, points: undefined };
+        }
+        return a;
+      });
+      if (updatedArrows.some((a, idx) => a !== currentArrows[idx])) {
+        useCanvasStore.getState().setGraph(useCanvasStore.getState().shapes, updatedArrows);
+      }
     },
-    [updateShape, createFile]
+    [updateShape, createFile, roomId]
   );
 
   // Transform end — update size
@@ -395,15 +411,6 @@ function CanvasPanel() {
     }
   }, [editingLabel, updateShape]);
 
-  // Get center of a shape for arrow endpoints
-  const getShapeCenter = (id: string): { x: number; y: number } | null => {
-    const shape = shapes.find((s) => s.id === id);
-    if (!shape) return null;
-    return {
-      x: shape.x + shape.width / 2,
-      y: shape.y + shape.height / 2,
-    };
-  };
 
   // Broadcast local cursor position
   const handleMouseMove = useCallback(
@@ -462,6 +469,9 @@ function CanvasPanel() {
 
     const isSelected = selectedId === shape.id;
     const isArrowSource = arrowStartId === shape.id;
+    const strokeColor = isSelected ? '#ffffff' : isArrowSource ? '#fbbf24' : (shape.stroke || '#818cf8');
+    const strokeWidth = isSelected || isArrowSource ? 2.5 : 1.5;
+    const fill = shape.fill || 'rgba(30, 41, 59, 0.85)';
 
     return (
       <Group
@@ -477,40 +487,78 @@ function CanvasPanel() {
         onDblClick={() => handleDblClick(shape)}
         onDblTap={() => handleDblClick(shape)}
       >
-        {shape.type === 'rect' ? (
+        {shape.type === 'diamond' ? (
+          <Line
+            points={[
+              shape.width / 2, 0,
+              shape.width, shape.height / 2,
+              shape.width / 2, shape.height,
+              0, shape.height / 2,
+            ]}
+            closed={true}
+            fill={fill}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            shadowColor="#000"
+            shadowBlur={isSelected ? 16 : 8}
+            shadowOpacity={0.25}
+            shadowOffsetY={3}
+          />
+        ) : shape.type === 'circle' ? (
+          shape.width > shape.height * 1.2 ? (
+            <Rect
+              width={shape.width}
+              height={shape.height}
+              fill={fill}
+              cornerRadius={shape.height / 2}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              shadowColor="#000"
+              shadowBlur={isSelected ? 16 : 8}
+              shadowOpacity={0.25}
+              shadowOffsetY={3}
+            />
+          ) : (
+            <Circle
+              x={shape.width / 2}
+              y={shape.height / 2}
+              radius={Math.min(shape.width, shape.height) / 2}
+              fill={fill}
+              stroke={strokeColor}
+              strokeWidth={strokeWidth}
+              shadowColor="#000"
+              shadowBlur={isSelected ? 16 : 8}
+              shadowOpacity={0.25}
+              shadowOffsetY={3}
+            />
+          )
+        ) : (
           <Rect
             width={shape.width}
             height={shape.height}
-            fill={shape.fill}
-            opacity={0.85}
-            cornerRadius={8}
-            stroke={isSelected ? '#fff' : isArrowSource ? '#fbbf24' : shape.fill}
-            strokeWidth={isSelected || isArrowSource ? 3 : 2}
-            dash={isSelected || isArrowSource ? undefined : [8, 6]}
-          />
-        ) : (
-          <Circle
-            x={shape.width / 2}
-            y={shape.height / 2}
-            radius={Math.min(shape.width, shape.height) / 2}
-            fill={shape.fill}
-            opacity={0.85}
-            stroke={isSelected ? '#fff' : isArrowSource ? '#fbbf24' : shape.fill}
-            strokeWidth={isSelected || isArrowSource ? 3 : 2}
-            dash={isSelected || isArrowSource ? undefined : [8, 6]}
+            fill={fill}
+            cornerRadius={10}
+            stroke={strokeColor}
+            strokeWidth={strokeWidth}
+            shadowColor="#000"
+            shadowBlur={isSelected ? 16 : 8}
+            shadowOpacity={0.25}
+            shadowOffsetY={3}
           />
         )}
         <Text
           text={shape.label || ' '}
-          x={0}
-          y={shape.height / 2 - 7}
-          width={shape.width}
+          x={shape.type === 'diamond' ? 24 : 10}
+          y={shape.height / 2 - 8}
+          width={shape.width - (shape.type === 'diamond' ? 48 : 20)}
           align="center"
-          fill="#fff"
+          fill="#f8fafc"
           fontSize={13}
-          fontFamily="Inter, sans-serif"
+          fontFamily="'JetBrains Mono', 'Fira Code', 'Inter', monospace"
           fontStyle="600"
           listening={false}
+          wrap="none"
+          ellipsis={true}
         />
         {shape.fileId && (
           <Group
@@ -525,7 +573,7 @@ function CanvasPanel() {
               setActiveFile(shape.fileId!);
             }}
           >
-            <Rect width={20} height={20} fill="rgba(0,0,0,0.3)" cornerRadius={4} />
+            <Rect width={20} height={20} fill="rgba(0,0,0,0.4)" cornerRadius={4} />
             <Text text="🔗" x={3} y={4} fontSize={12} fill="#fff" />
           </Group>
         )}
@@ -542,7 +590,7 @@ function CanvasPanel() {
           <div className="text-5xl mb-6 opacity-30">◇</div>
           <div className="leading-relaxed max-w-[300px] mx-auto">
             Select a tool from the toolbar above,<br />
-            then click on the canvas to create a shape.
+            or ask AI to generate an architectural flowchart.
           </div>
         </div>
       )}
@@ -562,30 +610,78 @@ function CanvasPanel() {
         <Layer>
           {/* Arrows */}
           {arrows.map((arrow) => {
-            const from = getShapeCenter(arrow.fromId);
-            const to = getShapeCenter(arrow.toId);
-            if (!from || !to) return null;
-            if (isNaN(from.x) || isNaN(from.y) || isNaN(to.x) || isNaN(to.y)) return null;
-            
-            const dx = to.x - from.x;
-            const dy = to.y - from.y;
-            const dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < 5) return null;
+            const fromShape = shapes.find((s) => s.id === arrow.fromId);
+            const toShape = shapes.find((s) => s.id === arrow.toId);
+            if (!fromShape || !toShape) return null;
+
+            let points: number[];
+            if (arrow.points && arrow.points.length >= 4) {
+              points = arrow.points;
+            } else {
+              const fromCenter = { x: fromShape.x + fromShape.width / 2, y: fromShape.y + fromShape.height / 2 };
+              const toCenter = { x: toShape.x + toShape.width / 2, y: toShape.y + toShape.height / 2 };
+              const p1 = getShapeBoundaryPoint(fromShape, toCenter);
+              const p2 = getShapeBoundaryPoint(toShape, fromCenter);
+              points = [p1.x, p1.y, p2.x, p2.y];
+            }
+
+            const isSelected = selectedId === arrow.id;
+            const strokeColor = isSelected ? '#ffffff' : (arrow.color || '#94a3b8');
+
+            let midX = (points[0] + points[points.length - 2]) / 2;
+            let midY = (points[1] + points[points.length - 1]) / 2;
+            if (points.length >= 6) {
+              midX = points[2];
+              midY = points[3];
+            }
+
+            const isTrue = arrow.label && /^(true|yes|y)$/i.test(arrow.label.trim());
+            const isFalse = arrow.label && /^(false|no|n)$/i.test(arrow.label.trim());
 
             return (
-              <Arrow
-                key={arrow.id}
-                points={[from.x, from.y, to.x, to.y]}
-                pointerLength={10}
-                pointerWidth={10}
-                fill="#d0bcff"
-                stroke="#d0bcff"
-                strokeWidth={3}
-                dash={[8, 8]}
-                opacity={selectedId === arrow.id ? 1 : 0.8}
-                onClick={() => setSelectedId(arrow.id)}
-                onTap={() => setSelectedId(arrow.id)}
-              />
+              <Group key={arrow.id}>
+                <Arrow
+                  points={points}
+                  tension={points.length > 4 ? 0.25 : 0}
+                  pointerLength={8}
+                  pointerWidth={7}
+                  fill={strokeColor}
+                  stroke={strokeColor}
+                  strokeWidth={isSelected ? 2.5 : 2}
+                  opacity={isSelected ? 1 : 0.85}
+                  onClick={() => setSelectedId(arrow.id)}
+                  onTap={() => setSelectedId(arrow.id)}
+                />
+                {arrow.label && (
+                  <Group x={midX} y={midY}>
+                    <Rect
+                      x={-18}
+                      y={-10}
+                      width={36}
+                      height={20}
+                      cornerRadius={10}
+                      fill="rgba(15, 23, 42, 0.92)"
+                      stroke={isTrue ? '#10b981' : isFalse ? '#f43f5e' : '#64748b'}
+                      strokeWidth={1.5}
+                      shadowColor="#000"
+                      shadowBlur={4}
+                      shadowOpacity={0.3}
+                    />
+                    <Text
+                      x={-18}
+                      y={-6}
+                      width={36}
+                      align="center"
+                      text={arrow.label}
+                      fill={isTrue ? '#34d399' : isFalse ? '#fb7185' : '#cbd5e1'}
+                      fontSize={10}
+                      fontFamily="'Inter', sans-serif"
+                      fontStyle="bold"
+                      listening={false}
+                    />
+                  </Group>
+                )}
+              </Group>
             );
           })}
 

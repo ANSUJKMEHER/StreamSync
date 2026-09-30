@@ -2,13 +2,16 @@ import { create } from 'zustand';
 
 export interface CanvasShape {
   id: string;
-  type: 'rect' | 'circle';
+  type: 'rect' | 'circle' | 'diamond';
   x: number;
   y: number;
   width: number;
   height: number;
   label: string;
   fill: string;
+  stroke?: string;
+  strokeWidth?: number;
+  category?: 'start' | 'end' | 'decision' | 'process' | 'io';
   fileId?: string; 
 }
 
@@ -16,9 +19,12 @@ export interface CanvasArrow {
   id: string;
   fromId: string;
   toId: string;
+  label?: string;
+  points?: number[];
+  color?: string;
 }
 
-export type CanvasTool = 'select' | 'rect' | 'circle' | 'arrow';
+export type CanvasTool = 'select' | 'rect' | 'circle' | 'diamond' | 'arrow';
 
 interface CanvasState {
   shapes: CanvasShape[];
@@ -42,20 +48,18 @@ interface CanvasState {
   setGraph: (shapes: CanvasShape[], arrows: CanvasArrow[]) => void;
 }
 
-const SHAPE_COLORS = [
-  '#6366f1', // indigo
-  '#8b5cf6', // violet
-  '#06b6d4', // cyan
-  '#10b981', // emerald
-  '#f59e0b', // amber
-  '#ef4444', // red
-  '#ec4899', // pink
-  '#3b82f6', // blue
+const MODERN_THEME_PALETTE = [
+  { fill: 'rgba(99, 102, 241, 0.2)', stroke: '#818cf8' }, // indigo
+  { fill: 'rgba(6, 182, 212, 0.2)', stroke: '#38bdf8' },  // cyan
+  { fill: 'rgba(16, 185, 129, 0.2)', stroke: '#10b981' }, // emerald
+  { fill: 'rgba(245, 158, 11, 0.2)', stroke: '#fbbf24' }, // amber
+  { fill: 'rgba(168, 85, 247, 0.2)', stroke: '#c084fc' }, // purple
+  { fill: 'rgba(236, 72, 153, 0.2)', stroke: '#f472b6' }, // pink
 ];
 
 let colorIdx = 0;
-export function nextShapeColor(): string {
-  const c = SHAPE_COLORS[colorIdx % SHAPE_COLORS.length];
+export function nextShapeColor(): { fill: string; stroke: string } {
+  const c = MODERN_THEME_PALETTE[colorIdx % MODERN_THEME_PALETTE.length];
   colorIdx++;
   return c;
 }

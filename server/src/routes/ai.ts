@@ -221,7 +221,7 @@ router.post('/flowchart', aiRateLimiter, async (req: Request, res: Response): Pr
       context += `\n--- ${f.name} ---\n${f.content}\n`;
     }
 
-    const systemPrompt = `You are an AI architect generating a flowchart based on the user's codebase.
+    const systemPrompt = `You are an AI architect and computer science expert generating clean, structured flowcharts.
     
     The user asked: "${prompt}"
     
@@ -231,19 +231,31 @@ router.post('/flowchart', aiRateLimiter, async (req: Request, res: Response): Pr
     
     "shapes" is an array of objects:
     {
-       "id": string (unique node ID),
-       "label": string (short description, e.g., "React App" or "Auth Service"),
-       "type": "rect" or "circle"
+       "id": string (unique ID, e.g. "start", "init", "cond", "body", "step", "end"),
+       "label": string (concise description or code snippet, e.g. "main() Start", "int i = 0;", "i < 10?", "cout << i", "i++", "main() End"),
+       "type": "rect" | "circle" | "diamond",
+       "category": "start" | "end" | "decision" | "process" | "io"
     }
+
+    Flowchart guidelines:
+    - Use "circle" with category "start" for entry/start points, and "end" for exit/return points.
+    - Use "diamond" with category "decision" for conditional checks, loop conditions, or if/else (e.g. "i < 10?", "x > 0?").
+    - Use "rect" with category "process" for statements, assignments, or increments (e.g. "int i = 0;", "i++").
+    - Use "rect" with category "io" for input/output operations (e.g. "cout << i", "print()", "cin >> x").
     
-    "arrows" is an array of objects representing directed edges between shapes:
+    "arrows" is an array of directed connections:
     {
        "id": string (unique arrow ID),
        "fromId": string (matches a shape id),
-       "toId": string (matches a shape id)
+       "toId": string (matches a shape id),
+       "label": string (optional branch label, e.g. "True", "False", "Yes", "No", or empty string "")
     }
-    
-    Keep the flowchart concise and focused directly on what the user asked. Only output valid JSON conforming to this schema.`;
+
+    For loops and if/else conditions:
+    - Clearly connect the decision node's "True" branch to the loop body / then block.
+    - Connect the step/increment back to the decision node (loop-back).
+    - Connect the "False" branch to the next step or End node.
+    - Keep the flowchart focused, readable, and directly conforming to this JSON schema.`;
 
     const result = await model.generateContent(systemPrompt);
     let responseText = result.response.text();
