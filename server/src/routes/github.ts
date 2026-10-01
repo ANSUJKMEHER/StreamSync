@@ -80,7 +80,7 @@ router.post('/import', authenticateToken, async (req: Request, res: Response): P
         if (pathParts.length >= 2) {
           parsedRepo = `${pathParts[0]}/${pathParts[1]}`;
         }
-      } catch (e) {
+      } catch {
         // ignore invalid URL
       }
     }

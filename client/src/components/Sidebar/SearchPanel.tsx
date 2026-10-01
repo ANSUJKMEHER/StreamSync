@@ -18,7 +18,7 @@ export default function SearchPanel() {
     if (!query.trim() || query.length < 2) return [];
 
     const results: SearchResult[] = [];
-    const searchRegex = new RegExp(query.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'i');
+    const searchRegex = new RegExp(query.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&'), 'i');
 
     files.forEach(file => {
       if (file.isFolder || !file.content) return;

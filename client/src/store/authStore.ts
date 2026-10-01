@@ -54,7 +54,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
       localStorage.setItem(USER_KEY, JSON.stringify(user));
       set({ user, token, isAuthenticated: true, isLoading: false, error: null });
       return true;
-    } catch (err) {
+    } catch {
       set({ isLoading: false, error: 'Connection failed. Is the server running?' });
       return false;
     }
@@ -80,7 +80,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
       localStorage.setItem(USER_KEY, JSON.stringify(user));
       set({ user, token, isAuthenticated: true, isLoading: false, error: null });
       return true;
-    } catch (err) {
+    } catch {
       set({ isLoading: false, error: 'Connection failed. Is the server running?' });
       return false;
     }
@@ -107,7 +107,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
         try {
           const cachedUser = JSON.parse(userStr);
           set({ user: cachedUser, token, isAuthenticated: true });
-        } catch (e) {
+        } catch {
           // ignore cache parse error
         }
       }

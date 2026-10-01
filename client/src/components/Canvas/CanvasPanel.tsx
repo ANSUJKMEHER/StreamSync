@@ -202,7 +202,7 @@ function CanvasPanel() {
     if (stageRef.current) {
       (window as any).__KONVA_STAGE__ = stageRef.current;
     }
-  }, [stageRef.current]);
+  }, []);
 
   // Attach transformer to selected node
   useEffect(() => {

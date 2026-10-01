@@ -303,8 +303,10 @@ class WebSocketService {
       return;
     }
 
-    // Exponential backoff: 1s, 2s, 4s, 8s, 16s, max 30s
-    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30_000);
+    // Exponential backoff with randomized jitter to prevent reconnection storms
+    const baseDelay = Math.min(1000 * Math.pow(1.5, this.reconnectAttempts), 25_000);
+    const jitter = Math.random() * 800;
+    const delay = Math.round(baseDelay + jitter);
     this.reconnectAttempts++;
 
     console.log(`[WS] Reconnecting in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);

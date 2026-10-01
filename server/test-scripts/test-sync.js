@@ -1,7 +1,7 @@
 const WebSocket = require('ws');
 const jwt = require('jsonwebtoken');
 const Y = require('yjs');
-const { fromByteArray, toByteArray } = require('base64-js');
+const { toByteArray } = require('base64-js');
 
 const JWT_SECRET = "super-secret-key-for-development-only";
 

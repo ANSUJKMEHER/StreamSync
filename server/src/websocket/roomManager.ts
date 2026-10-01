@@ -1,6 +1,6 @@
 import { WebSocket } from 'ws';
 import * as Y from 'yjs';
-import { fromByteArray, toByteArray } from 'base64-js';
+import { toByteArray } from 'base64-js';
 import { ConnectedClient, WSMessage } from '../types';
 import { prisma } from '../db';
 
@@ -42,8 +42,20 @@ export class RoomManager {
       const ydoc = this.ydocs.get(docId);
       if (!ydoc) continue;
       
-      // If docId starts with canvas-, it's canvas data (not saved in File DB currently)
-      if (docId.startsWith('canvas-')) continue;
+      // If docId starts with canvas-, save to Room.canvasState
+      if (docId.startsWith('canvas-')) {
+        try {
+          const roomId = docId.replace('canvas-', '');
+          const canvasState = Buffer.from(Y.encodeStateAsUpdate(ydoc));
+          await prisma.room.update({
+            where: { id: roomId },
+            data: { canvasState },
+          });
+        } catch (err) {
+          console.error(`[WS] Failed to auto-save canvas snapshot ${docId}:`, err);
+        }
+        continue;
+      }
 
       try {
         const content = ydoc.getText('monaco').toString();
@@ -74,6 +86,8 @@ export class RoomManager {
    */
   async saveRoomNow(roomId: string): Promise<void> {
     for (const [fileId, ydoc] of this.ydocs.entries()) {
+      if (fileId.startsWith('canvas-')) continue;
+
       const file = await prisma.file.findUnique({
         where: { id: fileId },
         select: { roomId: true },
@@ -86,6 +100,21 @@ export class RoomManager {
         where: { id: fileId },
         data: { content, crdtState },
       });
+    }
+
+    // Also persist canvas state if active
+    const canvasDocId = `canvas-${roomId}`;
+    const canvasDoc = this.ydocs.get(canvasDocId);
+    if (canvasDoc) {
+      try {
+        const canvasState = Buffer.from(Y.encodeStateAsUpdate(canvasDoc));
+        await prisma.room.update({
+          where: { id: roomId },
+          data: { canvasState },
+        });
+      } catch (err) {
+        console.error(`[WS] Failed to save canvas snapshot in saveRoomNow for ${roomId}:`, err);
+      }
     }
   }
 
@@ -100,8 +129,17 @@ export class RoomManager {
     const promise = (async () => {
       const ydoc = new Y.Doc();
       try {
-        // If it's a file, try to seed it from DB
-        if (!docId.startsWith('canvas-')) {
+        if (docId.startsWith('canvas-')) {
+          const roomId = docId.replace('canvas-', '');
+          const room = await prisma.room.findUnique({
+            where: { id: roomId },
+            select: { canvasState: true },
+          });
+          if (room?.canvasState) {
+            Y.applyUpdate(ydoc, new Uint8Array(room.canvasState));
+          }
+        } else {
+          // If it's a file, try to seed it from DB
           const file = await prisma.file.findUnique({
             where: { id: docId },
             select: { content: true, crdtState: true },
@@ -324,7 +362,7 @@ export class RoomManager {
           }
           this.dirtyDocs.delete(`canvas-${roomId}`);
           this.ydocs.delete(`canvas-${roomId}`);
-        } catch (err) {}
+        } catch {}
         console.log(`[WS] Room destroyed: ${roomId}`);
       } else {
         console.log(`[WS] Room ${roomId} was saved but not destroyed because a user joined during save`);

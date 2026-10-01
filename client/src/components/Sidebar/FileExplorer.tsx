@@ -199,13 +199,15 @@ export default function FileExplorer() {
       const activeFile = files.find(f => f.id === activeFileId);
       if (activeFile) {
         const parts = activeFile.name.split('/');
-        const newExpanded = new Set(expandedFolders);
-        let path = '';
-        for (let i = 0; i < parts.length - 1; i++) {
-          path = path ? `${path}/${parts[i]}` : parts[i];
-          newExpanded.add(path);
-        }
-        setExpandedFolders(newExpanded);
+        setExpandedFolders((prev) => {
+          const newExpanded = new Set(prev);
+          let path = '';
+          for (let i = 0; i < parts.length - 1; i++) {
+            path = path ? `${path}/${parts[i]}` : parts[i];
+            newExpanded.add(path);
+          }
+          return newExpanded;
+        });
       }
     }
   }, [activeFileId, files]);

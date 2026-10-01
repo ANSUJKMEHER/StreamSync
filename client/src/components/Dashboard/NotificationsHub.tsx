@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useAuthStore } from '../../store/authStore';
 import type { RoomInvite } from '../../types';
 import './NotificationsHub.css';
@@ -11,7 +11,7 @@ export default function NotificationsHub() {
 
   const API_BASE = (import.meta.env.VITE_API_URL || (window.location.hostname === 'localhost' ? 'http://localhost:3001' : 'https://streamsync-cxox.onrender.com')).replace(/\/$/, '');
 
-  const fetchInvites = async () => {
+  const fetchInvites = useCallback(async () => {
     if (!token) return;
     try {
       const res = await fetch(`${API_BASE}/api/v1/invites`, {
@@ -24,14 +24,14 @@ export default function NotificationsHub() {
     } catch (err) {
       console.error('Failed to fetch invites:', err);
     }
-  };
+  }, [token, API_BASE]);
 
   useEffect(() => {
     fetchInvites();
     // Poll every 30s for new invites
     const interval = setInterval(fetchInvites, 30000);
     return () => clearInterval(interval);
-  }, [token]);
+  }, [fetchInvites]);
 
   const handleAction = async (inviteId: string, action: 'accept' | 'reject') => {
     setLoading(true);

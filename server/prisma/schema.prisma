@@ -31,6 +31,7 @@ model Room {
   publicAccess String   @default("VIEW") // "VIEW" | "EDIT"
   githubRepo   String?  // e.g. "owner/repo"
   githubBranch String?  // e.g. "main"
+  canvasState  Bytes?   // Persisted Yjs CRDT binary snapshot for whiteboard canvas
   createdAt    DateTime @default(now())
   files        File[]
   collaborators Collaborator[]

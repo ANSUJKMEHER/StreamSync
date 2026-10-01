@@ -1,8 +1,6 @@
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
 import { performance } from 'perf_hooks';
 
-const prisma = new PrismaClient();
 const API_URL = 'http://localhost:3001/api/v1/ai/complete';
 const JWT_SECRET = process.env.JWT_SECRET || 'streamsync-dev-secret-change-in-production';
 

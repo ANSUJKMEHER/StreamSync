@@ -81,7 +81,7 @@ function generateMockCompletion(prefix: string, language: string): string {
 
 router.post('/complete', aiRateLimiter, async (req: Request, res: Response): Promise<void> => {
   try {
-    const { roomId, context } = req.body as AiCompletionRequest;
+    const { context } = req.body as AiCompletionRequest;
 
     if (!context || !context.prefix) {
       res.status(400).json({ success: false, error: 'Invalid context provided' });

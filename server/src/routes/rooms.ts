@@ -55,7 +55,7 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
         const jwt = require('jsonwebtoken');
         const decoded = jwt.verify(token, process.env.JWT_SECRET || 'streamsync-dev-secret-change-in-production');
         userId = (decoded as any).userId;
-      } catch (e) {
+      } catch {
         // invalid token, ignore
       }
     }

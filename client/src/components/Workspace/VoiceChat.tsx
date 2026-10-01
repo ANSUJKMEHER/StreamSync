@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { MdMic, MdMicOff, MdVideocam, MdVideocamOff, MdCallEnd } from 'react-icons/md';
 import { useRoomStore } from '../../store/roomStore';
 import { useAuthStore } from '../../store/authStore';
@@ -35,8 +35,67 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
     remoteStreamsKeys: Array.from(remoteStreams.keys())
   });
 
+  const createPeer = useCallback((targetUserId: string) => {
+    const pc = new RTCPeerConnection({
+      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] // Free Google STUN
+    });
+
+    if (localStream) {
+      localStream.getTracks().forEach(track => {
+        pc.addTrack(track, localStream);
+      });
+    }
+
+    pc.onicecandidate = (event) => {
+      if (event.candidate) {
+        wsService.send({
+          type: 'webrtc-signal',
+          roomId,
+          payload: {
+            targetUserId,
+            signal: event.candidate
+          }
+        });
+      }
+    };
+
+    const peerStream = new MediaStream();
+    peersRef.current.set(targetUserId, { pc, stream: peerStream });
+
+    pc.ontrack = (event) => {
+      peerStream.addTrack(event.track);
+      
+      const el = remoteVideoRefs.current[targetUserId];
+      if (el) {
+        // Kickstart the browser's video decoder by forcing a reload of the stream
+        el.srcObject = null;
+        el.srcObject = peerStream;
+        el.play().catch(e => console.log('Video auto-play suppressed', e));
+      }
+
+      setRemoteStreams(prev => {
+        const next = new Map(prev);
+        next.set(targetUserId, peerStream);
+        return next;
+      });
+    };
+    
+    // Instantly render the empty bubble for this peer
+    setRemoteStreams(prev => {
+      if (!prev.has(targetUserId)) {
+        const next = new Map(prev);
+        next.set(targetUserId, peerStream);
+        return next;
+      }
+      return prev;
+    });
+
+    return pc;
+  }, [localStream, roomId]);
+
   // 1. Initialize local media
   useEffect(() => {
+    const peers = peersRef.current;
     navigator.mediaDevices.getUserMedia({ video: false, audio: true })
       .then(stream => {
         // Mute audio initially
@@ -54,7 +113,7 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
       localStreamRef.current?.getTracks().forEach(t => {
         t.stop();
       });
-      peersRef.current.forEach(({ pc }) => pc.close());
+      peers.forEach(({ pc }) => pc.close());
     };
   }, []);
 
@@ -100,7 +159,7 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
 
     const unsubscribe = wsService.on('webrtc-signal', handleSignal);
     return () => unsubscribe();
-  }, [localStream, callParticipants]);
+  }, [callParticipants, roomId, createPeer]);
 
   // 3. Coordinate call participants and WebRTC connections
   useEffect(() => {
@@ -210,65 +269,7 @@ export default function VoiceChat({ roomId, onLeaveCall }: { roomId: string; onL
         }
       });
     };
-  }, [localStream, roomId, user]);
-
-  const createPeer = (targetUserId: string) => {
-    const pc = new RTCPeerConnection({
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] // Free Google STUN
-    });
-
-    if (localStream) {
-      localStream.getTracks().forEach(track => {
-        pc.addTrack(track, localStream);
-      });
-    }
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate) {
-        wsService.send({
-          type: 'webrtc-signal',
-          roomId,
-          payload: {
-            targetUserId,
-            signal: event.candidate
-          }
-        });
-      }
-    };
-
-    const peerStream = new MediaStream();
-    peersRef.current.set(targetUserId, { pc, stream: peerStream });
-
-    pc.ontrack = (event) => {
-      peerStream.addTrack(event.track);
-      
-      const el = remoteVideoRefs.current[targetUserId];
-      if (el) {
-        // Kickstart the browser's video decoder by forcing a reload of the stream
-        el.srcObject = null;
-        el.srcObject = peerStream;
-        el.play().catch(e => console.log('Video auto-play suppressed', e));
-      }
-
-      setRemoteStreams(prev => {
-        const next = new Map(prev);
-        next.set(targetUserId, peerStream);
-        return next;
-      });
-    };
-    
-    // Instantly render the empty bubble for this peer
-    setRemoteStreams(prev => {
-      if (!prev.has(targetUserId)) {
-        const next = new Map(prev);
-        next.set(targetUserId, peerStream);
-        return next;
-      }
-      return prev;
-    });
-
-    return pc;
-  };
+  }, [localStream, roomId, user, createPeer]);
 
   useEffect(() => {
     // Attach remote streams to video elements

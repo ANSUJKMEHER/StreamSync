@@ -88,7 +88,7 @@ async function localFallbackExecute(code: string, language: string): Promise<{ s
       exec(`g++ -O3 "${sourceFile}" -o "${binaryFile}"`, { timeout: 10000 }, (compileError, compileStdout, compileStderr) => {
         if (compileError) {
           if (compileError.message.includes('not found') || compileError.message.includes('is not recognized')) {
-            exec(`clang++ -O3 "${sourceFile}" -o "${binaryFile}"`, { timeout: 10000 }, (cErr, cOut, cStderr) => {
+            exec(`clang++ -O3 "${sourceFile}" -o "${binaryFile}"`, { timeout: 10000 }, (cErr) => {
               if (cErr) {
                 try { unlinkSync(sourceFile); } catch {}
                 resolve({
@@ -235,7 +235,7 @@ router.post('/', authenticateToken, executionRateLimiter, async (req: Request, r
         const result = await localFallbackExecute(code, lang);
         res.json({ success: true, data: result });
         return;
-      } catch (fallbackError: any) {
+      } catch {
         res.status(502).json({ success: false, error: 'Execution engine failed to connect, and local fallback is not supported for this language.' });
         return;
       }
