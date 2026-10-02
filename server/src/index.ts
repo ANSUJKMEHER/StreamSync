@@ -4,6 +4,7 @@ import http from 'http';
 import dotenv from 'dotenv';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 import { initWebSocket } from './websocket/socketHandler';
+import { prisma } from './db';
 
 dotenv.config();
 
@@ -72,6 +73,11 @@ server.listen(PORT, () => {
   ║   Health: http://localhost:${PORT}/api/health     ║
   ╚══════════════════════════════════════════════╝
   `);
+
+  // Ensure DB columns (e.g. canvasState) exist on PostgreSQL startup
+  prisma.$executeRawUnsafe(`ALTER TABLE "Room" ADD COLUMN IF NOT EXISTS "canvasState" BYTEA;`)
+    .then(() => console.log('[DB] Verified canvasState column in Room table'))
+    .catch((err: any) => console.warn('[DB] Note on canvasState column check:', err.message));
 });
 
 export default app;
